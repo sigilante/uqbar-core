@@ -100,8 +100,7 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      interface=(map @tas json)
-      types=(map @tas json)
+      mar-hash=(unit @ux)
   ==
 ::
 ::  context: state context fed into contract
@@ -124,12 +123,8 @@
     (quip call diff)
   ::
   ++  read
-    ^|  |_  pith
-    ++  json
-      *^json
-    ++  noun
-      *^noun
-    --
+    |~  pith
+    *
   --
 ::
 ::  contract output types
@@ -141,7 +136,7 @@
       =events
   ==
 +$  call  [contract=id town=id =calldata]
-+$  event   (pair @tas json)
++$  event   (pair @tas *)
 +$  events  (list event)
 ::
 ::  transaction types
