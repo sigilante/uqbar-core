@@ -5,40 +5,6 @@
     smart=zig-sys-smart
 ::
 |_  =bowl:gall
-++  get-interface-types-json
-  |=  $:  contract-id=id:smart
-          return=?(%interface %types)
-          label=@tas
-          noun=*
-      ==
-  |^  ^-  json
-  ?:  =(*bowl:gall bowl)
-    [%s (crip (noah !>(noun)))]
-  =/  interface-types=(map @tas json)  get-interface-types
-  ?~  interface-type=(~(get by interface-types) label)
-    [%s (crip (noah !>(noun)))]
-  (jold-full-tuple-to-object:jold u.interface-type noun)
-  ::
-  ++  get-interface-types
-    ^-  (map @tas json)
-    =/  =update:ui
-      .^  update:ui
-          %gx
-          %-  zing
-          :+  /(scot %p our.bowl)/indexer/(scot %da now.bowl)
-            /newest/item/(scot %ux contract-id)/noun
-          ~
-      ==
-    ?~  update                     ~
-    ?.  ?=(%newest-item -.update)  ~
-    =*  contract  item.update
-    ?.  ?=(%| -.contract)  ~
-    ?-  return
-      %interface  interface.p.contract
-      %types      types.p.contract
-    ==
-  --
-::
 ++  enjs
   =,  enjs:format
   |%
@@ -219,9 +185,9 @@
     |=  event=contract-event:eng
     ^-  json
     %-  pairs
-    :^    [%contract %s (scot %ux contract.event)]
-        [%label %s label.event]
-      [%json json.event]
+    :+  [%contract %s (scot %ux contract.event)]
+      :-  label.event
+      [%s (crip (noah !>(noun.event)))]
     ~
   ::
   ++  shell
@@ -241,7 +207,7 @@
     |=  [=calldata:smart contract-id=id:smart]
     ^-  json
     %+  frond  p.calldata
-    (get-interface-types-json contract-id %interface calldata)
+    [%s (crip (noah !>(q.calldata)))]
   ::
   ++  caller
     |=  =caller:smart
@@ -311,20 +277,11 @@
         :~  [%is-data %b %&]
             [%salt [%s (scot %ud salt.p.item)]]
             [%label %s `@ta`label.p.item]
-            :-  %noun
-            %+  frond  label.p.item
-            %:  get-interface-types-json
-                source.p.item
-                %types
-                label.p.item
-                noun.p.item
-            ==
+            [%noun %s (crip (noah !>(noun)))]
         ==
       ::  wheat
       :~  [%is-data %b %|]
           [%cont [%s (scot %ud 0)]]
-          [%interface (tas-to-json interface.p.item)]
-          [%types (tas-to-json types.p.item)]
       ==
     :~  [%id %s (scot %ux id.p.item)]
         [%source %s (scot %ux source.p.item)]

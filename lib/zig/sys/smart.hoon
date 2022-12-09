@@ -38,7 +38,7 @@
   |=  [=id pit=pith]
   ;;  (unit *)
   .*  0
-  [%12 [%0 1] [%1 (weld `pith`[%contract %noun [%ux id] ~] pit)]]
+  [%12 [%0 1] [%1 `pith`[%contract [%ux id] pit]]]
 ::
 ::  +hash: standard hashing functions for items
 ::
@@ -100,7 +100,7 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      mar-hash=(unit @ux)
+      mar-hash=@ux
   ==
 ::
 ::  context: state context fed into contract

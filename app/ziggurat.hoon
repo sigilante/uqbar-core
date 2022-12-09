@@ -206,8 +206,7 @@
             holder=user-address.project
             town-id=designated-town-id
             code=p.r
-            interface=~
-            types=~
+            mar-hash=0x0
         ==
       ==
       :-  [(make-read-desk project.act our.bowl) cards]

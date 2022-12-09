@@ -805,11 +805,12 @@
   ^-  json
   :-  %a
   %+  turn  events
-  |=  [contract=@ux label=@tas =json]
+  |=  e=contract-event:engine
   %-  pairs
-  :~  ['contract' [%s (scot %ux contract)]]
-      [(scot %t label) json]
-  ==
+  :+  [%contract %s (scot %ux contract.e)]
+    :-  label.e
+    [%s (crip (noah !>(noun.e)))]
+  ~
 ::
 ++  dir-to-json
   |=  dir=(list path)
