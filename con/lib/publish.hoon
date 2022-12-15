@@ -4,13 +4,13 @@
   $%  $:  %deploy
           mutable=?
           code=[bat=* pay=*]
-          interface=(map @tas json)
-          types=(map @tas json)
+          mar-hash=@ux
       ==
       ::
       $:  %upgrade
           to-upgrade=id
           new-code=[bat=* pay=*]
+          new-mar-hash=@ux
       ==
   ==
 --

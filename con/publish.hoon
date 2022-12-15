@@ -21,8 +21,7 @@
           id.caller.context
           town.context
           code.act
-          interface.act
-          types.act
+          mar-hash.act
       ==
     `(result ~ [pact ~] ~ ~)
   ::
@@ -34,7 +33,9 @@
             =(this.context source.p.pact)
             =(id.caller.context holder.p.pact)
         ==
-    =.  code.p.pact  new-code.act
+    =:  code.p.pact  new-code.act
+        mar-hash.p.pact  new-mar-hash.act
+    ==
     `(result [pact ~] ~ ~ ~)
   ==
 ::
