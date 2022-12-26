@@ -30,11 +30,13 @@
   (map @ux [=origin =transaction:smart action=supported-actions])
 ::
 ::  inner maps keyed by transaction hash
-::
+::  transaction-store holds all finished transactions,
+::  both ones sent by the address, and ones containing
+::  outputs which correspond to assets belong to that address.
 +$  transaction-store
   %+  map  address:smart
   (map @ux finished-transaction)
-
+::
 +$  finished-transaction
   [=origin batch=@ux =transaction:smart action=supported-actions =output:eng]
 ::
