@@ -1,5 +1,5 @@
 /-  ui=zig-indexer,
-    zig=zig-ziggurat
+    zig=zig-ziggurat :: TODO
 /+  ui-lib=zig-indexer
 ::
 |_  headers=(list [epoch-num=@ud =block-header:zig])

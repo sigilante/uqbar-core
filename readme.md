@@ -26,7 +26,6 @@ The user suite of apps include:
 * `%wallet`: manages key pairs, tracks assets, handles writes to chain
 * `%indexer`: indexes batches, provides a scry interface for chain state, sends subscription updates
 * [`%uqbar`](#why-route-reads-and-writes-through-uqbar): wraps `%wallet` and `%indexer` to provide a unified read/write interface
-* %ziggurat: an Urbit-native development and test environment
 
 The user suite of apps interact with the `%rollup` and `%sequencer` apps, and provide interfaces for use by Urbit apps that need to read or write to the chain.
 
