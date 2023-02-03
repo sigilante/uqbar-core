@@ -1,7 +1,7 @@
 # Uqbar Core
 
-Uqbar Core is the Uqbar developer suite.
-It contains code for the Gall apps required to simulate the ZK rollup to Ethereum, to sequence transactions in order to run a town, and the user application suite: the `%wallet` for chain writes, the `%indexer` for chain reads, `%uqbar`, a unified read-write interface, and %ziggurat, an Urbit-native development and test environment.
+Uqbar Core is the Uqbar chain.
+It contains code for the Gall apps required to simulate the ZK rollup to Ethereum, to sequence transactions in order to run a town, and the user application suite: the `%wallet` for chain writes, the `%indexer` for chain reads, and `%uqbar`, a unified read-write interface.
 
 
 ## Contents
@@ -26,7 +26,6 @@ The user suite of apps include:
 * `%wallet`: manages key pairs, tracks assets, handles writes to chain
 * `%indexer`: indexes batches, provides a scry interface for chain state, sends subscription updates
 * [`%uqbar`](#why-route-reads-and-writes-through-uqbar): wraps `%wallet` and `%indexer` to provide a unified read/write interface
-* %ziggurat: an Urbit-native development and test environment
 
 The user suite of apps interact with the `%rollup` and `%sequencer` apps, and provide interfaces for use by Urbit apps that need to read or write to the chain.
 
