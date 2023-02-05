@@ -1,1 +1,1 @@
-../../garden-dev/sur/settings.hoon
+../../webterm/sur/settings.hoon
