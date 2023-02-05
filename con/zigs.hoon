@@ -112,17 +112,11 @@
   ==
 ::
 ++  read
-  |_  =pith
-  ++  json
-    ^-  ^json
-    ?+    pith  !!
-        [%get-balance [%ux @ux] ~]
-      =+  (need (scry-state +.i.t.pith))
-      =+  (husk account:sur - ~ ~)
-      `^json`[%n (scot %ud balance.noun.-)]
-    ==
-  ::
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ?+    pith  !!
+      [%get-balance [%ux @ux] ~]
+    =+  (need (scry-state +.i.t.pith))
+    =+  (husk account:sur - ~ ~)
+    balance.noun.-
+  ==
 --

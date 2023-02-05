@@ -100,7 +100,9 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      mar-hash=@ux
+      ::  scry path with last value equal to hash of compiled core
+      ::  if ~, developer did not provide an interface
+      interface=pith
   ==
 ::
 ::  context: state context fed into contract

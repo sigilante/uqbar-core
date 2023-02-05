@@ -13,7 +13,7 @@
       $:  %upgrade
           to-upgrade=id
           new-code=[bat=* pay=*]
-          new-mar-hash=@ux
+          new-interface=path
       ==
   ==
 --

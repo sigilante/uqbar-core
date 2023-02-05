@@ -33,17 +33,13 @@
             =(this.context source.p.pact)
             =(id.caller.context holder.p.pact)
         ==
-    =:  code.p.pact  new-code.act
-        mar-hash.p.pact  new-mar-hash.act
+    =:  code.p.pact       new-code.act
+        interface.p.pact  new-interface.act
     ==
     `(result [pact ~] ~ ~ ~)
   ==
 ::
 ++  read
-  |_  =path
-  ++  json
-    ~
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ~
 --

@@ -4,7 +4,7 @@
   |%
   ++  noun
     ?+  label  !!
-      %account  ;;(account:sur:zigs n)
+      %account   ;;(account:sur:zigs n)
       %metadata  ;;(token-metadata:sur:zigs n)
     ==
   ++  json
