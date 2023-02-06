@@ -1,1 +1,0 @@
-../../dev-suite/app/subscriber.hoon
