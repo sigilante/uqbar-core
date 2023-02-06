@@ -14,7 +14,6 @@
       =+  ;;(account:sur:zigs n)
       %-  pairs:enjs:format
       :~  ['balance' s+(scot %ud balance.-)]
-          ::  TODO finish
           ['metadata' s+(scot %ux metadata.-)]
       ==
     ::

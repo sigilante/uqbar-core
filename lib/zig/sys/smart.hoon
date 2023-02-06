@@ -100,7 +100,7 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      ::  scry path with last value equal to hash of compiled core
+      ::  pith with last value equal to @ux hash of compiled core
       ::  if ~, developer did not provide an interface
       interface=pith
   ==
@@ -204,6 +204,13 @@
       [%p @p]    [%q @q]
       [%rs @rs]  [%rd @rd]  [%rh @rh]  [%rq @rq]
   ==
+::
+++  pout
+  |=  =pith
+  ^-  path
+  %+  turn  pith
+  |=  i=iota
+  ?@(i i (scot i))
 --  =<
 ::  ::
 ::  ::  three: formatting (json from zuse/lull)
