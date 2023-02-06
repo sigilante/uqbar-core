@@ -27,15 +27,13 @@
 ::    by `0xdead.beef` would be queried using
 ::    `/x/newest/holder/0xdead.beef`.
 ::
+::    (TODO with remote scry:)
 ::    Scry paths may be prepended with a `/json`, which
 ::    will cause the scry to return JSON rather than an
 ::    `update:ui` and will attempt to mold the `data` in
-::    `item`s and the `noun` in `transaction`s.
-::    In order to do so it requires the `source` contracts
-::    have properly filled out `interface` and `types`
-::    fields, see `lib/jolds.hoon` docstring for the spec
-::    and `con/lib/*interface-types.hoon`
-::    for examples.
+::    `item`s and the `noun` in `transaction`s based on
+::    the published interface scry path, if any, for the
+::    `source` contract.
 ::
 ::    When used in combination, the `/json` prefix must
 ::    come before the `/newest` prefix, so a valid example

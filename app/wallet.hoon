@@ -249,7 +249,7 @@
       `state(keys (~(put by keys) address.act [- nick.act]))
     ::
         %sign-typed-message
-      :: XX display something to the user using the type jold
+      ::  TODO display something to the user using the contract interface
       =/  keypair  (~(got by keys.state) from.act)
       =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
       =/  hash  (sham typed-message)

@@ -1,8 +1,7 @@
 /-  eng=zig-engine,
     seq=zig-sequencer,
     ui=zig-indexer
-/+  jold=zig-jold,
-    smart=zig-sys-smart
+/+  smart=zig-sys-smart
 ::
 |_  =bowl:gall
 ++  enjs
