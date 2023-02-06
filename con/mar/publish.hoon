@@ -8,38 +8,33 @@
 ++  action
   |%
   ++  noun
-    ;;(action:lib n)
+    ;;(action:lib [label n])
   ++  json
     ^-  ^json
-    ?+    label  !!
+    =/  act  ;;(action:lib [label n])
+    ?-    -.act
         %deploy
-      =+  ;;(action:lib n)
-      ?>  ?=(%deploy -.-)
       %+  frond:enjs:format  'deploy'
       %-  pairs:enjs:format
-      :~  ['mutable' b+mutable.-]
+      :~  ['mutable' b+mutable.act]
           ::  we don't JSONify the actual nock
-          ['interface' s+(spat (pout interface.-))]
+          ['interface' s+(spat (pout interface.act))]
       ==
     ::
         %deploy-and-init
-      =+  ;;(action:lib n)
-      ?>  ?=(%deploy-and-init -.-)
       %+  frond:enjs:format  'deploy-and-init'
       %-  pairs:enjs:format
-      :~  ['mutable' b+mutable.-]
+      :~  ['mutable' b+mutable.act]
           ::  we don't JSONify the actual nock
-          ['interface' s+(spat (pout interface.-))]
-          ['init' s+(scot %tas -.init.-)]
+          ['interface' s+(spat (pout interface.act))]
+          ['init' s+(scot %tas -.init.act)]
       ==
     ::
         %upgrade
-      =+  ;;(action:lib n)
-      ?>  ?=(%upgrade -.-)
       %+  frond:enjs:format  'upgrade'
       %-  pairs:enjs:format
-      :~  ['to_upgrade' s+(scot %ux to-upgrade.-)]
-          ['new_interface' s+(spat (pout new-interface.-))]
+      :~  ['to_upgrade' s+(scot %ux to-upgrade.act)]
+          ['new_interface' s+(spat (pout new-interface.act))]
       ==
     ==
   --
@@ -50,12 +45,12 @@
     $%  [%deploy contract=id deployer=address mutable=?]
         [%upgrade contract=id]
     ==
-  ++  noun  ;;(event-type n)
+  ++  noun  ;;(event-type [label n])
   ++  json
     ^-  ^json
     ?+    label  !!
         %deploy
-      =+  ;;(event-type n)
+      =+  ;;(event-type [label n])
       ?>  ?=(%deploy -.-)
       %+  frond:enjs:format  'deploy'
       %-  pairs:enjs:format
@@ -65,7 +60,7 @@
       ==
     ::
         %upgrade
-      =+  ;;(event-type n)
+      =+  ;;(event-type [label n])
       ?>  ?=(%upgrade -.-)
       %+  frond:enjs:format  'upgrade'
       %-  pairs:enjs:format

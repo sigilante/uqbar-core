@@ -302,15 +302,14 @@
   |=  a=(tree (pair key (pair hash value)))
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
-++  shag                                                ::  256bit noun hash
+::  +shag: the standard noun hashing function for uqbar. will likely be
+::  poseidon in ZK mode, but a simple +sham (half-sha-256) will do for now.
+::
+++  shag
   |=  yux=*
   ~>  %shag.+<
   ^-  hash
   `@ux`(sham yux)
-  ::  TODO: make LRU-cache-optimized version for granary retrivial
-  ::  ?@  yux
-  ::    (hash:pedersen yux 0)
-  ::  (hash:pedersen $(yux -.yux) $(yux +.yux))
 ::
 ::  +sore: single Pedersen hash in ascending order, uses +dor as
 ::  fallback

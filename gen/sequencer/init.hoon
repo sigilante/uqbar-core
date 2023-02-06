@@ -1,10 +1,7 @@
 /-  *zig-sequencer
 /+  ethereum, merk, smart=zig-sys-smart
-/=  fungible  /con/lib/fungible-interface-types
-/=  nft  /con/lib/nft-interface-types
-/=  publish  /con/lib/publish-interface-types
-/=  zigs  /con/lib/zigs-interface-types
-/*  escrow-contract    %jam  /con/compiled/escrow/jam
+/=  publish-mar  /con/mar/publish
+/=  zigs-mar     /con/mar/zigs
 /*  fungible-contract  %jam  /con/compiled/fungible/jam
 /*  nft-contract       %jam  /con/compiled/nft/jam
 /*  publish-contract   %jam  /con/compiled/publish/jam
@@ -80,10 +77,9 @@
   :*  zigs-contract-id:smart  ::  id
       zigs-contract-id:smart  ::  source
       zigs-contract-id:smart  ::  holder
-      town-id                ::  town-id
+      town-id                 ::  town-id
       [- +]:(cue zigs-contract)
-      interface=interface-json:zigs
-      types=types-json:zigs
+      interface=`pith:smart`[%ux `@ux`(shag:smart zigs-mar)]^~
   ==
 ::  publish.hoon contract
 =/  publish-pact
@@ -91,10 +87,9 @@
   :*  0x1111.1111  ::  id
       0x0          ::  source
       0x0          ::  holder
-      town-id     ::  town-id
+      town-id      ::  town-id
       [- +]:(cue publish-contract)
-      interface=interface-json:publish
-      types=~
+      interface=`pith:smart`[%ux `@ux`(shag:smart publish-mar)]^~
   ==
 ::  nft.hoon contract
 =/  nft-pact
@@ -105,19 +100,7 @@
       0x0          ::  holder
       town-id     ::  town-id
       [- +]:code
-      interface=interface-json:nft
-      types=types-json:nft
-  ==
-::  escrow.hoon contract
-=/  escrow-pact
-  ^-  pact:smart
-  :*  0xabcd.abcd  ::  id
-      0x0          ::  source
-      0x0          ::  holder
-      town-id      ::  town-id
-      [- +]:(cue escrow-contract)
       interface=~
-      types=~
   ==
 ::
 :: NFT stuff
@@ -168,8 +151,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:code
-      interface=interface-json:fungible
-      types=types-json:fungible
+      interface=~
   ==
 ::
 =/  fake-state
@@ -180,7 +162,6 @@
       [id.publish-pact [%| publish-pact]]
       [id.nft-pact [%| nft-pact]]
       [id.fungible-pact [%| fungible-pact]]
-      [id.escrow-pact [%| escrow-pact]]
       [zigs-1 beef-zigs-item]
       [zigs-2 dead-zigs-item]
       [zigs-3 cafe-zigs-item]

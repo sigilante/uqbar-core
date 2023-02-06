@@ -52,7 +52,7 @@ In the future, with remote scry, users will not need to run their own `%indexer`
    ```
 3. Either build or install the Urbit binary, then boot a development fakeship:
    ```bash
-   ./urbit -F zod
+   ./urbit -F nec
    ```
 4. In the Dojo of the fakeship, set up a `%zig` desk, where we will copy the files in this repo:
    ```hoon
@@ -63,8 +63,8 @@ In the future, with remote scry, users will not need to run their own `%indexer`
    ```bash
    cd ~/git/urbit/pkg  # Replace with your chosen directory.
 
-   rm -rf zod/zig/*
-   cp -RL uqbar-core/* zod/zig/
+   rm -rf nec/zig/*
+   cp -RL uqbar-core/* nec/zig/
    ```
 6. In the Dojo of the fakeship, commit the copied files and install.
    ```hoon
@@ -188,24 +188,24 @@ When routed through `%uqbar`, as below, `/indexer` must be prepended to the path
    ```
 
 2. Scrying from outside Urbit using the HTTP API.
-   The following examples assume `~zod` is running on `localhost:8080`.
+   The following examples assume `~nec` is running on `localhost:8080`.
    ```bash
-   export ZOD_COOKIE=$(curl -i -X POST localhost:8080/~/login -d 'password=lidlut-tabwed-pillex-ridrup' | grep set-cookie | awk '{print $2}' | awk -F ';' '{print $1}')
+   export nec_COOKIE=$(curl -i -X POST localhost:8080/~/login -d 'password=lidlut-tabwed-pillex-ridrup' | grep set-cookie | awk '{print $2}' | awk -F ';' '{print $1}')
 
    # Query all fields for the given hash.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/hash/0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/hash/0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70.json | jq
 
    # Query for the history of the given item.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
 
    # Query for the current state of the given item.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/newest/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/newest/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
    ```
 
 ### Accounts initialized by init script
 
 Below are listed the seed phrases, encryption passwords, and key pairs initialized by the `:sequencer|init` call [above](#starting-a-fakeship-testnet).
-Note in that section we make use of the first of these accounts to set up the `%wallet` (and `%sequencer`) on `~zod`.
+Note in that section we make use of the first of these accounts to set up the `%wallet` (and `%sequencer`) on `~nec`.
 
 ```hoon
 ::  Account holding a data with 300 zigs.
@@ -235,17 +235,17 @@ squid
 
 To add a new ship to a fakeship testnet or to a live testnet, follow these instructions.
 First make sure your ship is on the [whitelist](https://github.com/uqbar-dao/ziggurat/blob/master/lib/rollup.hoon) of the ship hosting the rollup simulator.
-The following two examples assume `~zod` is the host:
+The following two examples assume `~nec` is the host:
 
 
 ### Indexing on an existing testnet
 ```hoon
-:indexer &indexer-action [%set-sequencer [~zod %sequencer]]
-:indexer &indexer-action [%set-rollup [~zod %rollup]]
-:indexer &indexer-action [%bootstrap [~zod %indexer]]
+:indexer &indexer-action [%set-sequencer [~nec %sequencer]]
+:indexer &indexer-action [%set-rollup [~nec %rollup]]
+:indexer &indexer-action [%bootstrap [~nec %indexer]]
 ```
 In this example, not all the hosts need be the same ship.
-To give a specific example, `~zod` might be running the `%rollup`, while `~bus` runs the `%sequencer` for town `0x0` and also the `%indexer`.
+To give a specific example, `~nec` might be running the `%rollup`, while `~bus` runs the `%sequencer` for town `0x0` and also the `%indexer`.
 Every user who wishes to interact with the chain must currently run their own `%indexer`, so there will likely be many options to `%bootstrap` from.
 
 
@@ -253,7 +253,7 @@ Every user who wishes to interact with the chain must currently run their own `%
 
 To start sequencing a new town:
 ```hoon
-:sequencer|init ~zod <YOUR_town_ID> <YOUR_PRIVATE_KEY>
+:sequencer|init ~nec <YOUR_town_ID> <YOUR_PRIVATE_KEY>
 ```
 
 `%sequencer` does not create batches automatically unless configured to do so.
@@ -284,7 +284,7 @@ Therefore, we strongly recommend devs to route read/write requests through `%uqb
 Contracts and the standard library must be compiled before they can be used.
 Compilation makes use of generators that can be easily run in the Dojo.
 The compiled `.noun` files can be found in the `put` directory of your pier.
-For example, if you compile using a fakezod, the `noun` files can be found within `zod/.urb/put`.
+For example, if you compile using a fakeship named ~nec, the `noun` files can be found within `nec/.urb/put`.
 
 To recompile the standard library, use
 ```hoon
