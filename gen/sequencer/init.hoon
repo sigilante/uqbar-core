@@ -4,7 +4,6 @@
 /=  nft  /con/lib/nft-interface-types
 /=  publish  /con/lib/publish-interface-types
 /=  zigs  /con/lib/zigs-interface-types
-/*  escrow-contract    %jam  /con/compiled/escrow/jam
 /*  fungible-contract  %jam  /con/compiled/fungible/jam
 /*  nft-contract       %jam  /con/compiled/nft/jam
 /*  publish-contract   %jam  /con/compiled/publish/jam
@@ -108,17 +107,6 @@
       interface=interface-json:nft
       types=types-json:nft
   ==
-::  escrow.hoon contract
-=/  escrow-pact
-  ^-  pact:smart
-  :*  0xabcd.abcd  ::  id
-      0x0          ::  source
-      0x0          ::  holder
-      town-id      ::  town-id
-      [- +]:(cue escrow-contract)
-      interface=~
-      types=~
-  ==
 ::
 :: NFT stuff
 ::
@@ -180,7 +168,6 @@
       [id.publish-pact [%| publish-pact]]
       [id.nft-pact [%| nft-pact]]
       [id.fungible-pact [%| fungible-pact]]
-      [id.escrow-pact [%| escrow-pact]]
       [zigs-1 beef-zigs-item]
       [zigs-2 dead-zigs-item]
       [zigs-3 cafe-zigs-item]
