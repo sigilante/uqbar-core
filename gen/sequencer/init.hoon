@@ -15,7 +15,7 @@
 ::
 =/  pubkey-1  0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70
 =/  pubkey-2  0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de
-=/  pubkey-3  0x25a8.eb63.a5e7.3111.c173.639b.68ce.091d.d3fc.f139
+=/  pubkey-3  0x5da4.4219.e382.ad70.db07.0a82.12d2.0559.cf8c.b44d
 =/  zigs-1  (hash-data:smart zigs-contract-id:smart pubkey-1 town-id `@`'zigs')
 =/  zigs-2  (hash-data:smart zigs-contract-id:smart pubkey-2 town-id `@`'zigs')
 =/  zigs-3  (hash-data:smart zigs-contract-id:smart pubkey-3 town-id `@`'zigs')
