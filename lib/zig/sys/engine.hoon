@@ -126,7 +126,7 @@
       =/  all-burns   burned.diff
       =/  all-events=(list contract-event)
         %+  turn  events.diff
-        |=  i=[@tas json]
+        |=  i=[@tas *]
         [contract.tx i]
       |-  ::  INNER loop for handling continuations
       ?~  calls
@@ -238,12 +238,11 @@
             ~&  >>>  "didn't find it"  rem^~
           rem^item
         ::
-            [%0 %contract ?(%noun %json) [%ux @ux] ^]
-          ::  /contract/[%noun or %json]/[contract-id]/pith/in/contract
-          =/  kind                      -.+.+.+.pit
-          =/  contract-id=id:smart  +.-.+.+.+.+.pit
+            [%0 %contract [%ux @ux] ^]
+          ::  /contract/[contract-id]/pith/in/contract
+          =/  contract-id=id:smart  +.-.+.+.+.pit
           ::  pith includes fee, as it must match fee in contract
-          =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.+.pit)
+          =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.pit)
           ~&  >>  "looking for pact: {<contract-id>}"
           ?~  item=(get:big p.chain contract-id)
             ~&  >>>  "didn't find it"  rem^~
@@ -251,7 +250,7 @@
             ~&  >>>  "wasn't a pact"  rem^~
           =/  dor=vase  (load code.p.u.item)
           =/  gun
-            (ajar dor %read !>(context(this contract-id)) !>(read-pith) kind)
+            (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
           =/  =book:zink  (zebra:zink rem zink-cax search gun hints-on)
           ?:  ?=(%| -.p.book)
             gas.q.book^~

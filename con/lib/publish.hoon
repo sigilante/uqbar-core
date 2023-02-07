@@ -4,16 +4,20 @@
   $%  $:  %deploy
           mutable=?
           code=[bat=* pay=*]
-          interface=(map @tas json)
-          types=(map @tas json)
+          interface=pith
       ==
-      ::  TODO add initialization call option?
-      ::  $:  %deploy-and-init
-      ::  ==
-      ::
+  ::
+      $:  %deploy-and-init
+          mutable=?
+          code=[bat=* pay=*]
+          interface=pith
+          init=calldata
+      ==
+  ::
       $:  %upgrade
           to-upgrade=id
           new-code=[bat=* pay=*]
+          new-interface=pith
       ==
   ==
 --

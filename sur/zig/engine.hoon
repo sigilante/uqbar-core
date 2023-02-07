@@ -33,5 +33,5 @@
 ::
 ::  contract events are converted to this
 ::
-+$  contract-event  [contract=id:smart label=@tas =json]
++$  contract-event  [contract=id:smart label=@tas noun=*]
 --
