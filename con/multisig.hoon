@@ -154,12 +154,8 @@
   ==
 ::
 ++  read
-  |_  =path
-    ++  json
-      ~
-    ++  noun
-      ::  XX make an ++is-valid-bundle of signatures. This lets you use gasless
-      ::  multisignatures. Fairly certain it is safe...
-      ~
-    --
+  |=  =pith
+  ::  XX make an ++is-valid-bundle of signatures. This lets you use gasless
+  ::  multisignatures. Fairly certain it is safe...
+  ~
 --

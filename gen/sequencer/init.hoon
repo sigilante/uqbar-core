@@ -1,13 +1,14 @@
 /-  *zig-sequencer
 /+  ethereum, merk, smart=zig-sys-smart
-/=  publish-mar  /con/mar/publish
-/=  zigs-mar     /con/mar/zigs
+/=  fungible-mar  /con/mar/fungible
+/=  publish-mar   /con/mar/publish
+/=  zigs-mar      /con/mar/zigs
 /*  fungible-contract  %jam  /con/compiled/fungible/jam
 /*  nft-contract       %jam  /con/compiled/nft/jam
 /*  publish-contract   %jam  /con/compiled/publish/jam
 /*  zigs-contract      %jam  /con/compiled/zigs/jam
 :-  %say
-|=  [[now=@da eny=@uvJ bek=beak] [rollup-host=@p town-id=@ux private-key=@ux ~] ~]
+|=  [[now=@da eny=@uvJ bek=beak] [host=@p town-id=@ux private-key=@ux ~] ~]
 ::  one hundred million testnet zigs, now and forever
 =/  testnet-zigs-supply  100.000.000.000.000.000.000.000.000
 ::
@@ -115,7 +116,8 @@
       label=%metadata
       :*  name='Ziggurat Girls'
           symbol='GOODART'
-          properties=(~(gas pn:smart *(pset:smart @tas)) `(list @tas)`~[%hat %eyes %mouth])
+          ::  "properties"
+          (~(gas pn:smart *(pset:smart @tas)) `(list @tas)`~[%hat %eyes %mouth])
           supply=1
           cap=`5
           mintable=%.y
@@ -151,7 +153,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:code
-      interface=~
+      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
   ==
 ::
 =/  fake-state
@@ -173,7 +175,7 @@
 :-  %sequencer-town-action
 ^-  town-action
 :*  %init
-    rollup-host
+    host
     (address-from-prv:key:ethereum private-key)
     private-key
     town-id

@@ -72,7 +72,8 @@
 +$  address  @ux            ::  42-char hex address, ETH compatible
 +$  sig      [v=@ r=@ s=@]  ::  ETH compatible ECDSA signature
 ::
-++  zigs-contract-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
+::  hardcoded "native" token contract
+++  zigs-contract-id  `@ux`'zigs-contract'
 ::
 ::  items populate the state.
 ::
@@ -476,7 +477,7 @@
       $(b r.b, l.a ~, p.q.n.a (mer a(l ~) [p q.q]:n.a))
     $(a l.a)
   ::
-  ++  mek                                               ::  merkle hashes for key
+  ++  mek                                              ::  merkle hashes for key
     |=  [a=mert b=kee]
     ^-  (list hash)
     =|  =(list hash)
