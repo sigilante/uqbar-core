@@ -172,15 +172,15 @@
           ~|("%uqbar: no known sequencer for that town" !!)
         =/  tx-hash  `@ux`(sham +.transaction.write)
         :_  state
-        :~  %+  %~  poke  pass:io
+        :~  %+  ~(poke pass:io /write-result)
+              [our.bowl wallet-source]
+            uqbar-write-result+!>(`write-result:u`[tx-hash %sent ~])
+          ::
+            %+  %~  poke  pass:io
                 /submit-transaction/(scot %ux tx-hash)
               [q.u.seq %sequencer]
             :-  %sequencer-town-action
             !>(`town-action:s`[%receive transaction.write])
-          ::
-            %+  ~(poke pass:io /write-result)
-              [our.bowl wallet-source]
-            uqbar-write-result+!>(`write-result:u`[tx-hash %sent ~])
         ==
       ::
           %receipt

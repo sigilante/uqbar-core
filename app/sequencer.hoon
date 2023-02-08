@@ -217,17 +217,17 @@
       %^  spin  processed.new  0
       |=  [[=hash:smart t=transaction:smart op=output] i=@]
       :_  +(i)
-      =/  =hash:smart  `@ux`(sham [t op])
+      =/  signed-stuff  `@ux`(sham [t op])
       =/  usig
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
-          `@uvI`hash
+          `@uvI`signed-stuff
         (need private-key.state)
       %+  ~(poke pass:io /receipt)
         [-:(snag i pending.state) %uqbar]
       :-  %uqbar-write
       !>  ^-  write:uqbar
       :+  %receipt  hash
-      [(sign:sig our.bowl now.bowl hash) usig t op]
+      [(sign:sig our.bowl now.bowl signed-stuff) usig t op]
     ::
     ::  batching
     ::

@@ -1,4 +1,4 @@
-/-  eng=zig-engine
+/-  eng=zig-engine, uqbar=zig-uqbar
 /+  smart=zig-sys-smart
 |%
 +$  signature   [p=@ux q=ship r=life]
@@ -76,6 +76,9 @@
           =transaction:smart
           action=supported-actions
       ==
+      ::  poked back to origin after sequencer optimistically processes
+      [%sequencer-receipt sequencer-receipt:uqbar]
+      ::  poked back to origin when transaction is included in batch
       [%finished-transaction finished-transaction]
   ==
 ::
@@ -187,27 +190,4 @@
       properties=(pmap:smart @tas @t)
       transferrable=?
   ==
-::
-::  historical app states
-::
-+$  state-0
-  $:  %0
-      seed=[mnem=@t pass=@t address-index=@ud]
-      keys=(map address:smart [priv=(unit @ux) nick=@t])
-      nonces=(map address:smart (map town=@ux nonce=@ud))
-      =signed-message-store
-      tokens=(map address:smart =book)
-      =metadata-store
-      =old-unfinished-transaction-store
-      =old-transaction-store
-      =old-pending-store
-  ==
-+$  old-unfinished-transaction-store
-  (list [hash=@ux tx=transaction:smart action=supported-actions])
-+$  old-transaction-store
-  %+  map  address:smart
-  (map @ux [=transaction:smart action=supported-actions =output:eng])
-+$  old-pending-store
-  %+  map  address:smart
-  (map @ux [=transaction:smart action=supported-actions])
 --

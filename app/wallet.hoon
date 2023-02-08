@@ -3,17 +3,14 @@
 ::  UQ| wallet agent. Stores private key and facilitates signing
 ::  transactions, holding nonce values, and keeping track of owned data.
 ::
-/-  *zig-wallet, ui=zig-indexer, uqbar=zig-uqbar
-/+  default-agent, dbug, verb, ethereum, bip32, bip39,
+/-  *zig-wallet, ui=zig-indexer
+/+  default-agent, dbug, verb, io=agentio,
+    ethereum, bip32, bip39,
     ui-lib=zig-indexer, zink=zink-zink,
     *zig-wallet, smart=zig-sys-smart
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  versioned-state
-  $%  state-0
-      state-1
-  ==
 +$  state-1
   $:  %1
       ::  wallet holds a single seed at once
@@ -46,7 +43,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-%+  verb  |
+%+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -67,40 +64,9 @@
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  =/  old-state  !<(versioned-state old-vase)
-  ?-    -.old-state
+  ?+    -.q.old-vase  on-init
       %1
-    `this(state old-state)
-  ::
-      %0
-    :-  ~
-    %=    this
-        state
-      ^-  state-1
-      :*  %1
-          seed.old-state
-          keys.old-state
-          nonces.old-state
-          signed-message-store.old-state
-          tokens.old-state
-          metadata-store.old-state
-          approved-origins=*(map (pair term wire) [rate=@ud bud=@ud])
-          %-  malt
-          %+  turn  old-unfinished-transaction-store.old-state
-          |=  [hash=@ux tx=transaction:smart action=supported-actions]
-          [hash [~ tx action]]
-      ::
-          %-  ~(run by old-transaction-store.old-state)
-          |=  m=(map @ux [=transaction:smart =supported-actions =output:eng])
-          %-  ~(run by m)
-          |=  [[=transaction:smart =supported-actions =output:eng]]
-          [~ 0x0 transaction supported-actions output]
-      ::
-          %-  ~(run by old-pending-store.old-state)
-          |=  m=(map @ux [=transaction:smart =supported-actions])
-          (~(run by m) some)
-      ==
-    ==
+    `this(state !<(state-1 old-vase))
   ==
 ::
 ++  on-watch
@@ -134,9 +100,24 @@
   |^
   ?+    mark  !!
       %uqbar-write-result
-    ::  TODO handle these
-    ~&  !<(write-result:uqbar vase)
-    `this
+    =/  result  !<(write-result:uqbar vase)
+    =/  tx-hash  p.result
+    ?-    -.q.result
+        %sent       ~&  "%wallet: tx sent"  `this  ::  TODO more later
+        %delivered  ~&  "%wallet: tx delivered"  `this
+        %rejected   ~&  "%wallet: tx rejected"  `this
+        %receipt
+      ::  look for in our unfinished map
+      ?~  found=(~(get by unfinished-transaction-store) tx-hash)
+        `this  ::  TODO more
+      :_  this
+      ::  TODO update FE as well
+      ?~  origin.u.found  ~
+      :_  ~
+      %+  ~(poke pass:io /receipt)
+        [our.bowl p.u.origin.u.found]
+      wallet-update+!>(`wallet-update`[%sequencer-receipt +.q.result])
+    ==
       %wallet-poke
     =^  cards  state
       (poke-wallet !<(wallet-poke vase))
