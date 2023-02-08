@@ -15,6 +15,8 @@
     dbug,
     verb,
     s=zig-sequencer,
+    sig=zig-sig,
+    ethereum,
     smart=zig-sys-smart
 |%
 +$  card  card:agent:gall
@@ -22,7 +24,7 @@
   $:  %0
       indexers=(map id:smart dock)           ::  single indexer for each town
       sequencers=(map id:smart sequencer:s)  ::  single sequencer for each town
-      wallet-source=@tas
+      wallet-source=term  ::  track any wallet ship is using
   ==
 --
 ::
@@ -54,8 +56,7 @@
   ++  on-load
     |=  =old=vase
     ^-  (quip card _this)
-    =.  state  !<(state-0 old-vase)
-    [~ this]
+    `this(state !<(state-0 old-vase))
   ::
   ++  on-watch
     |=  =path
@@ -63,7 +64,6 @@
     ?>  =(src.bowl our.bowl)
     :_  this
     ?+    -.path  !!
-        %track  ~
         %wallet
       ::  must be of the form, e.g.,
       ::   /wallet/[requesting-app-name]/[*-updates]
@@ -170,33 +170,52 @@
         ?>  =(src.bowl our.bowl)
         ?~  seq=(~(get by sequencers.state) `@ux`town.transaction.write)
           ~|("%uqbar: no known sequencer for that town" !!)
-        =/  transaction-hash
-          (scot %ux `@ux`(sham +.transaction.write))
+        =/  tx-hash  `@ux`(sham +.transaction.write)
         :_  state
-        :+  %+  %~  poke  pass:io
-                /submit-transaction/[transaction-hash]
+        :~  %+  %~  poke  pass:io
+                /submit-transaction/(scot %ux tx-hash)
               [q.u.seq %sequencer]
             :-  %sequencer-town-action
-            !>  ^-  town-action:s
-            [%receive (silt ~[transaction.write])]
-          %+  fact:io
-            [%write-result !>(`write-result:u`[%sent ~])]
-          ~[/track/[transaction-hash]]
-        ~
+            !>(`town-action:s`[%receive (silt transaction.write)])
+          ::
+            %+  ~(poke pass:io /write-result)
+              [our.bowl wallet-source]
+            write-result+!>(`write-result:u`[tx-hash %sent ~])
+        ==
       ::
           %receipt
-        ::  forward to local watchers, usually wallet
-        :_  state
-        :_  ~
-        %+  fact:io
-          [%write-result !>(`write-result:u`write)]
-        ~[/track/(scot %ux transaction-hash.write)]
+        ::  forward to connected wallet app after
+        ::  verifying the sequencer's signatures
+        ?~  seq=(~(get by sequencers.state) `@ux`town.transaction.write)
+          ~|("%uqbar: got receipt from a stranger" !!)
+        =/  signed-stuff  (sham [transaction output]:write)
+        ?>  =(q.u.seq q.ship-sig.write)
+        ?>  (validate:sig our.bowl ship-sig.write signed-stuff now.bowl)
+        ?>  ::  TODO stick this in a library somewhere
+            =?    v.uqbar-sig.write
+                (gte v.uqbar-sig.write 27)
+              (sub v.uqbar-sig.write 27)
+            =/  virt=toon
+              %+  mong
+                :-  ecdsa-raw-recover:secp256k1:secp:crypto
+                [signed-stuff uqbar-sig.write]
+              ,~
+            ?.  ?=(%0 -.virt)  %.n  ::  invalid sig
+            .=  p.u.seq
+            %-  address-from-pub:key:ethereum
+            %-  serialize-point:secp256k1:secp:crypto
+            ;;([x=@ y=@] p.virt)
+        :_  state  :_  ~
+        %+  ~(poke pass:io /write-result)
+          [our.bowl wallet-source]
+        write-result+!>(`write-result:u`[tx-hash.write %receipt +.+.write])
       ==
     --
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
-    |^  ^-  (quip card _this)
+    |^
+    ^-  (quip card _this)
     ?+    -.wire  (on-agent:def wire sign)
         %capitol-updates
       ::  set sequencers based on rollup state, given by indexer
@@ -217,17 +236,20 @@
       ==
     ::
         %submit-transaction
-      ::  get receipt from sequencer
+      ::  get poke-ack from sequencer
       ?.  ?=([@ ~] t.wire)      `this
       ?.  ?=(%poke-ack -.sign)  `this
-      =/  path  ~[/track/[i.t.wire]]
-      :_  this
-      ?~  p.sign  ~
-      :_  ~
-      %+  fact:io
-        :-  %write-result
-        !>(`write-result:u`[%rejected src.bowl])
-      path
+      =/  tx-hash=hash:smart  (slav %ux i.t.wire)
+      :_  this  :_  ~
+      ?~  p.sign
+        ::  ack
+        %+  ~(poke pass:io /write-result)
+          [our.bowl wallet-source]
+        write-result+!>(`write-result:u`[tx-hash %delivered ~])
+      ::  nack
+      %+  ~(poke pass:io /write-result)
+        [our.bowl wallet-source]
+      write-result+!>(`write-result:u`[tx-hash %rejected ~])
     ==
     ::
     ++  pass-through
