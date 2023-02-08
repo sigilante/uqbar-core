@@ -49,6 +49,7 @@
           mode=availability-method
       ==
       [%set-block-height-api-key key=@t]
+      [%del-block-height-api-key ~]
       [%clear-state ~]
       ::  transactions
       [%receive-assets assets=state]

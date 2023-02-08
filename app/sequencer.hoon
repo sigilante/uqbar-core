@@ -11,7 +11,7 @@
 ::  Choose which library smart contracts are executed against here
 ::
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
-/*  zink-cax-noun   %noun  /lib/zig/sys/hash-cache/noun
+::  /*  zink-cax-noun   %noun  /lib/zig/sys/hash-cache/noun
 |%
 +$  card  card:agent:gall
 +$  proposed-batch  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
@@ -23,7 +23,7 @@
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=(list [@p transaction:smart])  ::  unexecuted transactions
       =memlist                            ::  executed and ordered transactions
-      proposed-batch=(unit proposed-batch)
+      proposed-batch=(unit proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
@@ -45,7 +45,7 @@
   =-  `this(state [[%1 ~ ~ ~ ~ ~ ~ ~ %off ~] - smart-lib])
   %~  engine  engine
     ::  sigs on, hints off
-  [smart-lib ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun))) %.y %.n]
+  [smart-lib *(map * @) %.y %.n]
 ::
 ++  on-save  !>(-.state)
 ::
@@ -57,7 +57,7 @@
   =/  eng
     %~  engine  engine
       ::  sigs on, hints off
-    [smart-lib ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun))) %.y %.n]
+    [smart-lib *(map * @) %.y %.n]
   ?+  -.q.old-vase  `this(state [*state-1 eng smart-lib])
     %1  `this(state [!<(state-1 old-vase) eng smart-lib])
   ==
@@ -126,9 +126,13 @@
       ?>  =(src.bowl our.bowl)
       `state(block-height-api-key `key.act)
     ::
+        %del-block-height-api-key
+      ?>  =(src.bowl our.bowl)
+      `state(block-height-api-key ~)
+    ::
         %clear-state
       ?>  =(src.bowl our.bowl)
-      ~&  >>  "sequencer: wiping state"
+      ~&  >>>  "sequencer: wiping state"
       `[[%1 ~ ~ ~ ~ ~ ~ ~ %off ~] eng.state smart-lib-vase.state]
     ::
     ::  handle bridged assets from rollup
@@ -141,13 +145,16 @@
         ~|("%sequencer: error: got asset while not active" !!)
       ?~  town.state  !!
       ~&  >>  "%sequencer: received assets from rollup: {<assets.act>}"
-      !!  ::  TODO
+      !!  ::  TODO -- this will be a special transaction type
     ::
     ::  transactions
     ::
         %receive
       ?.  =(%available status.state)
         ~|("%sequencer: error: got transaction while not active" !!)
+      ::  configurable rate minimum
+      ?.  (gte rate.gas.transaction.act 1)
+        ~|("%sequencer: rejected transaction, gas rate too low" !!)
       ::  fetch latest ETH block height and perform batch
       ::  TODO inline thread
       =/  tid  `@ta`(cat 3 'run-single_' (scot %uv (sham eny.bowl)))
@@ -220,9 +227,7 @@
       :-  %uqbar-write
       !>  ^-  write:uqbar
       :+  %receipt  hash
-      :^  (sign:sig our.bowl now.bowl hash)
-        usig
-      t  op
+      [(sign:sig our.bowl now.bowl hash) usig t op]
     ::
     ::  batching
     ::
