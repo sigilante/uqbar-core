@@ -10,9 +10,8 @@
   ::  +run: produce a state transition for a given town and mempool
   ::
   ++  run
-    |=  [=chain =mempool]
+    |=  [=chain pending=memlist]
     ^-  state-transition
-    =/  pending=memlist  (sort-mempool mempool)
     =|  st=state-transition
     =|  gas-reward=@ud
     =.  chain.st  chain
@@ -27,17 +26,15 @@
         modified  (put:big modified.st u.paid)
       ==
     ::  execute a single transaction and integrate the diff
+    ::  if we've already optimistically executed, use that diff
     =*  tx  tx.i.pending
-    =/  =output  ~(intake eng chain.st tx)
-    =/  priced-gas  (mul gas.output rate.gas.tx)
-    =?  modified.output  (gth priced-gas 0)
-      %+  put:big  modified.output
-      %+  ~(charge tax p.chain.st)
-        modified.output
-      [caller.tx priced-gas]
+    =/  =output
+      ?~  output.i.pending
+        ~(intake eng chain.st tx)
+      u.output.i.pending
     %=  $
       pending     t.pending
-      gas-reward  (add gas-reward priced-gas)
+      gas-reward  (add gas-reward (mul gas.output rate.gas.tx))
         st
       %=    st
         modified  (uni:big modified.st modified.output)
@@ -167,19 +164,25 @@
     ::
     ::  +exhaust: prepare final diff for entire call, including all
     ::  subsequent calls created. subtract gas remaining from budget
-    ::  to get total spend.
+    ::  to get total spend. charge gas from caller
     ::
     ++  exhaust
       |=  $:  gas=@ud
               =errorcode:smart
-              dif=(unit [=state =state e=(list contract-event)])
+              dif=(unit [mod=state =state e=(list contract-event)])
           ==
       ^-  output
-      ~&  >  "gas cost: {<(sub bud.gas.tx gas)>}"
-      :+  (sub bud.gas.tx gas)
+      =/  cost  (sub bud.gas.tx gas)
+      ~&  >  "gas cost: {<cost>}"
+      :+  cost
         errorcode
-      ?~  dif  [~ ~ ~]
-      u.dif
+      =/  priced-gas  (mul cost rate.gas.tx)
+      =/  gas-item
+        %+  ~(charge tax p.chain)
+          ?~(dif ~ mod.u.dif)
+        [caller.tx priced-gas]
+      ?~  dif  [(put:big ~ gas-item) ~ ~]
+      u.dif(mod (put:big mod.u.dif gas-item))
     ::
     ::  +combust: prime contract code for execution, then run using
     ::  ZK-hint-generating virtualized interpreter +zebra. return
@@ -387,11 +390,14 @@
 ++  sort-mempool
   |=  =mempool
   ^-  memlist
-  %+  sort  ~(tap in mempool)
-  |=  [a=[@ux tx=transaction:smart] b=[@ux tx=transaction:smart]]
-  ?:  =(address.caller.tx.a address.caller.tx.b)
-    (lth nonce.caller.tx.a nonce.caller.tx.b)
-  (gth rate.gas.tx.a rate.gas.tx.b)
+  %+  turn
+    %+  sort  ~(tap in mempool)
+    |=  [a=[@ux tx=transaction:smart] b=[@ux tx=transaction:smart]]
+    ?:  =(address.caller.tx.a address.caller.tx.b)
+      (lth nonce.caller.tx.a nonce.caller.tx.b)
+    (gth rate.gas.tx.a rate.gas.tx.b)
+  |=  [hash=@ux tx=transaction:smart]
+  [hash tx ~]
 ::
 ::  utilities
 ::

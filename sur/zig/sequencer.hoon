@@ -48,10 +48,12 @@
           starting-state=(unit chain)
           mode=availability-method
       ==
+      [%set-block-height-api-key key=@t]
       [%clear-state ~]
       ::  transactions
       [%receive-assets assets=state]
-      [%receive (set transaction:smart)]
+      [%receive =transaction:smart]
+      [%run-pending eth-block-height=@ud]
       ::  batching
       [%trigger-batch ~]
       [%perform-batch eth-block-height=@ud]

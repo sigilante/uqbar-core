@@ -176,11 +176,11 @@
                 /submit-transaction/(scot %ux tx-hash)
               [q.u.seq %sequencer]
             :-  %sequencer-town-action
-            !>(`town-action:s`[%receive (silt transaction.write)])
+            !>(`town-action:s`[%receive transaction.write])
           ::
             %+  ~(poke pass:io /write-result)
               [our.bowl wallet-source]
-            write-result+!>(`write-result:u`[tx-hash %sent ~])
+            uqbar-write-result+!>(`write-result:u`[tx-hash %sent ~])
         ==
       ::
           %receipt
@@ -208,7 +208,8 @@
         :_  state  :_  ~
         %+  ~(poke pass:io /write-result)
           [our.bowl wallet-source]
-        write-result+!>(`write-result:u`[tx-hash.write %receipt +.+.write])
+        :-  %uqbar-write-result
+        !>(`write-result:u`[tx-hash.write %receipt +.+.write])
       ==
     --
   ::
@@ -245,11 +246,11 @@
         ::  ack
         %+  ~(poke pass:io /write-result)
           [our.bowl wallet-source]
-        write-result+!>(`write-result:u`[tx-hash %delivered ~])
+        uqbar-write-result+!>(`write-result:u`[tx-hash %delivered ~])
       ::  nack
       %+  ~(poke pass:io /write-result)
         [our.bowl wallet-source]
-      write-result+!>(`write-result:u`[tx-hash %rejected ~])
+      uqbar-write-result+!>(`write-result:u`[tx-hash %rejected ~])
     ==
     ::
     ++  pass-through

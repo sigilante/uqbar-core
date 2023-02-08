@@ -133,6 +133,10 @@
   ^-  (quip card _this)
   |^
   ?+    mark  !!
+      %uqbar-write-result
+    ::  TODO handle these
+    ~&  !<(write-result:uqbar vase)
+    `this
       %wallet-poke
     =^  cards  state
       (poke-wallet !<(wallet-poke vase))

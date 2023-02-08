@@ -17,8 +17,7 @@
 ++  eng
   %~  engine  engine
   :^  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-    ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun)))
-  %.n  %.n
+  *(map * @)  %.n  %.n  ::  sigs off, hints off
 ::
 ::  fake data
 ::
@@ -47,7 +46,6 @@
         zigs-contract-id:smart  ::  holder
         town-id
         [-.code +.code]
-        ~
         ~
     ==
   ++  sequencer-account
@@ -107,7 +105,6 @@
         0x0  ::  holder
         town-id
         [-.code +.code]
-        ~
         ~
     ==
   ++  dummy-data
