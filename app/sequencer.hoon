@@ -15,13 +15,13 @@
 |%
 +$  card  card:agent:gall
 +$  proposed-batch  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
-+$  state-0
-  $:  %0
++$  state-1
+  $:  %1
       rollup=(unit ship)  ::  replace in future with ETH contract address
-      private-key=(unit @ux)
-      town=(unit town)  ::  state
-      =mempool
+      private-key=(unit @ux)  ::  our signing key
+      town=(unit town)        ::  chain-state
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
+
       proposed-batch=(unit proposed-batch)
       status=?(%available %off)
   ==
@@ -41,12 +41,13 @@
 ++  on-init
   ^-  (quip card _this)
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  =-  `this(state [[%0 ~ ~ ~ ~ ~ ~ %off] - smart-lib])
+  =-  `this(state [[%0 ~ ~ ~ ~ ~ %off] - smart-lib])
   %~  engine  engine
     ::  sigs on, hints off
   [smart-lib ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun))) %.y %.n]
 ::
 ++  on-save  !>(-.state)
+::
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
@@ -56,7 +57,9 @@
     %~  engine  engine
       ::  sigs on, hints off
     [smart-lib ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun))) %.y %.n]
-  `this(state [!<(state-0 old-vase) eng smart-lib])
+  ?+  -.q.old-vase  `this(state [*state-1 eng smart-lib])
+    %1  `this(state [!<(state-1 old-vase) eng smart-lib])
+  ==
 ::
 ++  on-watch
   |=  =path
@@ -112,6 +115,7 @@
       :~  %+  ~(watch pass:io /sub-rollup)
             [rollup-host.act %rollup]
           /peer-root-updates
+        ::
           %+  ~(poke pass:io /batch-submit/(scot %ux new-root))
             [rollup-host.act %rollup]
           rollup-action+!>([%launch-town address.act sig town])
@@ -143,9 +147,7 @@
         %-  ~(run in txs.act)
         |=  t=transaction:smart
         [`@ux`(sham +.t) t]
-      ::  give a "receipt" to sender, with signature they can show
-      ::  a counterparty for "business finality"
-      :_  state(mempool (~(uni in mempool) received))
+      :_  state(mempool (~(put in mempool) received))
       %+  turn  ~(tap in received)
       |=  [hash=@ux =transaction:smart]
       ^-  card
