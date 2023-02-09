@@ -99,29 +99,52 @@
   ^-  (quip card _this)
   |^
   ?+    mark  !!
-      %uqbar-write-result
-    =/  result  !<(write-result:uqbar vase)
-    =/  tx-hash  p.result
-    ?-    -.q.result
-        %sent       ~&  "%wallet: tx sent"  `this  ::  TODO more later
-        %delivered  ~&  "%wallet: tx delivered"  `this
-        %rejected   ~&  "%wallet: tx rejected"  `this
-        %receipt
-      ::  look for in our unfinished map
-      ?~  found=(~(get by unfinished-transaction-store) tx-hash)
-        `this  ::  TODO more
-      :_  this
-      ::  TODO update FE as well
-      ?~  origin.u.found  ~
-      :_  ~
-      %+  ~(poke pass:io /receipt)
-        [our.bowl p.u.origin.u.found]
-      wallet-update+!>(`wallet-update`[%sequencer-receipt +.q.result])
-    ==
       %wallet-poke
     =^  cards  state
       (poke-wallet !<(wallet-poke vase))
     [cards this]
+  ::
+      %uqbar-write-result
+    =/  result  !<(write-result:uqbar vase)
+    =/  tx-hash  p.result
+    ?~  found=(~(get by unfinished-transaction-store) tx-hash)
+      `this  ::  TODO more here
+    =*  tx  u.found
+    =^  cards  tx
+      ?-    -.q.result
+          %sent
+        ~&  "%wallet: tx sent"
+        ::  status code 101
+        `tx(status.transaction %101)
+          %delivered
+        ~&  "%wallet: tx delivered"
+        ::  status code 102
+        `tx(status.transaction %102)
+          %rejected
+        ~&  "%wallet: tx rejected"
+        ::  status code 103
+        `tx(status.transaction %103)
+          %receipt
+        :_  tx(status.transaction (add 200 status.transaction.+.q.result))
+        ?~  origin.u.found  ~
+        :_  ~
+        %+  ~(poke pass:io /receipt)
+          [our.bowl p.u.origin.u.found]
+        wallet-update+!>(`wallet-update`[%sequencer-receipt +.q.result])
+      ==
+    :-  (tx-update-card tx-hash transaction.tx action.tx)^~
+    %=    this
+        unfinished-transaction-store
+      (~(put by unfinished-transaction-store) [tx-hash tx])
+    ::
+        nonces
+      ?.  =(status.transaction.tx %103)  nonces
+      ::  dec nonce on this town, tx was rejected
+      %+  ~(put by nonces)  address.caller.transaction.tx
+      %+  ~(jab by (~(got by nonces) address.caller.transaction.tx))
+        town.transaction.tx
+      |=(n=@ud (dec n))
+    ==
   ==
   ::
   ++  poke-wallet
@@ -517,38 +540,6 @@
       |=  m=(map @ux finished-transaction)
       (~(put by m) updated)
     ==
-  ::
-      [%submit-tx @ @ ~]
-    ::  check to see if our tx was received by sequencer
-    =/  from=@ux  (slav %ux i.t.wire)
-    =/  hash=@ux  (slav %ux i.t.t.wire)
-    ?:  ?=(%poke-ack -.sign)
-      =/  our-txs  (~(got by transaction-store) from)
-      =/  this-tx  (~(got by our-txs) hash)
-      =.  this-tx
-        ?~  p.sign
-          ::  got it
-          ~&  >>  "wallet: tx was received by sequencer"
-          this-tx(status.transaction %101)
-        ::  failed
-        ~&  >>>  "wallet: tx was rejected by sequencer"
-        this-tx(status.transaction %103)
-      :-  ~[(tx-update-card hash transaction.this-tx action.this-tx)]
-      %=    this
-          transaction-store
-        %-  ~(put by transaction-store)
-        [from (~(put by our-txs) hash this-tx)]
-      ::
-          nonces
-        ?:  =(status.transaction.this-tx %101)
-          nonces
-        ::  dec nonce on this town, tx was rejected
-        %+  ~(put by nonces)  from
-        %+  ~(jab by (~(got by nonces) from))
-          town.transaction.this-tx
-        |=(n=@ud (dec n))
-      ==
-    `this
   ==
 ::
 ++  on-arvo  on-arvo:def
