@@ -132,7 +132,12 @@
           [our.bowl p.u.origin.u.found]
         wallet-update+!>(`wallet-update`[%sequencer-receipt +.q.result])
       ==
-    :-  (tx-update-card tx-hash transaction.tx action.tx)^~
+    =^  cards  tokens
+      ?.  ?=(%receipt -.q.result)  `tokens
+      ::  update our assets based on output of transaction
+      =+  (integrate-output tokens output.q.result)
+      [(fact:io wallet-frontend-update+!>([%new-book -]) ~[/book-updates])^~ -]
+    :-  (tx-update-card tx-hash transaction.tx action.tx)^cards
     %=    this
         unfinished-transaction-store
       (~(put by unfinished-transaction-store) [tx-hash tx])

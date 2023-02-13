@@ -18,6 +18,8 @@
     |-
     ?~  pending
       ::  finished with execution:
+      ::  put processed in correct order
+      =.  processed.st  (flop processed.st)
       ::  pay accumulated gas to sequencer
       ?~  paid=(~(pay tax p.chain.st) gas-reward)
         st
@@ -394,12 +396,12 @@
   |=  =mempool
   ^-  memlist
   %+  turn
-    %+  sort  ~(tap in mempool)
-    |=  [a=[@ux tx=transaction:smart] b=[@ux tx=transaction:smart]]
+    %+  sort  ~(tap by mempool)
+    |=  [a=[@ux @p tx=transaction:smart] b=[@ux @p tx=transaction:smart]]
     ?:  =(address.caller.tx.a address.caller.tx.b)
       (lth nonce.caller.tx.a nonce.caller.tx.b)
     (gth rate.gas.tx.a rate.gas.tx.b)
-  |=  [hash=@ux tx=transaction:smart]
+  |=  [hash=@ux @p tx=transaction:smart]
   [hash tx ~]
 ::
 ::  utilities

@@ -21,8 +21,8 @@
       private-key=(unit @ux)  ::  our signing key
       town=(unit town)        ::  chain-state
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
-      pending=(list [@p transaction:smart])  ::  unexecuted transactions
-      =memlist                            ::  executed and ordered transactions
+      pending=mempool         ::  unexecuted transactions
+      =memlist                ::  executed and ordered transactions
       proposed-batch=(unit proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
@@ -159,7 +159,8 @@
       ::  TODO inline thread
       =/  tid  `@ta`(cat 3 'run-single_' (scot %uv (sham eny.bowl)))
       =/  ta-now  `@ta`(scot %da now.bowl)
-      :_  state(pending [[src.bowl transaction.act] pending])
+      =+  [`@ux`(sham +.transaction.act) src.bowl transaction.act]
+      :_  state(pending (~(put by pending) -))
       :~  %+  ~(watch pass:io /run-single/[ta-now])
             [our.bowl %spider]
           /thread-result/[tid]
@@ -169,8 +170,6 @@
           :-  %spider-start
           !>  :^  ~  `tid
                 byk.bowl(r da+now.bowl)
-              ?~  block-height-api-key
-                sequencer-get-block-height+!>(~)
               sequencer-get-block-height-etherscan+!>(block-height-api-key)
       ==
     ::
@@ -197,20 +196,15 @@
           ?~  proposed-batch.state
             chain.town
           chain.u.proposed-batch.state
-        %+  turn  pending
-        |=  [@p =transaction:smart]
-        [`@ux`(sham +.transaction) transaction ~]
+        (sort-mempool:eng pending)
       =/  processed
         %+  turn  processed.new
         |=  [a=@ux b=transaction:smart c=output]
         [a b `c]
       :_  %=    state
-              memlist
-            (weld memlist `^memlist`processed)
-              pending
-            ~
-              proposed-batch
-            `[0 ~ chain.new 0x0 0x0]
+              pending         ~
+              memlist         (weld memlist `^memlist`processed)
+              proposed-batch  `[0 ~ chain.new 0x0 0x0]
           ==
       ^-  (list card)
       =<  p
@@ -223,7 +217,7 @@
           `@uvI`signed-stuff
         (need private-key.state)
       %+  ~(poke pass:io /receipt)
-        [-:(snag i pending.state) %uqbar]
+        [from:(~(got by pending) hash) %uqbar]
       :-  %uqbar-write
       !>  ^-  write:uqbar
       :+  %receipt  hash
@@ -247,8 +241,6 @@
           :-  %spider-start
           !>  :^  ~  `tid
                 byk.bowl(r da+now.bowl)
-              ?~  block-height-api-key
-                sequencer-get-block-height+!>(~)
               sequencer-get-block-height-etherscan+!>(block-height-api-key)
       ==
     ::
@@ -292,6 +284,7 @@
       ::  poke rollup
       ::
       :_  %=    state
+              memlist  ~
               proposed-batch
             `[new-batch-num processed.new chain.new diff-hash new-root]
           ==
@@ -397,6 +390,7 @@
         %-  %+  slog
               leaf+"%sequencer: get-eth-block thread failed: {(trip p.err)}"
             q.err
+        ::  NOW TRY AGAIN
         `this
           %thread-done
         =/  height=@ud  !<(@ud q.cage.sign)

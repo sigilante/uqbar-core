@@ -7,14 +7,14 @@
 ^-  form:m
 |^
 =/  args  !<((unit api-key) arg)
-?~  args
-  ~&  >>>  "must add etherscan api key"
-  !!
+=/  url
+  "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber"
+=?    url
+    ?=(^ args)
+  (weld url (weld "&apikey=" (trip u.args)))
+~&  url
 ;<  =json  bind:m
-    %-  fetch-json:strandio
-    %+  weld
-      "https://api.etherscan.io/api?module=proxy&action=eth_blockNumber&apikey="
-    (trip u.args)
+  (fetch-json:strandio url)
 (pure:m !>(`@ud`(scan `tape`(slag 2 (pars json)) hex)))
 ::
 +$  api-key  cord
