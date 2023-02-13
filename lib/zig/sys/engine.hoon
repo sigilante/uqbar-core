@@ -1,6 +1,6 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-|_  [library=vase zink-cax=(map * @) sigs-on=? hints-on=?]
+|_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
 ::
@@ -66,7 +66,6 @@
     ::
     ++  intake
       ^-  output
-      ~>  %bout
       ?.  ?:(sigs-on (verify-sig tx) %.y)
         ~&  >>>  "engine: signature mismatch"
         (exhaust bud.gas.tx %1 ~)
@@ -108,7 +107,7 @@
         ::  assert that caller holds this account
         ?.  =(holder.p.u.item address.caller.tx)       fail
         ::  assert account has enough tokens to withdraw
-        ?.  =(source.p.u.item ueth-contract-id:smart)  fail
+        ?.  =(source.p.u.item ueth-contract-id:smart)        fail
         ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
         ::  don't burn account item, just subtract withdrawn amount
         =/  event=contract-event
@@ -223,7 +222,7 @@
       =/  dor=vase  (load code)
       =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
       =/  =book:zink
-        (zebra:zink bud zink-cax search gun !hints-on)
+        (zebra:zink bud zink-cax jets search gun hints-on)
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
         [~ gas.q.book %6]
@@ -285,7 +284,7 @@
           =/  dor=vase  (load code.p.u.item)
           =/  gun
             (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
-          =/  =book:zink  (zebra:zink rem zink-cax search gun hints-on)
+          =/  =book:zink  (zebra:zink rem zink-cax jets search gun hints-on)
           ?:  ?=(%| -.p.book)
             gas.q.book^~
           ?~  p.p.book

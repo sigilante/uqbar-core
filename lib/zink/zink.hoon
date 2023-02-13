@@ -5,83 +5,50 @@
     +$  fail      (list [@ta *])
     +$  body      (each good fail)
     +$  cache     (map * phash)
-    +$  appendix  [cax=cache hit=hints gas=@]
+    +$  appendix  [cax=cache jets=jetmap hit=hints gas=@]
     +$  book      (pair body appendix)
     --
 |%
-++  jets
-  ^-  (map @tas @ud)
-  ::  TODO: determine *real* costs
-  ::  these are totally made up placeholders
-  %-  ~(gas by *(map @tas @ud))
-  :~  ::  math
-      [%add 1]  [%dec 1]  [%div 1]
-      [%dvr 1]  [%gte 1]  [%gth 1]
-      [%lte 1]  [%lth 1]  [%max 1]
-      [%min 1]  [%mod 1]  [%mul 1]
-      [%sub 1]
-      ::  bits
-      [%bex 1]  [%can 1]  [%cat 1]
-      [%cut 1]  [%end 1]  [%fil 1]
-      [%lsh 1]  [%met 1]  [%rap 1]
-      [%rep 1]  [%rev 1]  [%rip 1]
-      [%rsh 1]  [%run 1]  [%rut 1]
-      [%sew 1]  [%swp 1]  [%xeb 1]
-      ::  list
-      ::  [%turn 5]
-      ::  sha
-      [%sham 1.000]
-      [%shax 1.000]
-      [%shay 1.000]
-      ::  etc
-      [%need 1]
-      [%scot 5]
-      [%pedersen-hash 10]
-      [%shag 1.000]
-      ::  crypto
-      [%k224 100]  [%k256 100]  [%k384 100]  [%k512 100]
-      [%make 100]  [%sign 100]  [%reco 100]
-    ==
-::
 ++  zebra                                                 ::  bounded zk +mule
-  |=  [gas=@ud cax=cache scry=chain-state-scry [s=* f=*] test-mode=?]
+  |=  [gas=@ud cax=cache =jetmap scry=chain-state-scry [s=* f=*] hints-on=?]
   ^-  book
-  %.  [s f scry test-mode]
+  ~>  %bout
+  %.  [s f scry hints-on]
   %*  .  zink
-    app  [cax ~ gas]
+    app  [cax jetmap ~ gas]
   ==
 ::
-++  hash
-  |=  [n=* cax=(map * phash)]
-  ^-  phash
-  ?@  n
-    ?:  (lte n 12)
-      =/  ch  (~(get by cax) n)
-      ?^  ch  u.ch
-      (hash:pedersen n 0)
-    (hash:pedersen n 0)
-  ?^  ch=(~(get by cax) n)
-    u.ch
-  =/  hh  $(n -.n)
-  =/  ht  $(n +.n)
-  (hash:pedersen hh ht)
+::  ++  hash
+::    |=  [n=* cax=(map * phash)]
+::    ^-  phash
+::    ?@  n
+::      ?:  (lte n 12)
+::        =/  ch  (~(get by cax) n)
+::        ?^  ch  u.ch
+::        (hash:pedersen n 0)
+::      (hash:pedersen n 0)
+::    ?^  ch=(~(get by cax) n)
+::      u.ch
+::    =/  hh  $(n -.n)
+::    =/  ht  $(n +.n)
+::    (hash:pedersen hh ht)
 ::
-++  create-hints
-  |=  [n=^ h=hints cax=cache]
-  ^-  json
-  =/  hs  (hash -.n cax)
-  =/  hf  (hash +.n cax)
-  %-  pairs:enjs:format
-  :~  hints+(hints:enjs h)
-      subject+s+(num:enjs hs)
-      formula+s+(num:enjs hf)
-  ==
+::  ++  create-hints
+::    |=  [n=^ h=hints cax=cache]
+::    ^-  json
+::    =/  hs  (hash -.n cax)
+::    =/  hf  (hash +.n cax)
+::    %-  pairs:enjs:format
+::    :~  hints+(hints:enjs h)
+::        subject+s+(num:enjs hs)
+::        formula+s+(num:enjs hf)
+::    ==
 ::
 ++  zink
   =|  appendix
   =*  app  -
   =|  trace=fail
-  |=  [s=* f=* scry=chain-state-scry test-mode=?]
+  |=  [s=* f=* scry=chain-state-scry hints-on=?]
   ^-  book
   |^
   |-
@@ -306,6 +273,8 @@
     ::  if jet exists for this tag, and sample is good,
     ::  replace execution with jet
     =^  jax=body  app
+      ?:  ?=(?(%hunk %hand %lose %mean %spot) tag.f)
+        [%&^~ app]
       (jet tag.f u.p.sam)
     ?:  ?=(%| -.jax)  [%|^trace app]
     ?^  p.jax  [%& p.jax]^app
@@ -353,9 +322,8 @@
     ?:  ?=(%mean tag)
       ::  this is a crash..
       [%|^trace app]
-    ::  ~&  "looking for jet: {<`@tas`tag>}"
-    ?~  cost=(~(get by jets) tag)
-      ::  ~&  >>  "no jet found"
+    ?~  cost=(~(get by jets.app) tag)
+      ~&  [%missing-jet `@tas`tag]
       [%&^~ app]
     ?:  (lth gas u.cost)  [%&^~ app]
     :-  (run-jet tag sam `@ud`u.cost)
@@ -612,7 +580,7 @@
     ::  test mode disables hashing, so it won't generate valid hints.
     ::  however, computation is *much* faster since hashing is the
     ::  most expensive aspect of the process.
-    ?:  test-mode  [`0x1 app]
+    ?.  hints-on  [`0x1 app]
     =/  mh  (~(get by cax) n)
     ?^  mh
       ?:  =(gas 0)  [~ app]

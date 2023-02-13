@@ -426,7 +426,8 @@
           =+  gun=(~(mint ut p.smart-lib-vase) %noun data-hoon)
           =/  res=book:zink
             %:  zebra:zink
-                200.000  ~  *chain-state-scry:zink
+                200.000  ~  jets:zink
+                *chain-state-scry:zink
                 [q.smart-lib-vase q.gun]  %.y
             ==
           ?.  ?=(%& -.p.res)

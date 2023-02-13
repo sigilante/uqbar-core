@@ -28,7 +28,8 @@
       block-height-api-key=(unit @t)
   ==
 +$  inflated-state-1  [state-1 =eng smart-lib-vase=vase]
-+$  eng  $_  ~(engine engine !>(0) *(map * @) %.y %.n)  ::  sigs on, hints off
+::  sigs on, hints off
++$  eng  $_  ~(engine engine !>(0) *(map * @) jets:zink %.y %.n)
 --
 ::
 =|  inflated-state-1
@@ -45,7 +46,7 @@
   =-  `this(state [[%1 ~ ~ ~ ~ ~ ~ ~ %off ~] - smart-lib])
   %~  engine  engine
     ::  sigs on, hints off
-  [smart-lib *(map * @) %.y %.n]
+  [smart-lib *(map * @) jets:zink %.y %.n]
 ::
 ++  on-save  !>(-.state)
 ::
@@ -57,7 +58,7 @@
   =/  eng
     %~  engine  engine
       ::  sigs on, hints off
-    [smart-lib *(map * @) %.y %.n]
+    [smart-lib *(map * @) jets:zink %.y %.n]
   ?+  -.q.old-vase  `this(state [*state-1 eng smart-lib])
     %1  `this(state [!<(state-1 old-vase) eng smart-lib])
   ==
@@ -146,7 +147,8 @@
         ~|("%sequencer: error: got asset while not active" !!)
       ::  assert we haven't used this transaction hash as a deposit before
       ?<  (~(has in deposits.hall.u.town) hash.act)
-      ~&  >>  "%sequencer: received assets from rollup: {<data.act>}"
+      ?>  =(hash.act (sham deposit.act))  ::  TODO match hashing functions
+      ~&  >>  "%sequencer: received asset from rollup: {<deposit.act>}"
       !!  ::  TODO -- this will be a special transaction type
     ::
     ::  transactions
