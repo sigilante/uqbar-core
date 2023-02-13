@@ -254,6 +254,8 @@
     ::
         %perform-batch
       ?>  =(src.bowl our.bowl)
+      ~&  %perform-batch
+      ~>  %bout
       ?.  =(%available status.state)
         ~|("%sequencer: error: got poke while not active" !!)
       ?~  town.state

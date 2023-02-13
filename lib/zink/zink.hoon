@@ -86,17 +86,16 @@
   |^
   |-
   ?+    f
-    ~&  f
     [%|^trace app]
   ::
       [^ *]
     =^  hed=body  app
       $(f -.f)
-    ?:  ?=(%| -.hed)  ~&  61  [%|^trace app]
+    ?:  ?=(%| -.hed)  [%|^trace app]
     ?~  p.hed  [%&^~ app]
     =^  tal=body  app
       $(f +.f)
-    ?:  ?=(%| -.tal)  ~&  65  [%|^trace app]
+    ?:  ?=(%| -.tal)  [%|^trace app]
     ?~  p.tal  [%&^~ app]
     =^  hhed=(unit phash)  app  (hash -.f)
     ?~  hhed  [%&^~ app]
@@ -109,7 +108,7 @@
     =^  part  gas
       (frag axis.f s gas)
     ?~  part  [%&^~ app]
-    ?~  u.part  ~&  78  [%|^trace app]
+    ?~  u.part  [%|^trace app]
     =^  hpart=(unit phash)         app  (hash u.u.part)
     ?~  hpart  [%&^~ app]
     =^  hsibs=(unit (list phash))  app  (merk-sibs s axis.f)
@@ -130,11 +129,11 @@
     ?~  hfor  [%&^~ app]
     =^  subject=body  app
       $(f sub.f)
-    ?:  ?=(%| -.subject)  ~&  99  [%|^trace app]
+    ?:  ?=(%| -.subject)  [%|^trace app]
     ?~  p.subject  [%&^~ app]
     =^  formula=body  app
       $(f for.f)
-    ?:  ?=(%| -.formula)  ~&  103  [%|^trace app]
+    ?:  ?=(%| -.formula)  [%|^trace app]
     ?~  p.formula  [%&^~ app]
     %_  $
       s    u.p.subject
@@ -145,7 +144,7 @@
       [%3 arg=*]
     =^  argument=body  app
       $(f arg.f)
-    ?:  ?=(%| -.argument)  ~&  114  [%|^trace app]
+    ?:  ?=(%| -.argument)  [%|^trace app]
     ?~  p.argument  [%&^~ app]
     =^  harg=(unit phash)  app  (hash arg.f)
     ?~  harg  [%&^~ app]
@@ -162,11 +161,11 @@
       [%4 arg=*]
     =^  argument=body  app
       $(f arg.f)
-    ?:  ?=(%| -.argument)  ~&  131  [%|^trace app]
+    ?:  ?=(%| -.argument)  [%|^trace app]
     =^  harg=(unit phash)  app  (hash arg.f)
     ?~  harg  [%&^~ app]
     ?~  p.argument  [%&^~ app]
-    ?^  u.p.argument  ~&  135  [%|^trace app]
+    ?^  u.p.argument  [%|^trace app]
     :-  [%& ~ .+(u.p.argument)]
     app(hit [%4 u.harg u.p.argument]^hit)
   ::
@@ -177,11 +176,11 @@
     ?~  hb  [%&^~ app]
     =^  a=body  app
       $(f a.f)
-    ?:  ?=(%| -.a)  ~&  146  [%|^trace app]
+    ?:  ?=(%| -.a)  [%|^trace app]
     ?~  p.a  [%&^~ app]
     =^  b=body  app
       $(f b.f)
-    ?:  ?=(%| -.b)  ~&  150  [%|^trace app]
+    ?:  ?=(%| -.b)  [%|^trace app]
     ?~  p.b  [%&^~ app]
     :-  [%& ~ =(u.p.a u.p.b)]
     app(hit [%5 u.ha u.hb]^hit)
@@ -195,10 +194,10 @@
     ?~  hno  [%&^~ app]
     =^  result=body  app
       $(f test.f)
-    ?:  ?=(%| -.result)  ~&  164  [%|^trace app]
+    ?:  ?=(%| -.result)  [%|^trace app]
     ?~  p.result  [%&^~ app]
     =.  hit  [%6 u.htest u.hyes u.hno]^hit
-    ?+  u.p.result  ~&  167  [%|^trace app]
+    ?+  u.p.result  [%|^trace app]
       %&  $(f yes.f)
       %|  $(f no.f)
     ==
@@ -210,7 +209,7 @@
     ?~  hnext  [%&^~ app]
     =^  subject=body  app
       $(f subj.f)
-    ?:  ?=(%| -.subject)  ~&  179  [%|^trace app]
+    ?:  ?=(%| -.subject)  [%|^trace app]
     ?~  p.subject  [%&^~ app]
     %_  $
       s    u.p.subject
@@ -225,7 +224,7 @@
     ?~  hnext  [%&^~ app]
     =^  head=body  app
       $(f head.f)
-    ?:  ?=(%| -.head)  ~&  198  [%|^trace app]
+    ?:  ?=(%| -.head)  [%|^trace app]
     ?~  p.head  [%&^~ app]
     %_  $
       s    [u.p.head s]
@@ -238,12 +237,12 @@
     ?~  hcore  [%&^~ app]
     =^  core=body  app
       $(f core.f)
-    ?:  ?=(%| -.core)  ~&  211  [%|^trace app]
+    ?:  ?=(%| -.core)  [%|^trace app]
     ?~  p.core  [%&^~ app]
     =^  arm  gas
       (frag axis.f u.p.core gas)
     ?~  arm  [%&^~ app]
-    ?~  u.arm  ~&  216  [%|^trace app]
+    ?~  u.arm  [%|^trace app]
     =^  harm=(unit phash)  app  (hash u.u.arm)
     ?~  harm  [%&^~ app]
     =^  hsibs=(unit (list phash))  app  (merk-sibs u.p.core axis.f)
@@ -259,23 +258,23 @@
     ?~  hval  [%&^~ app]
     =^  htar=(unit phash)  app  (hash target.f)
     ?~  htar  [%&^~ app]
-    ?:  =(0 axis.f)  ~&  232  [%|^trace app]
+    ?:  =(0 axis.f)  [%|^trace app]
     =^  target=body  app
       $(f target.f)
-    ?:  ?=(%| -.target)  ~&  235  [%|^trace app]
+    ?:  ?=(%| -.target)  [%|^trace app]
     ?~  p.target  [%&^~ app]
     =^  value=body  app
       $(f value.f)
-    ?:  ?=(%| -.value)  ~&  239  [%|^trace app]
+    ?:  ?=(%| -.value)  [%|^trace app]
     ?~  p.value  [%&^~ app]
     =^  mutant=(unit (unit *))  gas
       (edit axis.f u.p.target u.p.value gas)
     ?~  mutant  [%&^~ app]
-    ?~  u.mutant  ~&  244  [%|^trace app]
+    ?~  u.mutant  [%|^trace app]
     =^  oldleaf  gas
       (frag axis.f u.p.target gas)
     ?~  oldleaf  [%&^~ app]
-    ?~  u.oldleaf  ~&  248  [%|^trace app]
+    ?~  u.oldleaf  [%|^trace app]
     =^  holdleaf=(unit phash)  app  (hash u.u.oldleaf)
     ?~  holdleaf  [%&^~ app]
     =^  hsibs=(unit (list phash))  app  (merk-sibs u.p.target axis.f)
@@ -288,7 +287,7 @@
     =^  next=body  app
       $(f next.f)
     :_  app
-    ?:  ?=(%| -.next)  ~&  260  %|^trace
+    ?:  ?=(%| -.next)  %|^trace
     ?~  p.next  %&^~
     :+  %&  ~
     .*  s
@@ -302,18 +301,18 @@
     ::    "jet: {<`@tas`-.+.clue.f>}"
     =^  sam=body  app
       $(f clue.f)
-    ?:  ?=(%| -.sam)  ~&  269  [%|^trace app]
+    ?:  ?=(%| -.sam)  [%|^trace app]
     ?~  p.sam  [%&^~ app]
     ::  if jet exists for this tag, and sample is good,
     ::  replace execution with jet
     =^  jax=body  app
       (jet tag.f u.p.sam)
-    ?:  ?=(%| -.jax)  ~&  190  [%|^trace app]
+    ?:  ?=(%| -.jax)  [%|^trace app]
     ?^  p.jax  [%& p.jax]^app
     ::  jet not found, proceed with normal computation
     =^  clue=body  app
       $(f clue.f)
-    ?:  ?=(%| -.clue)  ~&  269  [%|^trace app]
+    ?:  ?=(%| -.clue)  [%|^trace app]
     ?~  p.clue  [%&^~ app]
     =^  next=body  app
       =?    trace
@@ -321,7 +320,7 @@
         [[tag.f u.p.clue] trace]
       $(f next.f)
     :_  app
-    ?:  ?=(%| -.next)  ~&  286  %|^trace
+    ?:  ?=(%| -.next)  %|^trace
     ?~  p.next  %&^~
     :+  %&  ~
     .*  s
@@ -333,11 +332,11 @@
     ::       (similar process in nock 0)
     =^  ref=body  app
       $(f ref.f)
-    ?:  ?=(%| -.ref)     ~&  289  [%|^trace app]
+    ?:  ?=(%| -.ref)     [%|^trace app]
     ?~  p.ref            [%&^~ app]
     =^  path=body  app
       $(f path.f)
-    ?:  ?=(%| -.path)    ~&  293  [%|^trace app]
+    ?:  ?=(%| -.path)    [%|^trace app]
     ?~  p.path           [%&^~ app]
     =/  result  (scry gas p.ref p.path)
     ?~  product.result
@@ -353,7 +352,7 @@
       [%&^~ app]
     ?:  ?=(%mean tag)
       ::  this is a crash..
-      ~&  317  [%|^trace app]
+      [%|^trace app]
     ::  ~&  "looking for jet: {<`@tas`tag>}"
     ?~  cost=(~(get by jets) tag)
       ::  ~&  >>  "no jet found"

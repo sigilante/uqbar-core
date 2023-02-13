@@ -236,9 +236,10 @@
             [%0 %state [%ux @ux] ~]
           ::  /state/[item-id]
           =/  item-id=id:smart  +.-.+.+.+.pit
-          ~&  >>  "looking for item: {<item-id>}"
+          ::  ~&  >>  "looking for item: {<item-id>}"
           ?~  item=(get:big p.chain item-id)
-            ~&  >>>  "didn't find it"  rem^~
+            ::  ~&  >>>  "didn't find it"
+            rem^~
           rem^item
         ::
             [%0 %contract [%ux @ux] ^]
@@ -246,11 +247,13 @@
           =/  contract-id=id:smart  +.-.+.+.+.pit
           ::  pith includes fee, as it must match fee in contract
           =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.pit)
-          ~&  >>  "looking for pact: {<contract-id>}"
+          ::  ~&  >>  "looking for pact: {<contract-id>}"
           ?~  item=(get:big p.chain contract-id)
-            ~&  >>>  "didn't find it"  rem^~
+            ::  ~&  >>>  "didn't find it"
+            rem^~
           ?.  ?=(%| -.u.item)
-            ~&  >>>  "wasn't a pact"  rem^~
+            ::  ~&  >>>  "wasn't a pact"
+            rem^~
           =/  dor=vase  (load code.p.u.item)
           =/  gun
             (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
