@@ -37,10 +37,11 @@
 +$  contract-event  [contract=id:smart label=@tas noun=*]
 ::
 ::  the mold for %withdraw transaction calldata
+::  only handling uETH currently.
 ::
 +$  withdraw-mold
   $%  [%token id=id:smart amount=@ud]
-      [%nft id=id:smart]
+      ::  [%nft id=id:smart]
   ==
 ::
 ::  hardcoded molds comporting to account-token standard

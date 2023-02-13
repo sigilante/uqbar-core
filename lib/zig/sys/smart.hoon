@@ -74,6 +74,7 @@
 ::
 ::  hardcoded "native" token contract
 ++  zigs-contract-id  `@ux`'zigs-contract'
+++  ueth-contract-id  `@ux`'ueth-contract'
 ::
 ::  items populate the state.
 ::
