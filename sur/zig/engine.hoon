@@ -7,8 +7,9 @@
 +$  nonces  (merk:smart address:smart @ud)
 +$  chain   (pair state nonces)
 ::
-+$  mempool  (set [hash=@ux tx=transaction:smart])   ::  transaction mempool
-+$  memlist  (list [hash=@ux tx=transaction:smart])  ::  sorted mempool
++$  mempool  (map hash=@ux [from=@p tx=transaction:smart])
+::  sorted mempool with optional pre-computed output
++$  memlist  (list [hash=@ux tx=transaction:smart output=(unit output)])
 +$  processed-txs  (list [tx-hash=@ux tx=transaction:smart =output])
 ::
 +$  state-diff  state  ::  state transitions for one batch

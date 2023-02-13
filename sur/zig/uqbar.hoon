@@ -1,27 +1,38 @@
+/-  eng=zig-engine
 /+  smart=zig-sys-smart
 |%
+::
+::  signed transaction result, from sequencer
+::
++$  sequencer-receipt
+  $:  ship-sig=[p=@ux q=ship r=life]
+      uqbar-sig=sig:smart
+      position=@ud
+      =transaction:smart
+      =output:eng
+  ==
 ::
 ::  pokes
 ::
 +$  action
   $%  [%set-sources towns=(list [town=id:smart dock])]
       [%remove-source town=id:smart source=dock]
-      [%set-wallet-source app-name=@tas]  ::  to plug in a third-party wallet app
+      [%set-wallet-source app-name=term]  ::  to use third-party wallet app
       [%open-faucet town=id:smart send-to=address:smart]
   ==
 ::
 +$  write
   $%  [%submit =transaction:smart]
-      [%receipt transaction-hash=@ux ship-sig=[p=@ux q=ship r=life] uqbar-sig=sig:smart]
+      [%receipt tx-hash=hash:smart sequencer-receipt]  ::  from the sequencer
   ==
 ::
-::  updates
+::  responses from sending a %submit poke
 ::
 +$  write-result
+  %+  pair  hash:smart  ::  the hash of the submitted transaction
   $%  [%sent ~]
-      [%receipt transaction-hash=@ux ship-sig=[p=@ux q=ship r=life] uqbar-sig=sig:smart]
-      [%rejected =ship]
-      [%executed result=errorcode:smart]
-      [%nonce value=@ud]
+      [%delivered ~]
+      [%rejected ~]
+      [%receipt sequencer-receipt]
   ==
 --

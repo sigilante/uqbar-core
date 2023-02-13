@@ -99,6 +99,13 @@ After [initial installation](#initial-installation), start the `%rollup`, initia
 ```
 
 
+If you want to perform lots of batching locally, you'll want to get an API key for etherscan to make more requests. The sequencer agent uses this API to fetch the most recent block height for ETH. [Get a free API key from etherscan](https://etherscan.io/apis) and save in %sequencer like so:
+```hoon
+:sequencer &sequencer-town-action [%set-block-height-api-key 'YOUR_KEY']
+```
+
+
+
 ### Example: writing to chain with `%wallet`
 
 After [starting the testnet](#starting-up-a-new-testnet), send transactions using the `%wallet`.
