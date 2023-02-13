@@ -74,6 +74,7 @@
 ::
 ::  hardcoded "native" token contract
 ++  zigs-contract-id  `@ux`'zigs-contract'
+::  hardcoded contract for ETH deposited on Uqbar
 ++  ueth-contract-id  `@ux`'ueth-contract'
 ::
 ::  items populate the state.
