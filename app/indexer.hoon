@@ -564,7 +564,7 @@
             ~
         ?:  (only-missing-newest capitol.update)  ~
         %+  murn  ~(val by capitol.update)
-        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux)]
+        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
         =/  [* =batch-order:ui]
           %+  ~(gut by batches-by-town)  town-id
           [~ batch-order=~]

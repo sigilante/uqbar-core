@@ -1,6 +1,11 @@
 /-  eng=zig-engine, uqbar=zig-uqbar
 /+  smart=zig-sys-smart
 |%
++$  token-metadata  token-metadata:eng
++$  token-account  token-account:eng
++$  nft-metadata    nft-metadata:eng
++$  nft             nft:eng
+::
 +$  signature   [p=@ux q=ship r=life]
 ::  for app-generated transactions to be notified of their txn results
 +$  origin  (unit (pair term wire))
@@ -158,49 +163,5 @@
       [%give-nft to=address:smart item=id:smart]
       [%text @t]
       [%noun *]
-  ==
-::
-::  hardcoded molds comporting to account-token standard
-::
-+$  token-metadata
-  $:  name=@t
-      symbol=@t
-      decimals=@ud
-      supply=@ud
-      cap=(unit @ud)
-      mintable=?
-      minters=(pset:smart address:smart)
-      deployer=id:smart
-      salt=@
-  ==
-::
-+$  token-account
-  $:  balance=@ud
-      allowances=(pmap:smart sender=address:smart @ud)
-      metadata=id:smart
-      nonces=(pmap:smart taker=address:smart @ud)
-  ==
-::
-::  hardcoded molds comporting to account-NFT standard
-::
-+$  nft-metadata
-  $:  name=@t
-      symbol=@t
-      properties=(pset:smart @tas)
-      supply=@ud
-      cap=(unit @ud)  ::  (~ if mintable is false)
-      mintable=?      ::  automatically set to %.n if supply == cap
-      minters=(pset:smart address:smart)
-      deployer=id:smart
-      salt=@
-  ==
-::
-+$  nft  ::  a non-fungible token
-  $:  id=@ud
-      uri=@t
-      metadata=id:smart
-      allowances=(pset:smart address:smart)
-      properties=(pmap:smart @tas @t)
-      transferrable=?
   ==
 --

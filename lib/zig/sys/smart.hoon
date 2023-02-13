@@ -168,7 +168,7 @@
       %6  ::  6: crash in contract execution
       %7  ::  7: validation of diff failed
       %8  ::  8: ran out of gas while executing
-      %9  ::  9: dedicated burn transaction failed
+      %9  ::  9: dedicated burn/withdraw transaction failed
   ==
 ::
 ::  EIP-712 mold for offchain data signing

@@ -13,6 +13,11 @@
       mode=availability-method
       latest-diff-hash=@ux
       roots=(list @ux)
+      ::  deposits from the rollup contract are tracked, such that each
+      ::  can only be used *once*. a sequencer handles deposits by linking
+      ::  a transaction hash to the rollup contract and directly inserting
+      ::  the associated assets into the town state.
+      deposits=(set @ux)
   ==
 ::
 ::  capitol: tracks sequencer and state roots / diffs for all towns
@@ -52,7 +57,7 @@
       [%del-block-height-api-key ~]
       [%clear-state ~]
       ::  transactions
-      [%receive-assets assets=state]
+      [%deposit hash=@ux data=@]  ::  from rollup contract
       [%receive =transaction:smart]
       [%run-pending eth-block-height=@ud]
       ::  batching

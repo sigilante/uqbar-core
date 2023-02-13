@@ -90,8 +90,34 @@
                 =(holder.p.u.to-burn address.caller.tx)
             ==                                          fail
         ?:  =(id.p.u.to-burn zigs.caller.tx)            fail
+        ?:  ?=(%| -.u.to-burn)                          fail
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[~ - ~])
         (gas:big *state ~[id.p.u.to-burn^u.to-burn])
+      ::  withdraw tx: burn an NFT or some amount of token off a town,
+      ::  and make it available for withdraw on ETH.
+      ?:  &(=(0x0 contract.tx) =(%withdraw p.calldata.tx))
+        =/  fail  (exhaust bud.gas.tx %9 ~)
+        ?.  ?=(withdraw-mold q.calldata.tx)            fail
+        ?:  ?=(%nft -.q.calldata.tx)
+          ::  NFT withdraw: simply burn item
+          ?~  item=(get:big p.chain id.q.calldata.tx)  fail
+          ::  assert that NFT item matches expected standard
+          ?.  ?=(%& -.u.item)                          fail
+          ?~  ((soft nft) noun.p.u.item)               fail
+          =-  (exhaust (sub bud.gas.tx 1.000) %0 `[~ - ~])
+          (gas:big *state ~[id.p.u.item^u.item])
+        ::  token withdraw: make sure account item has balance,
+        ::  then subtract amount in call
+        ?~  item=(get:big p.chain id.q.calldata.tx)    fail
+        ::  assert that token account item matches expected standard
+        ?.  ?=(%& -.u.item)                            fail
+        ?~  acc=((soft token-account) noun.p.u.item)   fail
+        ::  assert account has enough tokens to withdraw
+        ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
+        ::  don't burn account item, just subtract withdrawn amount
+        =-  (exhaust (sub bud.gas.tx 1.000) %0 `[- ~ ~])
+        =-  (gas:big *state ~[id.p.u.item^u.item(noun.p -)])
+        u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
       ::  normal tx
       =?    q.calldata.tx
           ?&  =(contract.tx zigs-contract-id:smart)
