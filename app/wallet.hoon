@@ -11,8 +11,8 @@
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  state-1
-  $:  %1
++$  state-2
+  $:  %2
       ::  wallet holds a single seed at once
       ::  address-index notes where we are in derivation path
       seed=[mnem=@t pass=@t address-index=@ud]
@@ -39,7 +39,7 @@
   ==
 --
 ::
-=|  state-1
+=|  state-2
 =*  state  -
 ::
 %-  agent:dbug
@@ -51,7 +51,7 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  :_  this(state *state-1)
+  :_  this(state *state-2)
   ::  auto-populate %wallet with a random seed on install
   :_  ~
   :*  %pass  /self-poke
@@ -65,8 +65,8 @@
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
-      %1
-    `this(state !<(state-1 old-vase))
+      %2
+    `this(state !<(state-2 old-vase))
   ==
 ::
 ++  on-watch
@@ -140,7 +140,10 @@
     :-  (tx-update-card tx-hash transaction.tx action.tx)^cards
     %=    this
         unfinished-transaction-store
-      (~(put by unfinished-transaction-store) [tx-hash tx])
+      %+  ~(put by unfinished-transaction-store)
+        tx-hash
+      ?.  ?=(%receipt -.q.result)  tx
+      tx(output `output.q.result)
     ::
         nonces
       ?.  =(status.transaction.tx %103)  nonces
@@ -319,7 +322,7 @@
               unfinished-transaction-store
             %+  ~(put by unfinished-transaction-store)
               hash
-            [origin.u.found tx action.u.found]
+            [origin.u.found tx action.u.found ~]
           ::
               nonces
             (~(put by nonces) from.act (~(put by our-nonces) town.tx +(nonce)))
@@ -368,7 +371,7 @@
               unfinished-transaction-store
             %+  ~(put by unfinished-transaction-store)
               hash
-            [origin.u.found tx action.u.found]
+            [origin.u.found tx action.u.found ~]
           ::
               nonces
             (~(put by nonces) from.act (~(put by our-nonces) town.tx +(nonce)))
@@ -491,9 +494,8 @@
     ::  update status, then insert in tx-store mapping
     ::  and build an update card with its new status.
     =|  cards=(list card)
-    =|  still-looking=(list [@ux origin transaction:smart supported-actions])
-    =/  unfinished
-      ^-  (list [hash=@ux =origin tx=transaction:smart act=supported-actions])
+    =|  still-looking=(list [@ux unfinished-transaction])
+    =/  unfinished=(list [hash=@ux unfinished-transaction])
       ~(tap by unfinished-transaction-store)
     |-
     ?~  unfinished
@@ -523,13 +525,30 @@
     ::  put latest version of tx into transaction-store
     =/  updated=[@ux finished-transaction]
       =+  found=(~(got by transactions.tx-latest) hash.i.unfinished)
-      ::  add 200 to finished status code to get wallet status equivalent
-      =.  status.transaction.found  (add 200 status.transaction.found)
+      ::  if the output of the transaction included in batch does not match
+      ::  what we received as a receipt, this is VERY VERY BAD. we can
+      ::  use this as proof of fraud against the sequencer, potentially,
+      ::  but most importantly we must inform the user that the sequencer
+      ::  is actively behaving in a byzantine manner.
+      ::
+      =.  status.transaction.found
+        ?.  ?|  ?=(~ output.i.unfinished)
+                =(output.found u.output.i.unfinished)
+            ==
+          ::  FREAK TF OUT!!!
+          ~&  >>>  "%wallet: WARNING: BYZANTINE SEQUENCER"
+          ~&  >>  "expected:"
+          ~&  >>  output.i.unfinished
+          ~&  >>  "got:"
+          ~&  >>  output.found
+          `@ud`'BYZANTINE'
+        ::  add 300 to finished status code to get wallet status equivalent
+        (add 300 status.transaction.found)
       :*  hash.i.unfinished
           origin.i.unfinished
           batch-hash
           transaction.found
-          act.i.unfinished
+          action.i.unfinished
           output.found
       ==
     ::  when we have a finished transaction, use transaction origin to
@@ -541,7 +560,7 @@
       ?~  origin.updated  cards
       [(notify-origin-card our.bowl updated) cards]
         transaction-store
-      %+  ~(jab by transaction-store)  address.caller.tx.i.unfinished
+      %+  ~(jab by transaction-store)  address.caller.transaction.i.unfinished
       |=  m=(map @ux finished-transaction)
       (~(put by m) updated)
     ==
@@ -610,7 +629,7 @@
     ?^  f2=(~(get by pending) tx-hash)
       [%unfinished-transaction u.f2]
     ?^  f3=(~(get by unfinished-transaction-store) tx-hash)
-      [%unfinished-transaction u.f3]
+      [%unfinished-transaction [- -.+ -.+>]:u.f3]
     ~
   ::
   ::  internal / non-standard noun scries
@@ -676,7 +695,11 @@
     :~  :-  'unfinished'
         %-  pairs:enjs
         %+  turn  ~(tap by unfinished-transaction-store.state)
-        transaction-no-output:parsing
+        |=  [hash=@ux uf=unfinished-transaction]
+        ?~  output.uf
+          (transaction-no-output:parsing hash [- -.+ -.+>]:uf)
+        %-  transaction-with-output:parsing
+        [hash -.uf 0x0 -.+.uf -.+>.uf u.output.uf]
         :-  'finished'
         %-  pairs:enjs
         %+  turn  ~(tap by transaction-store.state)

@@ -7,6 +7,7 @@
 +$  sequencer-receipt
   $:  ship-sig=[p=@ux q=ship r=life]
       uqbar-sig=sig:smart
+      position=@ud
       =transaction:smart
       =output:eng
   ==

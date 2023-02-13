@@ -22,7 +22,7 @@
       town=(unit town)        ::  chain-state
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=mempool         ::  unexecuted transactions
-      =memlist                ::  executed and ordered transactions
+      =memlist                ::  executed transactions in working state
       proposed-batch=(unit proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
@@ -201,6 +201,7 @@
         %+  turn  processed.new
         |=  [a=@ux b=transaction:smart c=output]
         [a b `c]
+      =/  memlist-lent  (lent memlist)
       :_  %=    state
               pending         ~
               memlist         (weld memlist `^memlist`processed)
@@ -221,7 +222,9 @@
       :-  %uqbar-write
       !>  ^-  write:uqbar
       :+  %receipt  hash
-      [(sign:sig our.bowl now.bowl signed-stuff) usig t op]
+      :+  (sign:sig our.bowl now.bowl signed-stuff)
+        usig
+      [(add memlist-lent i) t op]
     ::
     ::  batching
     ::
@@ -374,10 +377,15 @@
           %thread-done
         =/  height=@ud  !<(@ud q.cage.sign)
         ~&  >  "eth-block-height: {<height>}"
-        :_  this  :_  ~
-        %+  ~(poke pass:io /perform)
-          [our.bowl %sequencer]
-        sequencer-town-action+!>(`town-action`[%perform-batch height])
+        :_  this
+        ::  get any last pending transactions, then make a batch.
+        :~  %+  ~(poke pass:io /perform)
+              [our.bowl %sequencer]
+            sequencer-town-action+!>(`town-action`[%run-pending height])
+            %+  ~(poke pass:io /perform)
+              [our.bowl %sequencer]
+            sequencer-town-action+!>(`town-action`[%perform-batch height])
+        ==
       ==
     ==
   ::
