@@ -74,6 +74,8 @@
 ::
 ::  hardcoded "native" token contract
 ++  zigs-contract-id  `@ux`'zigs-contract'
+::  hardcoded contract for ETH deposited on Uqbar
+++  ueth-contract-id  `@ux`'ueth-contract'
 ::
 ::  items populate the state.
 ::
@@ -168,7 +170,7 @@
       %6  ::  6: crash in contract execution
       %7  ::  7: validation of diff failed
       %8  ::  8: ran out of gas while executing
-      %9  ::  9: dedicated burn transaction failed
+      %9  ::  9: dedicated burn/withdraw transaction failed
   ==
 ::
 ::  EIP-712 mold for offchain data signing

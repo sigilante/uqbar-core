@@ -131,7 +131,7 @@
 +$  card  card:agent:gall
 --
 ::
-=|  inflated-state-0:ui
+=|  inflated-state-1:ui
 =*  state  -
 ::
 %-  agent:dbug
@@ -189,8 +189,16 @@
     ==
   ++  on-save  !>(-.state)
   ++  on-load
-    |=  old-vase=vase
-    `this(state (set-state-from-vase old-vase))
+    |=  state-vase=vase
+    ^-  (quip card _this)
+    ?+    -.q.state-vase  on-init
+        %1
+      =+  !<(bs=base-state-1:ui state-vase)
+      =-  `this(state -)
+      :-  bs(catchup-indexer catchup-indexer)
+      %-  inflate-state
+      ~(tap by batches-by-town.bs)
+    ==
   ::
   ++  on-poke
     |=  [=mark =vase]
@@ -273,7 +281,7 @@
       :_  this
       %-  fact-init-kick:io
       :-  %indexer-bootstrap
-      !>(`versioned-state:ui`-.state)
+      !>(`base-state-1:ui`-.state)
     ::
         [%indexer-catchup @ @ ~]
       =/  town-id=id:smart   (slav %ux i.t.path)
@@ -466,7 +474,7 @@
             to-index                 ~
             newest-batch-by-town     ~
         ==
-        `this(state (set-state-from-vase q.cage.sign))
+        (on-load q.cage.sign)
       ==
     ::
         [%indexer-catchup-update @ @ ~]
@@ -564,7 +572,7 @@
             ~
         ?:  (only-missing-newest capitol.update)  ~
         %+  murn  ~(val by capitol.update)
-        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux)]
+        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
         =/  [* =batch-order:ui]
           %+  ~(gut by batches-by-town)  town-id
           [~ batch-order=~]
@@ -859,20 +867,9 @@
     ~
   [%hash combined-batch combined-transaction combined-item]
 ::
-++  set-state-from-vase
-  |=  state-vase=vase
-  ^-  _state
-  =+  !<(vs=versioned-state:ui state-vase)
-  ?-    -.vs
-      %0
-    :-  vs(catchup-indexer catchup-indexer)
-    %-  inflate-state
-    ~(tap by batches-by-town.vs)
-  ==
-::
 ++  inflate-state
   |=  batches-by-town-list=(list [@ux =batches:ui =batch-order:ui])
-  ^-  indices-0:ui
+  ^-  indices:ui
   =|  temporary-state=_state
   |^
   ?~  batches-by-town-list  +.temporary-state

@@ -20,15 +20,15 @@
     smart=zig-sys-smart
 |%
 +$  card  card:agent:gall
-+$  state-0
-  $:  %0
++$  state-1
+  $:  %1
       indexers=(map id:smart dock)           ::  single indexer for each town
       sequencers=(map id:smart sequencer:s)  ::  single sequencer for each town
       wallet-source=term  ::  track any wallet ship is using
   ==
 --
 ::
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 %-  agent:dbug
@@ -56,7 +56,10 @@
   ++  on-load
     |=  =old=vase
     ^-  (quip card _this)
-    `this(state !<(state-0 old-vase))
+    ?+    -.q.old-vase  on-init
+        %1
+      `this(state !<(state-1 old-vase))
+    ==
   ::
   ++  on-watch
     |=  =path

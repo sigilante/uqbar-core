@@ -1,6 +1,6 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-|_  [library=vase zink-cax=(map * @) sigs-on=? hints-on=?]
+|_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
 ::
@@ -66,7 +66,6 @@
     ::
     ++  intake
       ^-  output
-      ~>  %bout
       ?.  ?:(sigs-on (verify-sig tx) %.y)
         ~&  >>>  "engine: signature mismatch"
         (exhaust bud.gas.tx %1 ~)
@@ -90,8 +89,34 @@
                 =(holder.p.u.to-burn address.caller.tx)
             ==                                          fail
         ?:  =(id.p.u.to-burn zigs.caller.tx)            fail
+        ?:  ?=(%| -.u.to-burn)                          fail
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[~ - ~])
         (gas:big *state ~[id.p.u.to-burn^u.to-burn])
+      ::  withdraw tx: burn an NFT or some amount of token off a town,
+      ::  and make it available for withdraw on ETH.
+      ?:  &(=(0x0 contract.tx) =(%withdraw p.calldata.tx))
+        =/  fail  (exhaust bud.gas.tx %9 ~)
+        ?.  ?=(withdraw-mold q.calldata.tx)            fail
+        ::  ETH-only: withdraw some amount of tokens
+        ::  make sure account item has balance,
+        ::  then subtract amount in call
+        ?~  item=(get:big p.chain id.q.calldata.tx)    fail
+        ::  assert that token account item matches expected standard
+        ?.  ?=(%& -.u.item)                            fail
+        ?~  acc=((soft token-account) noun.p.u.item)   fail
+        ::  assert that caller holds this account
+        ?.  =(holder.p.u.item address.caller.tx)       fail
+        ::  assert account has enough tokens to withdraw
+        ?.  =(source.p.u.item ueth-contract-id:smart)  fail
+        ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
+        ::  don't burn account item, just subtract withdrawn amount
+        =/  event=contract-event
+          :+  ueth-contract-id:smart
+            %withdraw
+          [address.caller.tx amount.q.calldata.tx]
+        =-  (exhaust (sub bud.gas.tx 1.000) %0 `[- ~ event^~])
+        =-  (gas:big *state ~[id.p.u.item^u.item(noun.p -)])
+        u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
       ::  normal tx
       =?    q.calldata.tx
           ?&  =(contract.tx zigs-contract-id:smart)
@@ -197,7 +222,7 @@
       =/  dor=vase  (load code)
       =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
       =/  =book:zink
-        (zebra:zink bud zink-cax search gun !hints-on)
+        (zebra:zink bud zink-cax jets search gun hints-on)
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
         [~ gas.q.book %6]
@@ -259,7 +284,7 @@
           =/  dor=vase  (load code.p.u.item)
           =/  gun
             (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
-          =/  =book:zink  (zebra:zink rem zink-cax search gun hints-on)
+          =/  =book:zink  (zebra:zink rem zink-cax jets search gun hints-on)
           ?:  ?=(%| -.p.book)
             gas.q.book^~
           ?~  p.p.book

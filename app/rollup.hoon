@@ -8,14 +8,14 @@
     *zig-sequencer, *zig-rollup, eng=zig-sys-engine
 |%
 +$  card  card:agent:gall
-+$  state-0
-  $:  %0
++$  state-1
+  $:  %1
       =capitol
       status=?(%available %off)
   ==
 --
 ::
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 %-  agent:dbug
@@ -25,12 +25,15 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%0 ~ %off])
+++  on-init  `this(state [%1 ~ %off])
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  `this(state !<(state-0 old-vase))
+  ?+    -.q.old-vase  on-init
+      %1
+    `this(state !<(state-1 old-vase))
+  ==
 ::
 ++  on-watch
   |=  =path

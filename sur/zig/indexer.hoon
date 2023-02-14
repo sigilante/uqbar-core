@@ -62,12 +62,8 @@
 +$  sequencer-update-queue
   (map town-id=@ux (map batch-id=@ux batch))
 ::
-+$  versioned-state
-  $%  base-state-0
-  ==
-::
-+$  base-state-0
-  $:  %0
++$  base-state-1
+  $:  %1
       =batches-by-town
       =capitol:seq
       =sequencer-update-queue
@@ -75,7 +71,7 @@
       catchup-indexer=dock
   ==
 ::
-+$  indices-0
++$  indices
   $:  =transaction-index
       from-index=second-order-index
       item-index=batch-index
@@ -86,7 +82,7 @@
       =newest-batch-by-town
   ==
 ::
-+$  inflated-state-0  [base-state-0 indices-0]
++$  inflated-state-1  [base-state-1 indices]
 ::
 +$  batch-update-value
   [timestamp=@da location=town-location =batch]
