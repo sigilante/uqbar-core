@@ -152,7 +152,7 @@
   =/  cor  .*([q.smart-lib pay.code] bat.code)
   =/  dor  [-:!>(*contract:smart) cor]
   =/  gun  (ajar:engine dor %write !>(*context:smart) !>(*calldata:smart) %$)
-  =/  =book  (zebra bud cax *chain-state-scry gun %.n)
+  =/  =book  (zebra bud cax jets *chain-state-scry gun %.n)
   ~&  p.book
   cax.q.book
   ::
