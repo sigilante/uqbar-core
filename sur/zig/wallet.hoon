@@ -95,7 +95,7 @@
           action=supported-actions
       ==
       ::  poked back to origin after sequencer optimistically processes
-      [%sequencer-receipt sequencer-receipt:uqbar]
+      [%sequencer-receipt =origin sequencer-receipt:uqbar]
       ::  poked back to origin when transaction is included in batch
       [%finished-transaction finished-transaction]
   ==

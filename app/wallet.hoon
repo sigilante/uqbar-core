@@ -130,13 +130,15 @@
         :_  ~
         %+  ~(poke pass:io /receipt)
           [our.bowl p.u.origin.u.found]
-        wallet-update+!>(`wallet-update`[%sequencer-receipt +.q.result])
+        :-  %wallet-update
+        !>(`wallet-update`[%sequencer-receipt origin.u.found +.q.result])
       ==
     =^  cards  tokens
-      ?.  ?=(%receipt -.q.result)  `tokens
+      ?.  ?=(%receipt -.q.result)  [cards tokens]
       ::  update our assets based on output of transaction
       =+  (integrate-output tokens output.q.result)
-      [(fact:io wallet-frontend-update+!>([%new-book -]) ~[/book-updates])^~ -]
+      :_  -
+      (fact:io wallet-frontend-update+!>([%new-book -]) ~[/book-updates])^cards
     :-  (tx-update-card tx-hash transaction.tx action.tx)^cards
     %=    this
         unfinished-transaction-store
