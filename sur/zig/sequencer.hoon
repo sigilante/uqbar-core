@@ -20,6 +20,11 @@
       deposits=(set @ux)
   ==
 ::
+::  working state tracked here
+::
++$  proposed-batch
+  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
+::
 ::  capitol: tracks sequencer and state roots / diffs for all towns
 ::
 +$  capitol  (map @ux hall)
@@ -57,7 +62,7 @@
       [%del-block-height-api-key ~]
       [%clear-state ~]
       ::  transactions
-      [%deposit hash=@ux =deposit]  ::  from rollup contract
+      [%deposit hash=@ux deposit]  ::  from rollup contract
       [%receive =transaction:smart]
       [%run-pending eth-block-height=@ud]
       ::  batching

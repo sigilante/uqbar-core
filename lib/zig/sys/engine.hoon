@@ -107,7 +107,7 @@
         ::  assert that caller holds this account
         ?.  =(holder.p.u.item address.caller.tx)       fail
         ::  assert account has enough tokens to withdraw
-        ?.  =(source.p.u.item ueth-contract-id:smart)        fail
+        ?.  =(source.p.u.item ueth-contract-id:smart)  fail
         ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
         ::  don't burn account item, just subtract withdrawn amount
         =/  event=contract-event

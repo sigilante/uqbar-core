@@ -14,7 +14,6 @@
 ::  /*  zink-cax-noun   %noun  /lib/zig/sys/hash-cache/noun
 |%
 +$  card  card:agent:gall
-+$  proposed-batch  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
 +$  state-1
   $:  %1
       rollup=(unit ship)      ::  replace in future with ETH contract address
@@ -147,9 +146,36 @@
         ~|("%sequencer: error: got asset while not active" !!)
       ::  assert we haven't used this transaction hash as a deposit before
       ?<  (~(has in deposits.hall.u.town) hash.act)
-      ?>  =(hash.act (sham deposit.act))  ::  TODO match hashing functions
-      ~&  >>  "%sequencer: received asset from rollup: {<deposit.act>}"
-      !!  ::  TODO -- this will be a special transaction type
+      ?>  =(hash.act (sham +.+.act))  ::  TODO match hashing functions
+      ~&  >>  "%sequencer: received asset from rollup: {<+.+.act>}"
+      ::  add deposit amount to the wrapped ETH balance
+      ::  of the indicated uqbar address
+      =/  working-chain=chain
+        ?~  proposed-batch.state
+          chain.u.town.state
+        chain.u.proposed-batch.state
+      =/  acc-id=id:smart
+        %:  hash-data:smart
+            ueth-contract-id:smart
+            destination-address.act
+            town-id.hall.u.town
+            `@`'ueth'
+        ==
+      =.  p.working-chain
+        %+  put:big  p.working-chain
+        :-  acc-id
+        ?~  item=(get:big p.working-chain acc-id)
+          :*  %&  acc-id
+              ueth-contract-id:smart
+              destination-address.act
+              town-id.hall.u.town
+              `@`'ueth'  %account
+              [amount.act ~ `@ux`'ueth-metadata' ~]
+          ==
+        ?>  ?=(%& -.u.item)
+        =+  ;;(token-account noun.p.u.item)
+        u.item(noun.p -(balance (add balance.- amount.act)))
+      `state(proposed-batch `[0 ~ working-chain 0x0 0x0])
     ::
     ::  transactions
     ::
@@ -206,10 +232,10 @@
         |=  [a=@ux b=transaction:smart c=output]
         [a b `c]
       =/  memlist-lent  (lent memlist)
-      :_  %=    state
-              pending         ~
-              memlist         (weld memlist `^memlist`processed)
-              proposed-batch  `[0 ~ chain.new 0x0 0x0]
+      :_  %=  state
+            pending         ~
+            memlist         (weld memlist `^memlist`processed)
+            proposed-batch  `[0 ~ chain.new 0x0 0x0]
           ==
       ^-  (list card)
       =<  p

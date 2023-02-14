@@ -12,7 +12,7 @@
 =?    url
     ?=(^ args)
   (weld url (weld "&apikey=" (trip u.args)))
-~&  url
+::  ~&  url
 ;<  =json  bind:m
   (fetch-json:strandio url)
 (pure:m !>(`@ud`(scan `tape`(slag 2 (pars json)) hex)))
