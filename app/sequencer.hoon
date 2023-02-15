@@ -177,6 +177,14 @@
         ?>  ?=(%& -.u.item)
         =+  ;;(token-account noun.p.u.item)
         u.item(noun.p -(balance (add balance.- amount.deposit)))
+      ::  update supply in ueth metadata item
+      =.  p.working-chain
+        %+  put:big  p.working-chain
+        :-  `@ux`'ueth-metadata'
+        =+  md=(got:big p.working-chain `@ux`'ueth-metadata')
+        ?>  ?=(%& -.md)
+        =+  ;;(token-metadata noun.p.md)
+        md(noun.p -(supply (add supply.- amount.deposit)))
       `state(proposed-batch `[0 ~ working-chain 0x0 0x0])
     ::
     ::  transactions

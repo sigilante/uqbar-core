@@ -7,6 +7,7 @@
 /*  nft-contract       %jam  /con/compiled/nft/jam
 /*  publish-contract   %jam  /con/compiled/publish/jam
 /*  zigs-contract      %jam  /con/compiled/zigs/jam
+/*  ueth-contract      %jam  /con/compiled/ueth/jam
 :-  %say
 |=  [[now=@da eny=@uvJ bek=beak] [host=@p town-id=@ux private-key=@ux ~] ~]
 ::  one hundred million testnet zigs, now and forever
@@ -92,6 +93,36 @@
       [- +]:(cue publish-contract)
       interface=`pith:smart`[%ux `@ux`(shag:smart publish-mar)]^~
   ==
+::  ueth metadata item
+=/  ueth-metadata
+  ^-  data:smart
+  :*  `@ux`'ueth-metadata'
+      ueth-contract-id:smart
+      ueth-contract-id:smart
+      town-id
+      `@`'ueth'
+      %token-metadata
+      :*  name='Uqbar Wrapped Ethereum'
+          symbol='uETH'
+          decimals=18
+          supply=0
+          cap=~
+          mintable=%.n
+          minters=~
+          deployer=0x0
+          salt=`@`'ueth'
+      ==
+  ==
+::  ueth.hoon contract
+=/  ueth-pact
+  ^-  pact:smart
+  :*  ueth-contract-id:smart
+      0x0          ::  source
+      0x0          ::  holder
+      town-id      ::  town-id
+      [- +]:(cue ueth-contract)
+      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
+  ==
 ::  nft.hoon contract
 =/  nft-pact
   ^-  pact:smart
@@ -164,12 +195,14 @@
       [id.publish-pact [%| publish-pact]]
       [id.nft-pact [%| nft-pact]]
       [id.fungible-pact [%| fungible-pact]]
+      [id.ueth-pact [%| ueth-pact]]
       [zigs-1 beef-zigs-item]
       [zigs-2 dead-zigs-item]
       [zigs-3 cafe-zigs-item]
       [nft-1 [%& nft-data]]
       [id.nft-metadata-data [%& nft-metadata-data]]
       [id.zigs-metadata [%& zigs-metadata]]
+      [id.ueth-metadata [%& ueth-metadata]]
   ==
 ::
 :-  %sequencer-town-action
