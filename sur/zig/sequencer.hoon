@@ -62,7 +62,7 @@
       [%del-block-height-api-key ~]
       [%clear-state ~]
       ::  transactions
-      [%deposit hash=@ux deposit]  ::  from rollup contract
+      [%deposit hash=@ux deposit-bytes=@]  ::  from sidecar
       [%receive =transaction:smart]
       [%run-pending eth-block-height=@ud]
       ::  batching

@@ -146,8 +146,10 @@
         ~|("%sequencer: error: got asset while not active" !!)
       ::  assert we haven't used this transaction hash as a deposit before
       ?<  (~(has in deposits.hall.u.town) hash.act)
-      ?>  =(hash.act (sham +.+.act))  ::  TODO match hashing functions
-      ~&  >>  "%sequencer: received asset from rollup: {<+.+.act>}"
+      ?>  =(hash.act (sham deposit-bytes.act))  ::  TODO match hashing functions
+      =/  =deposit
+        (parse-deposit-bytes deposit-bytes.act)
+      ~&  >>  "%sequencer: received asset from rollup: {<deposit>}"
       ::  add deposit amount to the wrapped ETH balance
       ::  of the indicated uqbar address
       =/  working-chain=chain
@@ -157,7 +159,7 @@
       =/  acc-id=id:smart
         %:  hash-data:smart
             ueth-contract-id:smart
-            destination-address.act
+            destination-address.deposit
             town-id.hall.u.town
             `@`'ueth'
         ==
@@ -167,14 +169,14 @@
         ?~  item=(get:big p.working-chain acc-id)
           :*  %&  acc-id
               ueth-contract-id:smart
-              destination-address.act
+              destination-address.deposit
               town-id.hall.u.town
               `@`'ueth'  %account
-              [amount.act ~ `@ux`'ueth-metadata' ~]
+              [amount.deposit ~ `@ux`'ueth-metadata' ~]
           ==
         ?>  ?=(%& -.u.item)
         =+  ;;(token-account noun.p.u.item)
-        u.item(noun.p -(balance (add balance.- amount.act)))
+        u.item(noun.p -(balance (add balance.- amount.deposit)))
       `state(proposed-batch `[0 ~ working-chain 0x0 0x0])
     ::
     ::  transactions
@@ -429,7 +431,20 @@
               leaf+"%sequencer: get-eth-block thread failed: {(trip p.err)}"
             q.err
         ::  NOW TRY AGAIN
-        `this
+        =/  tid  `@ta`(cat 3 'run-single_' (scot %uv (sham eny.bowl)))
+        =/  ta-now  `@ta`(scot %da now.bowl)
+        :_  this
+        :~  %+  ~(watch pass:io /run-single/[ta-now])
+              [our.bowl %spider]
+            /thread-result/[tid]
+          ::
+            %+  ~(poke pass:io /run-single/[ta-now])
+              [our.bowl %spider]
+            :-  %spider-start
+            !>  :^  ~  `tid
+                  byk.bowl(r da+now.bowl)
+                sequencer-get-block-height-etherscan+!>(block-height-api-key)
+        ==
           %thread-done
         =/  height=@ud  !<(@ud q.cage.sign)
         ~&  >  "eth-block-height: {<height>}"
@@ -474,9 +489,9 @@
     ?.  ?=(%& -.item)  ~
     `item
   ::
-      [%grain @ ~]
+      [%item @ ~]
     ?~  town  [~ ~]
-    (read-grain t.path p.chain.u.town)
+    (read-item t.path p.chain.u.town)
   ==
 ::
 ++  on-leave  on-leave:def
