@@ -309,7 +309,7 @@
         :~  [%is-data %b %&]
             [%salt [%s (scot %ud salt.p.item)]]
             [%label %s `@ta`label.p.item]
-            [%noun %s (crip (noah !>(noun)))]
+            [%noun %s (crip (noah !>(noun.p.item)))]
         ==
       ::  wheat
       :~  [%is-data %b %|]
