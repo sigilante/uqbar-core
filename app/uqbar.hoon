@@ -194,20 +194,7 @@
         =/  signed-stuff  (sham [transaction output]:write)
         ?>  =(q.u.seq q.ship-sig.write)
         ?>  (validate:sig our.bowl ship-sig.write signed-stuff now.bowl)
-        ?>  ::  TODO stick this in a library somewhere
-            =?    v.uqbar-sig.write
-                (gte v.uqbar-sig.write 27)
-              (sub v.uqbar-sig.write 27)
-            =/  virt=toon
-              %+  mong
-                :-  ecdsa-raw-recover:secp256k1:secp:crypto
-                [signed-stuff uqbar-sig.write]
-              ,~
-            ?.  ?=(%0 -.virt)  %.n  ::  invalid sig
-            .=  p.u.seq
-            %-  address-from-pub:key:ethereum
-            %-  serialize-point:secp256k1:secp:crypto
-            ;;([x=@ y=@] p.virt)
+        ?>  (uqbar-validate:sig p.u.seq signed-stuff uqbar-sig.write)
         :_  state  :_  ~
         %+  ~(poke pass:io /write-result)
           [our.bowl wallet-source]
@@ -302,6 +289,12 @@
       :^  ~  ~  %wallet-update
       !>  ^-  wallet-update:w
       .^(wallet-update:w %gx (scry:io %wallet (snoc t.t.path %noun)))
+    ::
+    ::  return the @p and uqbar address for a sequencer on given town,
+    ::  if we know of one. form: (unit (pair address ship))
+    ::
+        [%sequencer-on-town @ ~]
+      ``noun+!>((~(get by sequencers.state) (slav %ux i.t.t.path)))
     ==
   ::
   ++  on-leave
