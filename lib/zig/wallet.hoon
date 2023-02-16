@@ -123,6 +123,33 @@
     addrs  t.addrs
     new  (~(put by new) i.addrs (indexer-update-to-book upd))
   ==
+::  +scan-transactions: upon receiving a new batch update, for each of our
+::  token or NFT assets across all addresses, query the indexer for any
+::  transactions in the new batch that affected these assets and add them
+::  to our transaction-store.  (unify result with store)
+++  scan-transactions
+  |=  [tokens=(map address:smart book) our=@p now=@da]
+  ^-  transaction-store
+  =/  megabook=(list [id:smart asset])
+    (zing (turn ~(val by tokens) |=(b=book ~(tap by b))))
+  =|  res=transaction-store
+  |-
+  ?~  megabook  res
+  =*  id  -.i.megabook
+  =*  asset  +.i.megabook
+  =/  upd
+    .^  update:ui  %gx
+      (scot %p our)  %uqbar  (scot %da now)
+      /indexer/newest/item-transactions/0x0/(scot %ux id)/noun
+    ==
+  ?~  upd  $(megabook t.megabook)
+  ?.  ?=(%transaction -.upd)
+    ?.  ?=(%newest-transaction -.upd)
+      $(megabook t.megabook)
+    ::  handle single transaction
+    $(megabook t.megabook)
+  ::  handle map of transactions
+  $(megabook t.megabook)
 ::
 ++  indexer-update-to-book
   |=  =update:ui

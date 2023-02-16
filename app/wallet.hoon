@@ -493,6 +493,14 @@
       (make-tokens addrs [our now]:bowl)
     =/  new-metadata
       (update-metadata-store new-tokens metadata-store [our now]:bowl)
+    =.  transaction-store
+      %-  %-  ~(uno by transaction-store)
+          (scan-transactions new-tokens [our now]:bowl)
+      |=  $:  k=@ux
+              v=(map @ux finished-transaction)
+              w=(map @ux finished-transaction)
+          ==
+      (~(uni by v) w)
     ::  for each of unfinished, scry uqbar for status
     ::  update status, then insert in tx-store mapping
     ::  and build an update card with its new status.
