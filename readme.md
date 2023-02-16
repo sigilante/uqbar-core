@@ -1,6 +1,6 @@
-# Ziggurat
+# Uqbar Core
 
-Ziggurat is the Uqbar developer suite.
+Uqbar Core is the Uqbar chain.
 It contains code for the Gall apps required to simulate the ZK rollup to Ethereum, to sequence transactions in order to run a town, and the user application suite: the `%wallet` for chain writes, the `%indexer` for chain reads, and `%uqbar`, a unified read-write interface.
 
 
@@ -39,7 +39,9 @@ In the future, with remote scry, users will not need to run their own `%indexer`
 
 ## Initial Installation
 
-1. Clone the official Urbit repository and add this repository as a submodule.
+1. Make sure Git LFS is installed, [see instructions](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
+   Some large binaries are stored on Git LFS, and so installation will not work without Git LFS.
+2. Clone the official Urbit repository and add this repository as a submodule.
    This structure is necessary to resolve symbolic links to other desks like `base-dev` and `garden-dev`.
    ```bash
    cd ~/git  # Replace with your chosen directory.
@@ -48,28 +50,28 @@ In the future, with remote scry, users will not need to run their own `%indexer`
    cd urbit/pkg
    git submodule add git@github.com:uqbar-dao/uqbar-core.git uqbar-core
    ```
-2. Either build or install the Urbit binary, then boot a development fakeship:
+3. Either build or install the Urbit binary, then boot a development fakeship:
    ```bash
-   ./urbit -F zod
+   ./urbit -F nec
    ```
-3. In the Dojo of the fakeship, set up a `%zig` desk, where we will copy the files in this repo:
+4. In the Dojo of the fakeship, set up a `%zig` desk, where we will copy the files in this repo:
    ```hoon
    |merge %zig our %base
    |mount %zig
    ```
-4. In a new terminal, copy the files from this repo into the `%zig` desk:
+5. In a new terminal, copy the files from this repo into the `%zig` desk:
    ```bash
    cd ~/git/urbit/pkg  # Replace with your chosen directory.
 
-   rm -rf zod/zig/*
-   cp -RL uqbar-core/* zod/zig/
+   rm -rf nec/zig/*
+   cp -RL uqbar-core/* nec/zig/
    ```
-5. In the Dojo of the fakeship, commit the copied files and install.
+6. In the Dojo of the fakeship, commit the copied files and install.
    ```hoon
    |commit %zig
    |install our %zig
    ```
-6. Run tests, if desired, in the Dojo.
+7. Run tests, if desired, in the Dojo.
    ```hoon
    ::  Run all tests.
    -test ~[/=zig=/tests]
@@ -90,11 +92,18 @@ Specifically, contracts for zigs tokens, NFTs, and publishing new contracts are 
 After [initial installation](#initial-installation), start the `%rollup`, initialize the `%sequencer`, set up the `%uqbar` read-write interface, and configure the `%wallet` to point to some [pre-set assets](#accounts-initialized-by-init-script), minted in the `:sequencer|init` poke:
 ```hoon
 :rollup|activate
-:indexer &set-sequencer [our %sequencer]
-:indexer &set-rollup [our %rollup]
+:indexer &indexer-action [%set-sequencer [our %sequencer]]
+:indexer &indexer-action [%set-rollup [our %rollup]]
 :sequencer|init our 0x0 0xc9f8.722e.78ae.2e83.0dd9.e8b9.db20.f36a.1bc4.c704.4758.6825.c463.1ab6.daee.e608
 :uqbar &wallet-poke [%import-seed 'uphold apology rubber cash parade wonder shuffle blast delay differ help priority bleak ugly fragile flip surge shield shed mistake matrix hold foam shove' 'squid' 'nickname']
 ```
+
+
+If you want to perform lots of batching locally, you'll want to get an API key for etherscan to make more requests. The sequencer agent uses this API to fetch the most recent block height for ETH. [Get a free API key from etherscan](https://etherscan.io/apis) and save in %sequencer like so:
+```hoon
+:sequencer &sequencer-town-action [%set-block-height-api-key 'YOUR_KEY']
+```
+
 
 
 ### Example: writing to chain with `%wallet`
@@ -186,24 +195,24 @@ When routed through `%uqbar`, as below, `/indexer` must be prepended to the path
    ```
 
 2. Scrying from outside Urbit using the HTTP API.
-   The following examples assume `~zod` is running on `localhost:8080`.
+   The following examples assume `~nec` is running on `localhost:8080`.
    ```bash
-   export ZOD_COOKIE=$(curl -i -X POST localhost:8080/~/login -d 'password=lidlut-tabwed-pillex-ridrup' | grep set-cookie | awk '{print $2}' | awk -F ';' '{print $1}')
+   export nec_COOKIE=$(curl -i -X POST localhost:8080/~/login -d 'password=lidlut-tabwed-pillex-ridrup' | grep set-cookie | awk '{print $2}' | awk -F ';' '{print $1}')
 
    # Query all fields for the given hash.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/hash/0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/hash/0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70.json | jq
 
    # Query for the history of the given item.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
 
    # Query for the current state of the given item.
-   curl --cookie "$ZOD_COOKIE" localhost:8080/~/scry/uqbar/indexer/newest/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
+   curl --cookie "$nec_COOKIE" localhost:8080/~/scry/uqbar/indexer/newest/item/0x89a0.89d8.dddf.d13a.418c.0d93.d4b4.e7c7.637a.d56c.96c0.7f91.3a14.8174.c7a7.71e6.json | jq
    ```
 
 ### Accounts initialized by init script
 
 Below are listed the seed phrases, encryption passwords, and key pairs initialized by the `:sequencer|init` call [above](#starting-a-fakeship-testnet).
-Note in that section we make use of the first of these accounts to set up the `%wallet` (and `%sequencer`) on `~zod`.
+Note in that section we make use of the first of these accounts to set up the `%wallet` (and `%sequencer`) on `~nec`.
 
 ```hoon
 ::  Account holding a data with 300 zigs.
@@ -224,8 +233,8 @@ squid
 ::  Seed, password, private key, public key:
 flee alter erode parrot turkey harvest pass combine casual interest receive album coyote shrug envelope turtle broken purity wear else fluid transaction theme buyer
 squid
-0x3163.45c7.9265.36bd.6a32.d317.87c0.c961.8df2.8d91.4c07.1a04.b929.baf6.cfd2.b4e8
-0x25a8.eb63.a5e7.3111.c173.639b.68ce.091d.d3fc.f139
+0xea88.44f4.1573.d220.8e6e.a784.a3ac.4dcb.5070.dee0.7899.01ba.7ce8.0042.6897.bf8e
+0x5da4.4219.e382.ad70.db07.0a82.12d2.0559.cf8c.b44d
 ```
 
 
@@ -233,25 +242,25 @@ squid
 
 To add a new ship to a fakeship testnet or to a live testnet, follow these instructions.
 First make sure your ship is on the [whitelist](https://github.com/uqbar-dao/ziggurat/blob/master/lib/rollup.hoon) of the ship hosting the rollup simulator.
-The following two examples assume `~zod` is the host:
+The following two examples assume `~nec` is the host:
 
 
 ### Indexing on an existing testnet
 ```hoon
-:indexer &set-sequencer [~zod %sequencer]
-:indexer &set-rollup [~zod %rollup]
-:indexer &indexer-bootstrap [~zod %indexer]
+:indexer &indexer-action [%set-sequencer [~nec %sequencer]]
+:indexer &indexer-action [%set-rollup [~nec %rollup]]
+:indexer &indexer-action [%bootstrap [~nec %indexer]]
 ```
 In this example, not all the hosts need be the same ship.
-To give a specific example, `~zod` might be running the `%rollup`, while `~bus` runs the `%sequencer` for town `0x0` and also the `%indexer`.
-Every user who wishes to interact with the chain must currently run their own `%indexer`, so there will likely be many options to `%indexer-bootstrap` from.
+To give a specific example, `~nec` might be running the `%rollup`, while `~bus` runs the `%sequencer` for town `0x0` and also the `%indexer`.
+Every user who wishes to interact with the chain must currently run their own `%indexer`, so there will likely be many options to `%bootstrap` from.
 
 
 ### Sequencing on an existing testnet
 
 To start sequencing a new town:
 ```hoon
-:sequencer|init ~zod <YOUR_town_ID> <YOUR_PRIVATE_KEY>
+:sequencer|init ~nec <YOUR_town_ID> <YOUR_PRIVATE_KEY>
 ```
 
 `%sequencer` does not create batches automatically unless configured to do so.
@@ -282,7 +291,7 @@ Therefore, we strongly recommend devs to route read/write requests through `%uqb
 Contracts and the standard library must be compiled before they can be used.
 Compilation makes use of generators that can be easily run in the Dojo.
 The compiled `.noun` files can be found in the `put` directory of your pier.
-For example, if you compile using a fakezod, the `noun` files can be found within `zod/.urb/put`.
+For example, if you compile using a fakeship named ~nec, the `noun` files can be found within `nec/.urb/put`.
 
 To recompile the standard library, use
 ```hoon

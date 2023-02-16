@@ -14,11 +14,6 @@
   `[~ ~ ~ [[%recovered s+(scot %ux result)]]~]
 ::
 ++  read
-  |_  =pith
-  ++  json
-    ~
-  ::
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ~
 --

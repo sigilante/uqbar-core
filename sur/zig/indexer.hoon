@@ -5,6 +5,8 @@
 |%
 +$  query-type
   $?  %batch
+      %batch-chain
+      %batch-transactions
       %transaction
       %from
       %item
@@ -60,12 +62,8 @@
 +$  sequencer-update-queue
   (map town-id=@ux (map batch-id=@ux batch))
 ::
-+$  versioned-state
-  $%  base-state-0
-  ==
-::
-+$  base-state-0
-  $:  %0
++$  base-state-1
+  $:  %1
       =batches-by-town
       =capitol:seq
       =sequencer-update-queue
@@ -73,7 +71,7 @@
       catchup-indexer=dock
   ==
 ::
-+$  indices-0
++$  indices
   $:  =transaction-index
       from-index=second-order-index
       item-index=batch-index
@@ -84,10 +82,17 @@
       =newest-batch-by-town
   ==
 ::
-+$  inflated-state-0  [base-state-0 indices-0]
++$  inflated-state-1  [base-state-1 indices]
 ::
 +$  batch-update-value
   [timestamp=@da location=town-location =batch]
++$  batch-chain-update-value
+  [timestamp=@da location=town-location =chain:eng]
++$  batch-transactions-update-value
+  $:  timestamp=@da
+      location=town-location
+      transactions=processed-txs:eng
+  ==
 +$  transaction-update-value
   $:  timestamp=@da
       location=transaction-location
@@ -101,7 +106,9 @@
   $@  ~
   $%  [%path-does-not-exist ~]
       [%batch batches=(map batch-id=id:smart batch-update-value)]
+      [%batch-chain chains=(map batch-id=id:smart batch-chain-update-value)]
       [%batch-order =batch-order]
+      [%batch-transactions transactions=(map batch-id=id:smart batch-transactions-update-value)]
       [%transaction transactions=(map transaction-id=id:smart transaction-update-value)]
       [%item items=(jar item-id=id:smart item-update-value)]
       $:  %hash
@@ -123,5 +130,13 @@
       =town:seq
       timestamp=@da
       should-update-subs=?
+  ==
+++  action
+  $%  [%set-catchup-indexer =dock]
+      [%set-sequencer =dock]
+      [%set-rollup =dock]
+      [%bootstrap =dock]
+      [%catchup =dock town-id=id:smart batch-id=id:smart]
+      [%consume-batch args=consume-batch-args]
   ==
 --

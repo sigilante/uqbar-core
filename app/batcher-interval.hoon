@@ -46,12 +46,6 @@
   ?>  ?=([%batch-timer ~] wire)
   ?.  active  `this
   =/  wait  (add now.bowl interval)
-  =/  mempool-size  .^(@ud %gx /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/mempool-size/noun)
-  ?:  =(0 mempool-size)
-    ::  don't trigger if empty mempool
-    :_  this
-    [%pass /batch-timer %arvo %b %wait wait]~
-  ~&  >  "%batcher: triggering batch with current mempool size: {<mempool-size>}"
   :_  this
   :~  [%pass /batch-timer %arvo %b %wait wait]
       =-  [%pass /seq-poke %agent [our.bowl %sequencer] %poke -]

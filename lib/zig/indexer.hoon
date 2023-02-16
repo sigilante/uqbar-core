@@ -1,49 +1,9 @@
 /-  eng=zig-engine,
     seq=zig-sequencer,
     ui=zig-indexer
-/+  jold=zig-jold,
-    smart=zig-sys-smart
+/+  smart=zig-sys-smart
 ::
 |_  =bowl:gall
-++  get-interface-types-json
-  |=  $:  contract-id=id:smart
-          return=?(%interface %types)
-          label=@tas
-          noun=*
-      ==
-  |^  ^-  json
-  ?:  =(*bowl:gall bowl)
-    [%s (crip (noah !>(noun)))]
-  =/  interface-types=(map @tas json)  get-interface-types
-  ?~  interface-type=(~(get by interface-types) label)
-    [%s (crip (noah !>(noun)))]
-  =/  jold-result
-    %-  mule
-    |.
-    (jold-full-tuple-to-object:jold u.interface-type noun)
-  ?:  ?=(%& -.jold-result)  p.jold-result
-  [%s (crip (noah !>(noun)))]
-  ::
-  ++  get-interface-types
-    ^-  (map @tas json)
-    =/  =update:ui
-      .^  update:ui
-          %gx
-          %-  zing
-          :+  /(scot %p our.bowl)/indexer/(scot %da now.bowl)
-            /newest/item/(scot %ux contract-id)/noun
-          ~
-      ==
-    ?~  update                     ~
-    ?.  ?=(%newest-item -.update)  ~
-    =*  contract  item.update
-    ?.  ?=(%| -.contract)  ~
-    ?-  return
-      %interface  interface.p.contract
-      %types      types.p.contract
-    ==
-  --
-::
 ++  enjs
   =,  enjs:format
   |%
@@ -58,8 +18,15 @@
         %batch
       (frond %batch (batches batches.update))
     ::
+        %batch-chain
+      (frond %batch-chain (batch-chain chains.update))
+    ::
         %batch-order
       (frond %batch-order (batch-order batch-order.update))
+    ::
+        %batch-transactions
+      %+  frond  %batch-transactions
+      (batch-transactions transactions.update)
     ::
         %transaction
       (frond %transaction (transactions transactions.update))
@@ -144,6 +111,32 @@
       [%town (town +.batch)]
     ~
   ::
+  ++  batch-chain
+    |=  chains=(map batch-id=id:smart batch-chain-update-value:ui)
+    ^-  json
+    %-  pairs
+    %+  turn  ~(tap by chains)
+    |=  [=id:smart timestamp=@da location=town-location:ui c=chain:eng]
+    :-  (scot %ux id)
+    %-  pairs
+    :^    [%timestamp (sect timestamp)]
+        [%location (town-location location)]
+      [%chain (chain c)]
+    ~
+  ::
+  ++  batch-transactions
+    |=  transactions=(map batch-id=id:smart batch-transactions-update-value:ui)
+    ^-  json
+    %-  pairs
+    %+  turn  ~(tap by transactions)
+    |=  [=id:smart timestamp=@da location=town-location:ui t=processed-txs:eng]
+    :-  (scot %ux id)
+    %-  pairs
+    :^    [%timestamp (sect timestamp)]
+        [%location (town-location location)]
+      [%transactions (processed-txs t)]
+    ~
+  ::
   ++  processed-txs
     |=  =processed-txs:eng
     ^-  json
@@ -224,9 +217,9 @@
     |=  event=contract-event:eng
     ^-  json
     %-  pairs
-    :^    [%contract %s (scot %ux contract.event)]
-        [%label %s label.event]
-      [%json json.event]
+    :+  [%contract %s (scot %ux contract.event)]
+      :-  label.event
+      [%s (crip (noah !>(noun.event)))]
     ~
   ::
   ++  shell
@@ -246,7 +239,7 @@
     |=  [=calldata:smart contract-id=id:smart]
     ^-  json
     %+  frond  p.calldata
-    (get-interface-types-json contract-id %interface calldata)
+    [%s (crip (noah !>(q.calldata)))]
   ::
   ++  caller
     |=  =caller:smart
@@ -316,20 +309,11 @@
         :~  [%is-data %b %&]
             [%salt [%s (scot %ud salt.p.item)]]
             [%label %s `@ta`label.p.item]
-            :-  %noun
-            %+  frond  label.p.item
-            %:  get-interface-types-json
-                source.p.item
-                %types
-                label.p.item
-                noun.p.item
-            ==
+            [%noun %s (crip (noah !>(noun.p.item)))]
         ==
       ::  wheat
       :~  [%is-data %b %|]
           [%cont [%s (scot %ud 0)]]
-          [%interface (tas-to-json interface.p.item)]
-          [%types (tas-to-json types.p.item)]
       ==
     :~  [%id %s (scot %ux id.p.item)]
         [%source %s (scot %ux source.p.item)]

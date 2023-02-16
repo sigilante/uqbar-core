@@ -1,21 +1,21 @@
 /-  *zig-sequencer
 /+  ethereum, merk, smart=zig-sys-smart
-/=  fungible  /con/lib/fungible-interface-types
-/=  nft  /con/lib/nft-interface-types
-/=  publish  /con/lib/publish-interface-types
-/=  zigs  /con/lib/zigs-interface-types
+/=  fungible-mar  /con/mar/fungible
+/=  publish-mar   /con/mar/publish
+/=  zigs-mar      /con/mar/zigs
 /*  fungible-contract  %jam  /con/compiled/fungible/jam
 /*  nft-contract       %jam  /con/compiled/nft/jam
 /*  publish-contract   %jam  /con/compiled/publish/jam
 /*  zigs-contract      %jam  /con/compiled/zigs/jam
+/*  ueth-contract      %jam  /con/compiled/ueth/jam
 :-  %say
-|=  [[now=@da eny=@uvJ bek=beak] [rollup-host=@p town-id=@ux private-key=@ux ~] ~]
+|=  [[now=@da eny=@uvJ bek=beak] [host=@p town-id=@ux private-key=@ux ~] ~]
 ::  one hundred million testnet zigs, now and forever
 =/  testnet-zigs-supply  100.000.000.000.000.000.000.000.000
 ::
 =/  pubkey-1  0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70
 =/  pubkey-2  0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de
-=/  pubkey-3  0x25a8.eb63.a5e7.3111.c173.639b.68ce.091d.d3fc.f139
+=/  pubkey-3  0x5da4.4219.e382.ad70.db07.0a82.12d2.0559.cf8c.b44d
 =/  zigs-1  (hash-data:smart zigs-contract-id:smart pubkey-1 town-id `@`'zigs')
 =/  zigs-2  (hash-data:smart zigs-contract-id:smart pubkey-2 town-id `@`'zigs')
 =/  zigs-3  (hash-data:smart zigs-contract-id:smart pubkey-3 town-id `@`'zigs')
@@ -79,10 +79,9 @@
   :*  zigs-contract-id:smart  ::  id
       zigs-contract-id:smart  ::  source
       zigs-contract-id:smart  ::  holder
-      town-id                ::  town-id
+      town-id                 ::  town-id
       [- +]:(cue zigs-contract)
-      interface=interface-json:zigs
-      types=types-json:zigs
+      interface=`pith:smart`[%ux `@ux`(shag:smart zigs-mar)]^~
   ==
 ::  publish.hoon contract
 =/  publish-pact
@@ -90,10 +89,39 @@
   :*  0x1111.1111  ::  id
       0x0          ::  source
       0x0          ::  holder
-      town-id     ::  town-id
+      town-id      ::  town-id
       [- +]:(cue publish-contract)
-      interface=interface-json:publish
-      types=~
+      interface=`pith:smart`[%ux `@ux`(shag:smart publish-mar)]^~
+  ==
+::  ueth metadata item
+=/  ueth-metadata
+  ^-  data:smart
+  :*  `@ux`'ueth-metadata'
+      ueth-contract-id:smart
+      ueth-contract-id:smart
+      town-id
+      `@`'ueth'
+      %token-metadata
+      :*  name='Uqbar Wrapped Ethereum'
+          symbol='uETH'
+          decimals=18
+          supply=0
+          cap=~
+          mintable=%.n
+          minters=~
+          deployer=0x0
+          salt=`@`'ueth'
+      ==
+  ==
+::  ueth.hoon contract
+=/  ueth-pact
+  ^-  pact:smart
+  :*  ueth-contract-id:smart
+      0x0          ::  source
+      0x0          ::  holder
+      town-id      ::  town-id
+      [- +]:(cue ueth-contract)
+      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
   ==
 ::  nft.hoon contract
 =/  nft-pact
@@ -104,8 +132,7 @@
       0x0          ::  holder
       town-id     ::  town-id
       [- +]:code
-      interface=interface-json:nft
-      types=types-json:nft
+      interface=~
   ==
 ::
 :: NFT stuff
@@ -120,7 +147,8 @@
       label=%metadata
       :*  name='Ziggurat Girls'
           symbol='GOODART'
-          properties=(~(gas pn:smart *(pset:smart @tas)) `(list @tas)`~[%hat %eyes %mouth])
+          ::  "properties"
+          (~(gas pn:smart *(pset:smart @tas)) `(list @tas)`~[%hat %eyes %mouth])
           supply=1
           cap=`5
           mintable=%.y
@@ -156,8 +184,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:code
-      interface=interface-json:fungible
-      types=types-json:fungible
+      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
   ==
 ::
 =/  fake-state
@@ -168,18 +195,20 @@
       [id.publish-pact [%| publish-pact]]
       [id.nft-pact [%| nft-pact]]
       [id.fungible-pact [%| fungible-pact]]
+      [id.ueth-pact [%| ueth-pact]]
       [zigs-1 beef-zigs-item]
       [zigs-2 dead-zigs-item]
       [zigs-3 cafe-zigs-item]
       [nft-1 [%& nft-data]]
       [id.nft-metadata-data [%& nft-metadata-data]]
       [id.zigs-metadata [%& zigs-metadata]]
+      [id.ueth-metadata [%& ueth-metadata]]
   ==
 ::
 :-  %sequencer-town-action
 ^-  town-action
 :*  %init
-    rollup-host
+    host
     (address-from-prv:key:ethereum private-key)
     private-key
     town-id

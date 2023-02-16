@@ -27,15 +27,13 @@
 ::    by `0xdead.beef` would be queried using
 ::    `/x/newest/holder/0xdead.beef`.
 ::
+::    (TODO with remote scry:)
 ::    Scry paths may be prepended with a `/json`, which
 ::    will cause the scry to return JSON rather than an
 ::    `update:ui` and will attempt to mold the `data` in
-::    `item`s and the `noun` in `transaction`s.
-::    In order to do so it requires the `source` contracts
-::    have properly filled out `interface` and `types`
-::    fields, see `lib/jolds.hoon` docstring for the spec
-::    and `con/lib/*interface-types.hoon`
-::    for examples.
+::    `item`s and the `noun` in `transaction`s based on
+::    the published interface scry path, if any, for the
+::    `source` contract.
 ::
 ::    When used in combination, the `/json` prefix must
 ::    come before the `/newest` prefix, so a valid example
@@ -44,9 +42,15 @@
 ::    /x/batch/[batch-id=@ux]
 ::    /x/batch/[town-id=@ux]/[batch-id=@ux]:
 ::      An entire batch.
+::    /x/batch-chain/[batch-id=@ux]
+::    /x/batch-chain/[town-id=@ux]/[batch-id=@ux]:
+::      Chain state within a batch.
 ::    /x/batch-order/[town-id=@ux]
 ::    /x/batch-order/[town-id=@ux]/[nth-most-recent=@ud]/[how-many=@ud]:
 ::      The order of batches for a town, or a subset thereof.
+::    /x/batch-transactions/[batch-id=@ux]
+::    /x/batch-transactions/[town-id=@ux]/[batch-id=@ux]:
+::      Transactions within a batch.
 ::    /x/transaction/[transaction-id=@ux]:
 ::    /x/transaction/[town-id=@ux]/[transaction-id=@ux]:
 ::      Info about transaction with the given hash.
@@ -70,7 +74,7 @@
 ::      History of id (queries `from`s and `to`s).
 ::    /x/source/[source-id=@ux]:
 ::    /x/source/[town-id=@ux]/[source-id=@ux]:
-::      items ruled by source with given hash.
+::      Items with source of given hash.
 ::    /x/to/[to-id=@ux]:
 ::    /x/to/[town-id=@ux]/[to-id=@ux]:
 ::      History of receiver with the given hash.
@@ -95,20 +99,21 @@
 ::
 ::    ##  Pokes
 ::
-::    %indexer-bootstrap:
-::      Copy state from target indexer.
-::      WARNING: Overwrites current state, so should
-::      only be used when bootstrapping a new indexer.
+::    %indexer-action:
+::      %bootstrap:
+::        Copy state from target indexer.
+::        WARNING: Overwrites current state, so should
+::        only be used when bootstrapping a new indexer.
 ::
-::    %indexer-catchup:
-::      Copy state from target indexer
-::      from given batch hash onward.
+::      %catchup:
+::        Copy state from target indexer
+::        from given batch hash onward.
 ::
-::    %set-sequencer:
-::      Subscribe to sequencer for new batches.
+::      %set-sequencer:
+::        Subscribe to sequencer for new batches.
 ::
-::    %set-rollup:
-::      Subscribe to rollup for new batch-idss.
+::      %set-rollup:
+::        Subscribe to rollup for new batch-idss.
 ::
 ::
 /-  eng=zig-engine,
@@ -126,7 +131,7 @@
 +$  card  card:agent:gall
 --
 ::
-=|  inflated-state-0:ui
+=|  inflated-state-1:ui
 =*  state  -
 ::
 %-  agent:dbug
@@ -146,8 +151,8 @@
     ::   to allow easier setup.
     ::   TODO: Remove hardcode and add a GUI button/
     ::         input menu to setup.
-    =/  testnet-host=@p            ~bacdun
-    =/  indexer-bootstrap-host=@p  ~dister-dozzod-bacdun
+    =/  testnet-host=@p            ~nec
+    =/  indexer-bootstrap-host=@p  ~nec
     =/  rollup-dock=dock           [testnet-host %rollup]
     =/  sequencer-dock=dock        [testnet-host %sequencer]
     =/  indexer-bootstrap-dock=dock
@@ -157,7 +162,7 @@
         :-  %uqbar-action
         !>  ^-  action:uqbar
         :-  %set-sources
-        [0x0 (~(gas in *(set dock)) ~[[our dap]:bowl])]~
+        [0x0 [our dap]:bowl]~
     ?:  ?|  =(testnet-host our.bowl)
             =(indexer-bootstrap-host our.bowl)
         ==
@@ -184,69 +189,79 @@
     ==
   ++  on-save  !>(-.state)
   ++  on-load
-    |=  old-vase=vase
-    `this(state (set-state-from-vase old-vase))
+    |=  state-vase=vase
+    ^-  (quip card _this)
+    ?+    -.q.state-vase  on-init
+        %1
+      =+  !<(bs=base-state-1:ui state-vase)
+      =-  `this(state -)
+      :-  bs(catchup-indexer catchup-indexer)
+      %-  inflate-state
+      ~(tap by batches-by-town.bs)
+    ==
   ::
   ++  on-poke
     |=  [=mark =vase]
     ^-  (quip card _this)
     ?>  (team:title our.bowl src.bowl)
     ?+    mark  (on-poke:def mark vase)
-        %set-catchup-indexer
-      `this(catchup-indexer !<(dock vase))
-    ::
-        %set-sequencer
-      :_  this
-      %^    set-watch-target:ic
-          sequencer-wire
-        !<(dock vase)
-      sequencer-path
-    ::
-        %set-rollup
-      :_  this
-      %+  weld
-        %^    set-watch-target:ic
-            rollup-capitol-wire
-          !<(dock vase)
-        rollup-capitol-path
-      %^    set-watch-target:ic
-          rollup-root-wire
-        !<(dock vase)
-      rollup-root-path
-    ::
-        %indexer-bootstrap
-      =+  !<(indexer-bootstrap-dock=dock vase)
-      :_  this(catchup-indexer indexer-bootstrap-dock)
-      %^    set-watch-target:ic
-          indexer-bootstrap-wire
-        indexer-bootstrap-dock
-      indexer-bootstrap-path
-    ::
-        %indexer-catchup
-      =+  !<([=dock town=id:smart batch-id=id:smart] vase)
-      :_  this(catchup-indexer dock)
-      %^    set-watch-target:ic
-          (indexer-catchup-wire town batch-id)
-        dock
-      (indexer-catchup-path town batch-id)
-    ::
-        %consume-batch
-      =+  !<(args=consume-batch-args:ui vase)
-      =*  town-id   town-id.hall.town.args
-      =*  batch-id  batch-id.args
-      =^  cards  state
-        (consume-batch:ic args)
-      :-  cards
-      %=  this
-          sequencer-update-queue
-        %+  ~(put by sequencer-update-queue)  town-id
-        %.  batch-id
-        ~(del by (~(gut by sequencer-update-queue) town-id ~))
+        %indexer-action
+      =+  !<(=action:ui vase)
+      ?-    -.action
+          %set-catchup-indexer
+        `this(catchup-indexer dock.action)
       ::
-          town-update-queue
-        %+  ~(put by town-update-queue)  town-id
-        %.  batch-id
-        ~(del by (~(gut by town-update-queue) town-id ~))
+          %set-sequencer
+        :_  this
+        %^    set-watch-target:ic
+            sequencer-wire
+          dock.action
+        sequencer-path
+      ::
+          %set-rollup
+        :_  this
+        %+  weld
+          %^    set-watch-target:ic
+              rollup-capitol-wire
+            dock.action
+          rollup-capitol-path
+        %^    set-watch-target:ic
+            rollup-root-wire
+          dock.action
+        rollup-root-path
+      ::
+          %bootstrap
+        :_  this(catchup-indexer dock.action)
+        %^    set-watch-target:ic
+            indexer-bootstrap-wire
+          dock.action
+        indexer-bootstrap-path
+      ::
+          %catchup
+        =+  !<([=dock town=id:smart batch-id=id:smart] vase)
+        :_  this(catchup-indexer dock.action)
+        %^    set-watch-target:ic
+            (indexer-catchup-wire [town-id batch-id]:action)
+          dock.action
+        (indexer-catchup-path [town-id batch-id]:action)
+      ::
+          %consume-batch
+        =*  town-id   town-id.hall.town.args.action
+        =*  batch-id  batch-id.args.action
+        =^  cards  state
+          (consume-batch:ic args.action)
+        :-  cards
+        %=  this
+            sequencer-update-queue
+          %+  ~(put by sequencer-update-queue)  town-id
+          %.  batch-id
+          ~(del by (~(gut by sequencer-update-queue) town-id ~))
+        ::
+            town-update-queue
+          %+  ~(put by town-update-queue)  town-id
+          %.  batch-id
+          ~(del by (~(gut by town-update-queue) town-id ~))
+        ==
       ==
     ==
   ::
@@ -266,7 +281,7 @@
       :_  this
       %-  fact-init-kick:io
       :-  %indexer-bootstrap
-      !>(`versioned-state:ui`-.state)
+      !>(`base-state-1:ui`-.state)
     ::
         [%indexer-catchup @ @ ~]
       =/  town-id=id:smart   (slav %ux i.t.path)
@@ -347,6 +362,9 @@
       (get-ids u.query-payload only-newest)
     ::
         $?  [%batch @ ~]        [%batch @ @ ~]
+            [%batch-chain @ ~]  [%batch-chain @ @ ~]
+            [%batch-transactions @ ~]
+            [%batch-transactions @ @ ~]
             [%transaction @ ~]  [%transaction @ @ ~]
             [%from @ ~]         [%from @ @ ~]
             [%item @ ~]         [%item @ @ ~]
@@ -456,7 +474,7 @@
             to-index                 ~
             newest-batch-by-town     ~
         ==
-        `this(state (set-state-from-vase q.cage.sign))
+        (on-load q.cage.sign)
       ==
     ::
         [%indexer-catchup-update @ @ ~]
@@ -526,9 +544,10 @@
         :_  state
         :_  ~
         %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %consume-batch
-        !>  ^-  consume-batch-args:ui
-        :*  batch-id
+        :-  %indexer-action
+        !>  ^-  action:ui
+        :*  %consume-batch
+            batch-id
             transactions.update
             [chain.update hall.update]
             u.timestamp
@@ -553,7 +572,7 @@
             ~
         ?:  (only-missing-newest capitol.update)  ~
         %+  murn  ~(val by capitol.update)
-        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux)]
+        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
         =/  [* =batch-order:ui]
           %+  ~(gut by batches-by-town)  town-id
           [~ batch-order=~]
@@ -593,9 +612,10 @@
         :_  state
         :_  ~
         %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %consume-batch
-        !>  ^-  consume-batch-args:ui
-        :*  batch-id
+        :-  %indexer-action
+        !>  ^-  action:ui
+        :*  %consume-batch
+            batch-id
             transactions.u.sequencer-update
             town.u.sequencer-update
             timestamp
@@ -847,20 +867,9 @@
     ~
   [%hash combined-batch combined-transaction combined-item]
 ::
-++  set-state-from-vase
-  |=  state-vase=vase
-  ^-  _state
-  =+  !<(vs=versioned-state:ui state-vase)
-  ?-    -.vs
-      %0
-    :-  vs(catchup-indexer catchup-indexer)
-    %-  inflate-state
-    ~(tap by batches-by-town.vs)
-  ==
-::
 ++  inflate-state
   |=  batches-by-town-list=(list [@ux =batches:ui =batch-order:ui])
-  ^-  indices-0:ui
+  ^-  indices:ui
   =|  temporary-state=_state
   |^
   ?~  batches-by-town-list  +.temporary-state
@@ -905,15 +914,29 @@
     ?.(only-newest get-batch get-newest-batch)
   |^
   ?+    query-type  ~
-      %batch
-    get-batch-update
-  ::
+      %batch               get-batch-update
+      %batch-chain         get-batch-chain-update
+      %batch-transactions  get-batch-transactions-update
+      %town                get-town
       ?(%transaction %from %item %item-transactions %holder %source %to)
     get-from-index
-  ::
-      %town
-    get-town
   ==
+  ::
+  ++  get-batch-chain-update
+    =/  =update:ui  get-batch-update
+    ?.  ?=(%batch -.update)  ~
+    :-  %batch-chain
+    %-  ~(run by batches.update)
+    |=  [timestamp=@da location=town-location:ui =batch:ui]
+    [timestamp location chain.batch]
+  ::
+  ++  get-batch-transactions-update
+    =/  =update:ui  get-batch-update
+    ?.  ?=(%batch -.update)  ~
+    :-  %batch-transactions
+    %-  ~(run by batches.update)
+    |=  [timestamp=@da location=town-location:ui =batch:ui]
+    [timestamp location transactions.batch]
   ::
   ++  get-town
     ?.  ?=(@ query-payload)  ~

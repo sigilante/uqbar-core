@@ -23,7 +23,7 @@
       [%change-type dummy=id]
     =+  i=(need (scry-state dummy.act))
     =/  new
-      =+  [[~ ~] ~ ~]  ::  empty pact
+      =+  [[~ ~] ~]  ::  empty pact
       [%| id.p.i source.p.i holder.p.i town.p.i -]
     `(result [new ~] ~ ~ ~)
   ::
@@ -64,7 +64,7 @@
   ::
       [%issue-bad-pact-id ~]
     =/  bad-pact
-      [0x123 this.context this.context town.context [~ ~] ~ ~]
+      [0x123 this.context this.context town.context [~ ~] ~]
     `(result ~ [%|^bad-pact ~] ~ ~)
   ::
       [%issue-without-provenance ~]
@@ -151,11 +151,6 @@
   ==
 ::
 ++  read
-  |_  =path
-  ++  json
-    ~
-  ::
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ~
 --

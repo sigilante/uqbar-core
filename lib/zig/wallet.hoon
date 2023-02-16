@@ -60,6 +60,44 @@
   =-  [%pass /new-batch %agent [our %uqbar] %watch -]~
   /indexer/wallet/batch-order/(scot %ux town)
 ::
+::  +integrate-output: upon receiving a transaction receipt,
+::  analyze the output and update our tracked assets if any changed.
+::
+++  integrate-output
+  |=  [tokens=(map address:smart book) =output:eng]
+  ^+  tokens
+  =/  burned=(list item:smart)    (turn ~(val by burned.output) tail)
+  =/  modified=(list item:smart)  (turn ~(val by modified.output) tail)
+  ::  remove any assets that were burned
+  =.  tokens
+    |-
+    ?~  burned  tokens
+    =*  item  i.burned
+    ?~  held=(~(get by tokens) holder.p.item)
+      $(burned t.burned)
+    =-  $(burned t.burned, tokens -)
+    (~(put by tokens) holder.p.item (~(del by u.held) id.p.item))
+  ::  now replace any assets that were modified
+  ::  NOTE: metadata for assets will still be tied to most recent
+  ::  batch. if this becomes an issue, will need to add an asset
+  ::  type that explains the ambiguity here.
+  |-
+  ?~  modified  tokens
+  =*  item  i.modified
+  ?~  held=(~(get by tokens) holder.p.item)
+    $(modified t.modified)
+  =-  $(modified t.modified, tokens -)
+  =-  (~(put by tokens) holder.p.item (~(put by u.held) id.p.item -))
+  ?.  ?=(%& -.item)
+    ::  handle contract asset
+    [%unknown town.p.item source.p.item ~]
+  ::  determine type token/nft/unknown and store in book
+  (discover-asset-mold town.p.item source.p.item noun.p.item)
+::
+::  +make-tokens: upon receiving a new batch update from indexer,
+::  query indexer for items held by each of our tracked addresses
+::  and create a view of those assets
+::
 ++  make-tokens
   |=  [addrs=(list address:smart) our=@p now=@da]
   ^-  (map address:smart book)
@@ -67,7 +105,7 @@
   |-  ::  scry for each tracked address
   ?~  addrs  new
   =/  upd  .^(update:ui %gx /(scot %p our)/uqbar/(scot %da now)/indexer/newest/holder/0x0/(scot %ux i.addrs)/noun)
-  ?~  upd  new
+  ?~  upd  $(addrs t.addrs)
   ?.  ?=(%item -.upd)
     ::  handle newest-item update type
     ?>  ?=(%newest-item -.upd)

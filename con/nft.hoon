@@ -19,21 +19,6 @@
   ==
 ::
 ++  read
-  |_  =path
-  ++  json
-    ^-  ^json
-    ?+    path  !!
-        [%inspect @ ~]
-      ?~  i=(scry-state (slav %ux i.t.path))  ~
-      ?.  ?=(%& -.u.i)  ~
-      ?^  item=((soft nft:sur:nft) noun.p.u.i)
-        (nft:enjs:lib:nft u.item)
-      ?^  meta=((soft metadata:sur:nft) noun.p.u.i)
-        (metadata:enjs:lib:nft u.meta)
-      ~
-    ==
-  ::
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ~
 --

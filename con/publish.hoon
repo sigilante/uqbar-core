@@ -22,9 +22,24 @@
           town.context
           code.act
           interface.act
-          types.act
       ==
-    `(result ~ [pact ~] ~ ~)
+    =/  =event  [%deploy id.p.pact id.caller.context mutable.act]
+    `(result ~ [pact ~] ~ event^~)
+  ::
+      %deploy-and-init
+    =/  source=id  ?:(mutable.act this.context 0x0)
+    =/  pact=item
+      :*  %|
+          (hash-pact source id.caller.context town.context code.act)
+          source
+          id.caller.context
+          town.context
+          code.act
+          interface.act
+      ==
+    =/  =call   [id.p.pact town.context init.act]
+    =/  =event  [%deploy id.p.pact id.caller.context mutable.act]
+    [call^~ (result ~ [pact ~] ~ event^~)]
   ::
       %upgrade
     ::  this contract must be source to upgrade
@@ -34,15 +49,14 @@
             =(this.context source.p.pact)
             =(id.caller.context holder.p.pact)
         ==
-    =.  code.p.pact  new-code.act
-    `(result [pact ~] ~ ~ ~)
+    =:  code.p.pact       new-code.act
+        interface.p.pact  new-interface.act
+    ==
+    =/  =event  [%upgrade id.p.pact]
+    `(result [pact ~] ~ ~ event^~)
   ==
 ::
 ++  read
-  |_  =path
-  ++  json
-    ~
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ~
 --

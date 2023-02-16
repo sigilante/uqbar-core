@@ -38,7 +38,7 @@
   |=  [=id pit=pith]
   ;;  (unit *)
   .*  0
-  [%12 [%0 1] [%1 (weld `pith`[%contract %noun [%ux id] ~] pit)]]
+  [%12 [%0 1] [%1 `pith`[%contract [%ux id] pit]]]
 ::
 ::  +hash: standard hashing functions for items
 ::
@@ -72,7 +72,10 @@
 +$  address  @ux            ::  42-char hex address, ETH compatible
 +$  sig      [v=@ r=@ s=@]  ::  ETH compatible ECDSA signature
 ::
-++  zigs-contract-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
+::  hardcoded "native" token contract
+++  zigs-contract-id  `@ux`'zigs-contract'
+::  hardcoded contract for ETH deposited on Uqbar
+++  ueth-contract-id  `@ux`'ueth-contract'
 ::
 ::  items populate the state.
 ::
@@ -100,8 +103,9 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      interface=(map @tas json)
-      types=(map @tas json)
+      ::  pith with last value equal to @ux hash of compiled core
+      ::  if ~, developer did not provide an interface
+      interface=pith
   ==
 ::
 ::  context: state context fed into contract
@@ -124,12 +128,8 @@
     (quip call diff)
   ::
   ++  read
-    ^|  |_  pith
-    ++  json
-      *^json
-    ++  noun
-      *^noun
-    --
+    |~  pith
+    *
   --
 ::
 ::  contract output types
@@ -141,7 +141,7 @@
       =events
   ==
 +$  call  [contract=id town=id =calldata]
-+$  event   (pair @tas json)
++$  event   (pair @tas *)
 +$  events  (list event)
 ::
 ::  transaction types
@@ -170,7 +170,7 @@
       %6  ::  6: crash in contract execution
       %7  ::  7: validation of diff failed
       %8  ::  8: ran out of gas while executing
-      %9  ::  9: dedicated burn transaction failed
+      %9  ::  9: dedicated burn/withdraw transaction failed
   ==
 ::
 ::  EIP-712 mold for offchain data signing
@@ -207,6 +207,13 @@
       [%p @p]    [%q @q]
       [%rs @rs]  [%rd @rd]  [%rh @rh]  [%rq @rq]
   ==
+::
+++  pout
+  |=  =pith
+  ^-  path
+  %+  turn  pith
+  |=  i=iota
+  ?@(i i (scot i))
 --  =<
 ::  ::
 ::  ::  three: formatting (json from zuse/lull)
@@ -298,15 +305,14 @@
   |=  a=(tree (pair key (pair hash value)))
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
-++  shag                                                ::  256bit noun hash
+::  +shag: the standard noun hashing function for uqbar. will likely be
+::  poseidon in ZK mode, but a simple +sham (half-sha-256) will do for now.
+::
+++  shag
   |=  yux=*
   ~>  %shag.+<
   ^-  hash
   `@ux`(sham yux)
-  ::  TODO: make LRU-cache-optimized version for granary retrivial
-  ::  ?@  yux
-  ::    (hash:pedersen yux 0)
-  ::  (hash:pedersen $(yux -.yux) $(yux +.yux))
 ::
 ::  +sore: single Pedersen hash in ascending order, uses +dor as
 ::  fallback
@@ -473,7 +479,7 @@
       $(b r.b, l.a ~, p.q.n.a (mer a(l ~) [p q.q]:n.a))
     $(a l.a)
   ::
-  ++  mek                                               ::  merkle hashes for key
+  ++  mek                                              ::  merkle hashes for key
     |=  [a=mert b=kee]
     ^-  (list hash)
     =|  =(list hash)

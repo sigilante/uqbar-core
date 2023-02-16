@@ -22,21 +22,11 @@
   ==
 ::
 ++  read
-  |_  =pith
-  ++  json
-    ^-  ^json
-    ?+    pith  !!
-        [%inspect [%ux @ux] ~]
-      ?~  i=(scry-state +.i.t.pith)  ~
-      ?.  ?=(%& -.u.i)  ~
-      ?^  acc=((soft account:sur) noun.p.u.i)
-        (account:enjs:lib u.acc)
-      ?^  meta=((soft token-metadata:sur) noun.p.u.i)
-        (metadata:enjs:lib u.meta)
-      ~
-    ==
-  ::
-  ++  noun
-    ~
-  --
+  |=  =pith
+  ?+    pith  !!
+      [%get-balance [%ux @ux] ~]
+    =+  (need (scry-state +.i.t.pith))
+    =+  (husk account:sur - ~ ~)
+    balance.noun.-
+  ==
 --

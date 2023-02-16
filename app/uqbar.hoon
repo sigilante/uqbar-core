@@ -2,8 +2,11 @@
 ::
 ::  The agent for interacting with Uqbar. Provides read/write layer for userspace agents.
 ::
-/-  spider,
-    f=zig-faucet,
+::  TODO: when remote scry releases, take another look at remote indexer
+::  and fallback logic, e.g. at
+::  https://github.com/uqbar-dao/uqbar-core/blob/master/app/uqbar.hoon#L636-L637
+::
+/-  f=zig-faucet,
     u=zig-uqbar,
     ui=zig-indexer,
     w=zig-wallet
@@ -12,26 +15,20 @@
     dbug,
     verb,
     s=zig-sequencer,
+    sig=zig-sig,
+    ethereum,
     smart=zig-sys-smart
 |%
 +$  card  card:agent:gall
-+$  state-0
-  $:  %0
-      min-ping-time=@dr
-      max-ping-time=@dr
-      next-ping-time=@da
-      ping-tids=(map @ta (pair id:smart dock))
-      ping-time-fast-delay=@dr
-      ping-timeout=@dr
-      pings-timedout=(unit @da)
-      indexer-sources=(jug id:smart dock)  ::  set of indexers for each town
-      =indexer-sources-ping-results:u
++$  state-1
+  $:  %1
+      indexers=(map id:smart dock)           ::  single indexer for each town
       sequencers=(map id:smart sequencer:s)  ::  single sequencer for each town
-      wallet-source=@tas
+      wallet-source=term  ::  track any wallet ship is using
   ==
 --
 ::
-=|  state-0
+=|  state-1
 =*  state  -
 ::
 %-  agent:dbug
@@ -46,26 +43,23 @@
   ::
   ++  on-init
     ^-  (quip card _this)
-    :-  ~
+    :-  :_  ~
+        %-  ~(poke-self pass:io /self-wire)
+        :-  %uqbar-action
+        !>  ^-  action:u
+        [%set-sources [0x0 [our.bowl %indexer]]~]
     %=  this
-        min-ping-time         ~m15  ::  TODO: allow user to set?
-        max-ping-time         ~h2   ::   Spam risk?
-        ping-time-fast-delay  ~s5
-        ping-timeout          ~s30
-        wallet-source         %wallet  ::  name of locally-installed wallet app
+      wallet-source  %wallet  ::  name of locally-installed wallet app
     ==
   ::
   ++  on-save  !>(state)
   ++  on-load
     |=  =old=vase
     ^-  (quip card _this)
-    =.  state  !<(state-0 old-vase)
-    =.  next-ping-time
-      ?:  (gth next-ping-time now.bowl)  next-ping-time
-      (make-next-ping-time:uc min-ping-time max-ping-time)
-    :_  this
-    ?:  (gth next-ping-time now.bowl)  ~
-    [(make-ping-wait-card:uc next-ping-time)]~
+    ?+    -.q.old-vase  on-init
+        %1
+      `this(state !<(state-1 old-vase))
+    ==
   ::
   ++  on-watch
     |=  =path
@@ -73,7 +67,6 @@
     ?>  =(src.bowl our.bowl)
     :_  this
     ?+    -.path  !!
-        %track  ~
         %wallet
       ::  must be of the form, e.g.,
       ::   /wallet/[requesting-app-name]/[*-updates]
@@ -101,101 +94,61 @@
       %+  ~(watch-our pass:io (weld wire-prefix sub-path))
       wallet-source  sub-path
     ::
-    ++  watch-indexer  ::  TODO: use fallback better?
+    ++  watch-indexer
       |=  [town=id:smart wire-prefix=wire sub-path=^path]
       ^-  (list card)
-      ?~  source=(get-best-source:uc town ~ %nu)
+      ?~  source=(~(get by indexers) town)
         ~&  >>>  "%uqbar: subscription failed:"
         ~&  >>>  " do not have indexer source for town {<town>}."
         ~&  >>>  " Add indexer source for town and try again."
         ~
+      ~&  %uqbar^%on-watch^%indexer^src.bowl^u.source
       :_  ~
       %+  ~(watch pass:io (weld wire-prefix sub-path))
-      p.u.source  sub-path
+      u.source  sub-path
     --
   ::
   ++  on-poke
-    |=  [=mark =vase]
+    |=  [m=mark v=vase]
     ^-  (quip card _this)
     |^
     =^  cards  state
-      ?+    mark  ~|("%uqbar: rejecting erroneous poke" !!)
-          %uqbar-action  (handle-action !<(action:u vase))
-          %uqbar-write   (handle-write !<(write:u vase))
-          %wallet-poke   (handle-wallet-poke !<(wallet-poke:w vase))
+      ?+    m  ~|("%uqbar: rejecting erroneous poke {<m>}" !!)
+          %uqbar-action  (handle-action !<(action:u v))
+          %uqbar-write   (handle-write !<(write:u v))
+          %wallet-poke   handle-wallet-poke
       ==
     [cards this]
     ::
-    ++  make-ping-rest-card
-      |=  old-next-ping-time=@da
-      ^-  card
-      %.  old-next-ping-time
-      %~  rest  pass:io
-      /start-indexer-ping/(scot %da old-next-ping-time)
-    ::
     ++  handle-wallet-poke
-      |=  =wallet-poke:w
       ^-  (quip card _state)
       :_  state
       :_  ~
-      %+  ~(poke-our pass:io /wallet-poke)  wallet-source
-      [%wallet-poke !>(`wallet-poke:w`wallet-poke)]
+      (~(poke-our pass:io /wallet-poke) wallet-source [m v])
     ::
     ++  handle-action
       |=  act=action:u
-      |^  ^-  (quip card _state)
+      ^-  (quip card _state)
       ?>  =(src.bowl our.bowl)
       ?-    -.act
           %set-wallet-source
         `state(wallet-source app-name.act)
       ::
-          %ping
-        =/  faster-next-ping-time=@da
-          %+  add  ping-time-fast-delay
-          ?~(pings-timedout now.bowl u.pings-timedout)
-        :_  state(next-ping-time faster-next-ping-time)
-        :+  (make-ping-rest-card next-ping-time)
-          (make-ping-wait-card:uc faster-next-ping-time)
-        ~
-      ::
-          %add-source
-        :-  :_  ~
-            %-  ~(poke-self pass:io /ping-action-poke)
-            [%uqbar-action !>(`action:u`[%ping ~])]
-        %=  state
-            indexer-sources
-          (~(put ju indexer-sources) town.act source.act)
-        ==
-      ::
           %remove-source
-        :-  :_  ~
-            %-  ~(poke-self pass:io /ping-action-poke)
-            [%uqbar-action !>(`action:u`[%ping ~])]
+        :-  ~
         %=  state
-            indexer-sources-ping-results
-          %^    remove-from-ping-results
-              town.act
-            source.act
-          indexer-sources-ping-results
-        ::
-            indexer-sources
-          (~(del ju indexer-sources) town.act source.act)
+            indexers
+          (~(del by indexers) town.act source.act)
         ==
       ::
           %set-sources
         =/  p=path  /capitol-updates
-        :-  :-  %-  ~(poke-self pass:io /ping-action-poke)
-                [%uqbar-action !>(`action:u`[%ping ~])]
-            %+  murn  towns.act
-            |=  [town=id:smart indexers=(set dock)]
-            ?~  indexers  ~
-            `(~(watch pass:io p) -.indexers p)  ::  TODO: do better here
+        :-  %+  turn  towns.act
+            |=  [town=id:smart indexer=dock]
+            (~(watch pass:io p) indexer p)
         %=  state
-            indexer-sources-ping-results
-          (set-sources-remove-from-ping-results towns.act)
-        ::
-            indexer-sources
-          (~(gas by *(map id:smart (set dock))) towns.act)
+            indexers
+          (~(gas by *(map id:smart dock)) towns.act)
         ==
       ::
           %open-faucet
@@ -209,44 +162,6 @@
         !>  ^-  action:f
         [%open town.act send-to.act]
       ==
-      ::
-      ++  remove-from-ping-results
-        |=  $:  town=id:smart
-                source=dock
-                =indexer-sources-ping-results:u
-            ==
-        ^-  indexer-sources-ping-results:u
-        =/  old
-          %+  ~(gut by indexer-sources-ping-results)
-          town  [~ ~ ~ ~]
-        ?:  ?=([~ ~ ~ ~] old)  indexer-sources-ping-results
-        %+  ~(put by indexer-sources-ping-results)
-          town
-        :^    (~(del in previous-up.old) source)
-            (~(del in previous-down.old) source)
-          (~(del in newest-up.old) source)
-        (~(del in newest-down.old) source)
-      ::
-      ++  set-sources-remove-from-ping-results
-        |=  towns=(list [town=id:smart (set dock)])
-        ^-  indexer-sources-ping-results:u
-        ?~  towns  indexer-sources-ping-results
-        =/  docks=(list dock)  ~(tap in +.i.towns)
-        %=  $
-            towns  t.towns
-            indexer-sources-ping-results
-          |-
-          ?~  docks  indexer-sources-ping-results
-          %=  $
-              docks  t.docks
-              indexer-sources-ping-results
-            %^    remove-from-ping-results
-                town.i.towns
-              i.docks
-            indexer-sources-ping-results
-          ==
-        ==
-      --
     ::
     ++  handle-write
       |=  =write:u
@@ -258,33 +173,40 @@
         ?>  =(src.bowl our.bowl)
         ?~  seq=(~(get by sequencers.state) `@ux`town.transaction.write)
           ~|("%uqbar: no known sequencer for that town" !!)
-        =/  transaction-hash
-          (scot %ux `@ux`(sham +.transaction.write))
+        =/  tx-hash  `@ux`(sham +.transaction.write)
         :_  state
-        :+  %+  %~  poke  pass:io
-                /submit-transaction/[transaction-hash]
+        :~  %+  ~(poke pass:io /write-result)
+              [our.bowl wallet-source]
+            uqbar-write-result+!>(`write-result:u`[tx-hash %sent ~])
+          ::
+            %+  %~  poke  pass:io
+                /submit-transaction/(scot %ux tx-hash)
               [q.u.seq %sequencer]
             :-  %sequencer-town-action
-            !>  ^-  town-action:s
-            [%receive (silt ~[transaction.write])]
-          %+  fact:io
-            [%write-result !>(`write-result:u`[%sent ~])]
-          ~[/track/[transaction-hash]]
-        ~
+            !>(`town-action:s`[%receive transaction.write])
+        ==
       ::
           %receipt
-        ::  forward to local watchers, usually wallet
-        :_  state
-        :_  ~
-        %+  fact:io
-          [%write-result !>(`write-result:u`write)]
-        ~[/track/(scot %ux transaction-hash.write)]
+        ::  forward to connected wallet app after
+        ::  verifying the sequencer's signatures
+        ?~  seq=(~(get by sequencers.state) `@ux`town.transaction.write)
+          ~|("%uqbar: got receipt from a stranger" !!)
+        =/  signed-stuff  (sham [transaction output]:write)
+        ?>  =(q.u.seq q.ship-sig.write)
+        ?>  (validate:sig our.bowl ship-sig.write signed-stuff now.bowl)
+        ?>  (uqbar-validate:sig p.u.seq signed-stuff uqbar-sig.write)
+        :_  state  :_  ~
+        %+  ~(poke pass:io /write-result)
+          [our.bowl wallet-source]
+        :-  %uqbar-write-result
+        !>(`write-result:u`[tx-hash.write %receipt +.+.write])
       ==
     --
   ::
   ++  on-agent
     |=  [=wire =sign:agent:gall]
-    |^  ^-  (quip card _this)
+    |^
+    ^-  (quip card _this)
     ?+    -.wire  (on-agent:def wire sign)
         %capitol-updates
       ::  set sequencers based on rollup state, given by indexer
@@ -305,59 +227,20 @@
       ==
     ::
         %submit-transaction
-      ::  get receipt from sequencer
+      ::  get poke-ack from sequencer
       ?.  ?=([@ ~] t.wire)      `this
       ?.  ?=(%poke-ack -.sign)  `this
-      =/  path  ~[/track/[i.t.wire]]
-      :_  this
-      ?~  p.sign  ~
-      :_  ~
-      %+  fact:io
-        :-  %write-result
-        !>(`write-result:u`[%rejected src.bowl])
-      path
-    ::
-        %pinger
-      ?.  ?=([@ ~] t.wire)
-        `this
-      =/  tid=@ta  i.t.wire
-      ?~  source=(~(get by ping-tids) tid)
-        `this
-      ?+    -.sign  (on-agent:def wire sign)
-          %kick      `this
-          %poke-ack  `this
-          %fact
-        =.  ping-tids  (~(del by ping-tids) tid)
-        ?+    p.cage.sign  (on-agent:def wire sign)
-            %thread-fail
-          ~&  >>>  "%uqbar: pinger failed tid: {<tid>}; source: {<u.source>}"
-          `this
-        ::
-            %thread-done
-          ?:  =(*vase q.cage.sign)  `this  ::  thread canceled
-          =*  town    p.u.source
-          =*  d        q.u.source
-          =/  is-last-ping-tid=?  =(0 ~(wyt by ping-tids))
-          =.  indexer-sources-ping-results
-            %+  ~(put by indexer-sources-ping-results)  town
-            =/  [pu=(set dock) pd=(set dock) nu=(set dock) nd=(set dock)]
-              %+  ~(gut by indexer-sources-ping-results)  town
-              [~ ~ ~ ~]
-            =:  nu  ?:(!<(? q.cage.sign) (~(put in nu) d) nu)
-                nd  ?:(!<(? q.cage.sign) nd (~(put in nd) d))
-            ==
-            ?:  is-last-ping-tid  [nu nd ~ ~]
-            [pu pd nu nd]
-          ?.  is-last-ping-tid  `this
-          :_  this(pings-timedout ~)
-          ?~  pings-timedout  ~
-          :_  ~
-          %.  u.pings-timedout
-          %~  rest  pass:io
-          /ping-timeout/(scot %da u.pings-timedout)
-          :: TODO: move current subscriptions if on non-replying indexer?
-        ==
-      ==
+      =/  tx-hash=hash:smart  (slav %ux i.t.wire)
+      :_  this  :_  ~
+      ?~  p.sign
+        ::  ack
+        %+  ~(poke pass:io /write-result)
+          [our.bowl wallet-source]
+        uqbar-write-result+!>(`write-result:u`[tx-hash %delivered ~])
+      ::  nack
+      %+  ~(poke pass:io /write-result)
+        [our.bowl wallet-source]
+      uqbar-write-result+!>(`write-result:u`[tx-hash %rejected ~])
     ==
     ::
     ++  pass-through
@@ -380,148 +263,6 @@
           sequencers
         %-  ~(run by capitol.upd)
         |=(=hall:s sequencer.hall)
-      ==
-    --
-  ::
-  ++  on-arvo
-    |=  [=wire =sign-arvo:agent:gall]
-    |^  ^-  (quip card _this)
-    ?+    wire  (on-arvo:def wire sign-arvo)
-        [%start-indexer-ping @ ~]
-      ?+    sign-arvo  (on-arvo:def wire sign-arvo)
-          [%behn %wake *]
-        =/  until=@da  (slav %da i.t.wire)
-        ?:  (gth until now.bowl)  `this
-        ?^  error.sign-arvo
-          ~&  >>>  "%uqbar: error from ping timer: {<u.error.sign-arvo>}"
-          `this
-        =.  next-ping-time
-          %+  make-next-ping-time:uc  min-ping-time
-          max-ping-time
-        =.  indexer-sources-ping-results
-          %-  ~(urn by indexer-sources-ping-results)
-          |=  $:  town=@ux
-                  previous-up=(set dock)
-                  previous-down=(set dock)
-                  newest-up=(set dock)
-                  newest-down=(set dock)
-              ==
-          [newest-up newest-down ~ ~]
-        =^  cards  state  make-ping-indexer-cards
-        :_  this
-        [(make-ping-wait-card:uc next-ping-time) cards]
-      ==
-    ::
-        [%ping-timeout @ ~]
-      ?+    sign-arvo  (on-arvo:def wire sign-arvo)
-          [%behn %wake *]
-        =/  until=@da  (slav %da i.t.wire)
-        ?:  (gth until now.bowl)  `this
-        =.  indexer-sources-ping-results
-          =/  ping-tids-list=(list [@ta town=id:smart d=dock])
-            ~(tap by ping-tids)
-          |-
-          ?~  ping-tids-list
-            %-  ~(gas by *_indexer-sources-ping-results)
-            %+  turn  ~(tap by indexer-sources-ping-results)
-            |=  $:  town=id:smart
-                    (set dock)
-                    (set dock)
-                    newest-up=(set dock)
-                    newest-down=(set dock)
-                ==
-            [town newest-up newest-down ~ ~]
-          =*  town  town.i.ping-tids-list
-          =*  d      d.i.ping-tids-list
-          %=  $
-              ping-tids-list  t.ping-tids-list
-              indexer-sources-ping-results
-            =/  [pu=(set dock) pd=(set dock) nu=(set dock) nd=(set dock)]
-              %+  ~(gut by indexer-sources-ping-results)
-              town  [~ ~ ~ ~]
-            %+  ~(put by indexer-sources-ping-results)
-            town  [pu pd nu (~(put in nd) d)]
-          ==
-        :-  %-  zing
-            :-  move-downed-subscriptions
-            %+  turn  ~(tap by ping-tids)
-            |=  [tid=@ta id:smart dock]
-            :+    %+  ~(poke-our pass:io /pinger/[tid])
-                    %spider
-                  [%spider-stop !>(`[@ta ?]`[tid %.y])]
-              (~(leave-our pass:io /pinger/[tid]) %spider)
-            ~
-        %=  this
-            ping-tids       ~
-            pings-timedout  ~
-        ==
-      ==
-    ==
-    ::
-    ++  move-downed-subscriptions
-      ^-  (list card)
-      %-  zing
-      %+  turn  ~(tap by indexer-sources-ping-results)
-      |=  $:  town=id:smart
-              previous-up=(set dock)
-              previous-down=(set dock)
-              newest-up=(set dock)
-              newest-down=(set dock)
-          ==
-      %+  roll  ~(tap by wex.bowl)
-      |=  [[[w=^wire s=ship t=term] a=? p=path] out=(list card)]
-      ?.  (~(has in previous-down) [s t])
-        out
-      ?~  source=(get-best-source:uc town ~ %nu)  out
-      :+  (~(leave pass:io w) [s t])
-        %+  ~(watch pass:io w)  p.u.source
-        ?.(?=(%history (rear p)) p (snip p))
-      out
-    ::
-    ++  make-ping-indexer-cards
-      ^-  (quip card _state)
-      =|  cards=(list card)
-      =|  tids=(list [@ta (pair id:smart dock)])
-      =/  all-indexer-sources=(list (pair id:smart dock))
-        %-  zing
-        %+  turn  ~(tap by indexer-sources)
-        |=  [town=id:smart docks=(set dock)]
-        %+  turn  ~(tap in docks)
-        |=(d=dock [town d])
-      |-
-      ?~  all-indexer-sources
-        =.  pings-timedout  `(add now.bowl ping-timeout)
-        :_  state(ping-tids (~(gas by *_ping-tids) tids))
-        ?>  ?=(^ pings-timedout)
-        :-  %.  u.pings-timedout
-            %~  wait  pass:io
-            /ping-timeout/(scot %da u.pings-timedout)
-        cards
-      =*  town  p.i.all-indexer-sources
-      =*  d      q.i.all-indexer-sources
-      =/  tid=@ta
-        %+  rap  3
-        :~  'ted-'
-            (scot %uw (sham eny.bowl))
-            '-'
-            (scot %ux town)
-            '-'
-            (scot %p p.d)
-        ==
-      =/  =start-args:spider
-        :-  ~
-        :^  `tid  byk.bowl(r da+now.bowl)
-        %uqbar-pinger  !>(`dock`d)
-      %=  $
-          all-indexer-sources  t.all-indexer-sources
-          tids  [[tid i.all-indexer-sources] tids]
-      ::
-          cards
-        :+  %+  ~(watch-our pass:io /pinger/[tid])
-            %spider  /thread-result/[tid]
-          %+  ~(poke-our pass:io /pinger/[tid])  %spider
-          [%spider-start !>(`start-args:spider`start-args)]
-        cards
       ==
     --
   ::
@@ -548,6 +289,12 @@
       :^  ~  ~  %wallet-update
       !>  ^-  wallet-update:w
       .^(wallet-update:w %gx (scry:io %wallet (snoc t.t.path %noun)))
+    ::
+    ::  return the @p and uqbar address for a sequencer on given town,
+    ::  if we know of one. form: (unit (pair address ship))
+    ::
+        [%sequencer-on-town @ ~]
+      ``noun+!>((~(get by sequencers.state) (slav %ux i.t.t.path)))
     ==
   ::
   ++  on-leave
@@ -579,6 +326,8 @@
       ?~  dock-path=(get-wex-dock-by-wire:uc path)  ~
       [(~(leave pass:io path) p.u.dock-path)]~
     --
+  ::
+  ++  on-arvo  on-arvo:def
   ++  on-fail   on-fail:def
   --
 ::
@@ -586,33 +335,6 @@
 ::
 |_  =bowl:gall
 +*  io  ~(. agentio bowl)
-::
-++  make-ping-wait-card
-  |=  next-ping-time=@da
-  ^-  card
-  %.  next-ping-time
-  %~  wait  pass:io
-  /start-indexer-ping/(scot %da next-ping-time)
-::
-++  make-next-ping-time
-  |=  [min-time=@dr max-time=@dr]
-  ^-  @da
-  %+  add  now.bowl
-  %+  add  min-time
-  %-  ~(rad og eny.bowl)
-  (sub max-time min-time)
-::
-++  roll-without-replacement
-  |=  [max=@ud seen=(list @ud)]
-  ^-  [@ud (list @ud)]
-  =/  number-seen=@ud  (lent seen)
-  =/  roll=@ud  (~(rad og eny.bowl) (sub max number-seen))
-  =|  index=@ud
-  |-
-  ?:  |(=(number-seen index) (lth roll (snag index seen)))
-    =.  roll  (add roll index)
-    [roll (into seen index roll)]
-  $(index +(index))
 ::
 ++  get-wex-dock-by-wire
   |=  =wire
@@ -625,67 +347,4 @@
   =*  wex  i.wexs
   ?.  =(wire w.wex)  $(wexs t.wexs)
   `[[s.wex t.wex] p.wex]
-::
-++  get-best-source
-  |=  [town=id:smart seen=(list @ud) level=?(%nu %nd %pu %pd %~)]
-  ^-  (unit [p=dock q=(list @ud) r=?(%nu %nd %pu %pd %~)])
-  ::  TODO:
-  ::   temporary hack to reduce fragility, since the
-  ::   complicated fallback logic below is not required
-  ::   until remote scry (because all users must host their
-  ::   own %indexer anyways). Once remote scry is out,
-  ::   revisit the fallback logic below and make it robust.
-  `[[our.bowl %indexer] ~ %~]
-  :: |^  ^-  (unit [p=dock q=(list @ud) r=?(%nu %nd %pu %pd %~)])
-  :: ?:  ?=(%~ level)  ~
-  :: =/  best-source  get-best-source-inner
-  :: ?~  best-source  ~
-  :: ?^  p.u.best-source  `[u.p.u.best-source +.u.best-source]
-  :: %=  $
-  ::     seen   q.u.best-source
-  ::     level  r.u.best-source
-  :: ==
-  :: ::
-  :: ++  get-best-source-inner
-  ::   ^-  (unit [p=(unit dock) q=(list @ud) r=?(%nu %nd %pu %pd %~)])
-  ::   =+  town-spr=(~(get by indexer-sources-ping-results) town-id)
-  ::   =+  town-s=(~(get ju indexer-sources) town-id)
-  ::   ?~  town-spr
-  ::     =/  size-town-s=@ud  ~(wyt in town-s)
-  ::     ?:  =(0 size-town-s)  ~
-  ::     =^  index  seen
-  ::       (roll-without-replacement size-town-s seen)
-  ::     `[`(snag index ~(tap in town-s)) seen %~]
-  ::   =/  [level-town-spr=(set dock) next-level=?(%nu %nd %pu %pd %~)]
-  ::     =*  newest-up    newest-up.u.town-spr
-  ::     =*  newest-down  newest-down.u.town-spr
-  ::     =/  newest-seen-so-far=(set dock)
-  ::       (~(uni in newest-up) newest-down)
-  ::     ?+    level  !!  ::  TODO: handle better?
-  ::         %nu
-  ::       :-  newest-up
-  ::       ?:  (gth ~(wyt in newest-up) (lent seen))  level
-  ::       ?:(=(town-s newest-seen-so-far) %nd %pu)
-  ::     ::
-  ::         %pu
-  ::       =*  previous-up  previous-up.u.town-spr
-  ::       :-  (~(dif in previous-up) newest-seen-so-far)
-  ::       ?:((gth ~(wyt in previous-up) (lent seen)) level %pd)
-  ::     ::
-  ::         %pd
-  ::       =*  previous-down  previous-down.u.town-spr
-  ::       :-  (~(dif in previous-down) newest-seen-so-far)
-  ::       ?:((gth ~(wyt in previous-down) (lent seen)) level %nd)
-  ::     ::
-  ::         %nd
-  ::       :-  newest-down
-  ::       ?:((gth ~(wyt in newest-down) (lent seen)) level %~)
-  ::     ==
-  ::   =/  size-level-town-spr=@ud  ~(wyt in level-town-spr)
-  ::   ?:  =(0 size-level-town-spr)  `[~ seen next-level]
-  ::   =^  index  seen
-  ::     (roll-without-replacement size-level-town-spr seen)
-  ::   :^  ~  `(snag index ~(tap in level-town-spr))
-  ::   ?.(=(level next-level) ~ seen)  next-level
-  :: --
 --
