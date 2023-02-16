@@ -1,4 +1,4 @@
-/-  *zig-sequencer
+/-  *zig-sequencer, w=zig-wallet
 |%
 ++  parse-deposit-bytes
   |=  bytes=@
@@ -22,6 +22,17 @@
     latest-diff-hash.hall  diff-hash.proposed
     roots.hall             (snoc roots.hall.u.old root.proposed)
   ==
+::
+++  get-our-caller
+  |=  [addr=@ux town=@ux our=@p now=@da]
+  ^-  caller:smart
+  =/  =wallet-update:w
+    .^  wallet-update:w  %gx
+        %+  weld  /(scot %p our)/wallet/(scot %da now)
+        /account/(scot %ux addr)/(scot %ux town)/noun
+    ==
+  ?>  ?=(%account -.wallet-update)
+  caller.wallet-update
 ::
 ++  read-item
   |=  [=path =state]
