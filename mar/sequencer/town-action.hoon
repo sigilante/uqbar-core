@@ -11,7 +11,7 @@
     |%
     ++  process  ::  ONLY HANDLING %deposit POKES!!
       %-  of
-      :~  [%deposit (ot ~[[%hash (se %ux)] [%deposit-bytes (se %ux)]])]
+      :~  [%deposit (ot ~[[%deposit-bytes sa]])]
       ==
     --
   --

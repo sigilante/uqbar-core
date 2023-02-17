@@ -62,7 +62,7 @@
       [%del-block-height-api-key ~]
       [%clear-state ~]
       ::  transactions
-      [%deposit hash=@ux deposit-bytes=@ux]  ::  from sidecar
+      [%deposit deposit-bytes=tape]  ::  from sidecar
       [%receive =transaction:smart]
       [%run-pending eth-block-height=@ud]
       ::  batching
