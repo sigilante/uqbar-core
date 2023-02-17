@@ -310,6 +310,7 @@
 ::
 ++  shag
   |=  yux=*
+  ~>  %shag.+<
   ^-  hash
   %-  keccak-256:keccak:crypto
   ?@  yux
@@ -321,6 +322,7 @@
 ::
 ++  sore
   |=  [a=* b=*]
+  ~>  %sore.+<
   ^-  ?
   =+  [c=(shag a) d=(shag b)]
   ?:  =(c d)
@@ -331,6 +333,7 @@
 ::
 ++  sure
   |=  [a=* b=*]
+  ~>  %sure.+<
   ^-  ?
   =+  [c=(shag (shag a)) d=(shag (shag b))]
   ?:  =(c d)

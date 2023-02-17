@@ -1,5 +1,5 @@
 /-  *zig-zink
-/+  *zink-pedersen, *zink-json, merk
+/+  *zink-pedersen, *zink-json, smart=zig-sys-smart
 =>  |%
     +$  good      (unit *)
     +$  fail      (list [@ta *])
@@ -325,6 +325,7 @@
     ?~  cost=(~(get by jets.app) tag)
       ~&  [%missing-jet `@tas`tag]
       [%&^~ app]
+    ~&  [%running-jet `@tas`tag]
     ?:  (lth gas u.cost)  [%&^~ app]
     :-  (run-jet tag sam `@ud`u.cost)
     app(gas (sub gas u.cost))
@@ -332,6 +333,7 @@
   ++  run-jet
     |=  [tag=@ sam=* cost=@ud]
     ^-  body
+    ~>  %bout
     ::  TODO: probably unsustainable to need to include assertions to
     ::  make all jets crash safe.
     ?+    tag  %|^trace
@@ -489,6 +491,19 @@
         %shay
       ?.  ?=([@u @] sam)  %|^trace
       %&^(some (shay sam))
+    ::                                                                       ::
+    ::  merklization                                                         ::
+    ::                                                                       ::
+        %shag
+      %&^(some (shag:smart sam))
+    ::
+        %sore
+      ?.  ?=([* *] sam)  %|^trace
+      %&^(some (sore:smart sam))
+    ::
+        %sure
+      ?.  ?=([* *] sam)  %|^trace
+      %&^(some (sure:smart sam))
     ::                                                                       ::
     ::  etc                                                                  ::
     ::                                                                       ::

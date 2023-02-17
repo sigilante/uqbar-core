@@ -69,6 +69,10 @@
       [%sham 1.000]
       [%shax 1.000]
       [%shay 1.000]
+      ::  merklization
+      [%shag 1.000]
+      [%sore 2.000]
+      [%sure 4.000]
       ::  etc
       [%need 1]
       [%scot 5]
