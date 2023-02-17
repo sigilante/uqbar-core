@@ -305,9 +305,8 @@
   |=  a=(tree (pair key (pair hash value)))
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
-::  +shag: the standard noun hashing function for uqbar. will likely be
-::  poseidon in ZK mode. this must align to hashing function in rollup
-::  contract, so we use a noun-hashing version of keccak-256
+::  +shag: the standard noun hashing function for uqbar. uses a special
+::  form of RLP-encoding to make items discoverable in the state tree
 ::
 ++  shag
   |=  yux=*
@@ -315,7 +314,7 @@
   %-  keccak-256:keccak:crypto
   ?@  yux
     [(met 3 yux) yux]
-  =+  (jam yux)
+  =+  (encode:rlp p+yux)
   [(met 3 -) -]
 ::
 ::  +sore: single hash in ascending order, uses +dor as fallback
@@ -1213,6 +1212,132 @@
   %+  end  [3 20]
   %+  keccak-256  64
   (rev 3 64 pub)
+::
+::  *custom* RLP encoding/decoding
+::  treats nouns as lists
+::
+++  rlp
+  |%
+  +$  item
+    $@  @
+    $%  [%p p=*]
+        [%b b=byts]
+    ==
+  ::
+  ++  encode
+    |=  in=*
+    |^  ^-  @
+        ?+  in  !!
+            @
+          $(in [%b (met 3 in) in])
+        ::
+            [%b b=byts]
+          ?:  &(=(1 wid.b.in) (lte dat.b.in 0x7f))
+            dat.b.in
+          =-  (can 3 ~[b.in [(met 3 -) -]])
+          (encode-length wid.b.in 0x80)
+        ::
+            [%p p=*]
+          ::  we +can because b+1^0x0 encodes to 0x00
+          ::
+          =/  l=(list byts)
+            =|  l=(list byts)
+            |-
+            ?@  p.in
+              =+  (encode p.in)
+              [(met 3 -)^- l]
+            ?@  -.p.in
+              =+  (encode -.p.in)
+              $(l [(met 3 -)^- l], p.in +.p.in)
+            =+  (encode [%p -.p.in])
+            $(l [(met 3 -)^- l], p.in +.p.in)
+          %+  can  3
+          =-  (snoc l (met 3 -)^-)
+          (encode-length (roll (turn l head) add) 0xc0)
+        ==
+    ::
+    ++  encode-length
+      |=  [len=@ off=@]
+      ?:  (lth len 56)  (add len off)
+      =-  (cat 3 len -)
+      :(add (met 3 len) off 55)
+    --
+  ::
+  ++  decode
+    |=  dat=@
+    ^-  *
+    =/  bytes=(list @)  (flop (rip 3 dat))
+    =?  bytes  ?=(~ bytes)  ~[0]
+    |^  noun:decode-head
+    ::
+    ++  decode-head
+      ^-  [done=@ud =noun]
+      ?~  bytes
+        ~|  %rlp-unexpected-end
+        !!
+      =*  byt  i.bytes
+      ::  byte in 0x00-0x79 range encodes itself
+      ::
+      ?:  (lte byt 0x79)
+        :-  1
+        ::  [%b 1^byt]
+        byt
+      ::  byte in 0x80-0xb7 range encodes string length
+      ::
+      ?:  (lte byt 0xb7)
+        =+  len=(sub byt 0x80)
+        :-  +(len)
+        ::  :-  %b
+        ::  len^(get-value 1 len)
+        (get-value 1 len)
+      ::  byte in 0xb8-0xbf range encodes string length length
+      ::
+      ?:  (lte byt 0xbf)
+        =+  led=(sub byt 0xb7)
+        =+  len=(get-value 1 led)
+        :-  (add +(led) len)
+        ::  :-  %b
+        ::  len^(get-value +(led) len)
+        (get-value +(led) len)
+      ::  byte in 0xc0-f7 range encodes list length
+      ::
+      ?:  (lte byt 0xf7)
+        =+  len=(sub byt 0xc0)
+        :-  +(len)
+        ::  :-  %p
+        %.  len
+        decode-list(bytes (slag 1 `(list @)`bytes))
+      ::  byte in 0xf8-ff range encodes list length length
+      ::
+      ?:  (lte byt 0xff)
+        =+  led=(sub byt 0xf7)
+        =+  len=(get-value 1 led)
+        :-  (add +(led) len)
+        ::  :-  %p
+        %.  len
+        decode-list(bytes (slag +(led) `(list @)`bytes))
+      ~|  [%rip-not-bloq-3 `@ux`byt]
+      !!
+    ::
+    ++  decode-list
+      |=  rem=@ud
+      ^-  *
+      ?:  =(1 rem)
+        noun:decode-head
+      =+  ^-  [don=@ud =noun]
+        decode-head
+      :-  noun
+      %=  $
+        rem    (sub rem don)
+        bytes  (slag don bytes)
+      ==
+    ::
+    ++  get-value
+      |=  [at=@ud to=@ud]
+      ^-  @
+      (rep 3 (flop (swag [at to] bytes)))
+    --
+--
 ::
 ::  AMES from lull.hoon
 ::
