@@ -534,9 +534,6 @@
         %reco
       ?.  ?=([@ [@ @ @]] sam)  %|^trace
       %&^(some (ecdsa-raw-recover:secp256k1:secp:crypto sam))
-    ::
-        %shag
-      %&^(some (shag:merk sam))
     ==
   ::
   ++  frag

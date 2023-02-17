@@ -103,7 +103,7 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      ::  pith with last value equal to @ux hash of compiled core
+      ::  pith with last value equal to +sham of compiled core
       ::  if ~, developer did not provide an interface
       interface=pith
   ==
@@ -1272,23 +1272,17 @@
     ::
     ++  decode-head
       ^-  [done=@ud =noun]
-      ?~  bytes
-        ~|  %rlp-unexpected-end
-        !!
+      ?~  bytes  !!
       =*  byt  i.bytes
       ::  byte in 0x00-0x79 range encodes itself
       ::
       ?:  (lte byt 0x79)
-        :-  1
-        ::  [%b 1^byt]
-        byt
+        1^byt
       ::  byte in 0x80-0xb7 range encodes string length
       ::
       ?:  (lte byt 0xb7)
         =+  len=(sub byt 0x80)
         :-  +(len)
-        ::  :-  %b
-        ::  len^(get-value 1 len)
         (get-value 1 len)
       ::  byte in 0xb8-0xbf range encodes string length length
       ::
@@ -1296,15 +1290,12 @@
         =+  led=(sub byt 0xb7)
         =+  len=(get-value 1 led)
         :-  (add +(led) len)
-        ::  :-  %b
-        ::  len^(get-value +(led) len)
         (get-value +(led) len)
       ::  byte in 0xc0-f7 range encodes list length
       ::
       ?:  (lte byt 0xf7)
         =+  len=(sub byt 0xc0)
         :-  +(len)
-        ::  :-  %p
         %.  len
         decode-list(bytes (slag 1 `(list @)`bytes))
       ::  byte in 0xf8-ff range encodes list length length
@@ -1313,10 +1304,8 @@
         =+  led=(sub byt 0xf7)
         =+  len=(get-value 1 led)
         :-  (add +(led) len)
-        ::  :-  %p
         %.  len
         decode-list(bytes (slag +(led) `(list @)`bytes))
-      ~|  [%rip-not-bloq-3 `@ux`byt]
       !!
     ::
     ++  decode-list

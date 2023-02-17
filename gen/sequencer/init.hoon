@@ -81,7 +81,7 @@
       zigs-contract-id:smart  ::  holder
       town-id                 ::  town-id
       [- +]:(cue zigs-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart zigs-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham zigs-mar)]^~
   ==
 ::  publish.hoon contract
 =/  publish-pact
@@ -91,7 +91,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:(cue publish-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart publish-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham publish-mar)]^~
   ==
 ::  ueth metadata item
 =/  ueth-metadata
@@ -121,7 +121,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:(cue ueth-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham fungible-mar)]^~
   ==
 ::  nft.hoon contract
 =/  nft-pact
@@ -184,7 +184,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:code
-      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham fungible-mar)]^~
   ==
 ::
 =/  fake-state
