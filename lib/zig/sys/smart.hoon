@@ -306,16 +306,19 @@
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
 ::  +shag: the standard noun hashing function for uqbar. will likely be
-::  poseidon in ZK mode, but a simple +sham (half-sha-256) will do for now.
+::  poseidon in ZK mode. this must align to hashing function in rollup
+::  contract, so we use a noun-hashing version of keccak-256
 ::
 ++  shag
   |=  yux=*
-  ~>  %shag.+<
   ^-  hash
-  `@ux`(sham yux)
+  %-  keccak-256:keccak:crypto
+  ?@  yux
+    [(met 3 yux) yux]
+  =+  (jam yux)
+  [(met 3 -) -]
 ::
-::  +sore: single Pedersen hash in ascending order, uses +dor as
-::  fallback
+::  +sore: single hash in ascending order, uses +dor as fallback
 ::
 ++  sore
   |=  [a=* b=*]
@@ -325,8 +328,7 @@
     (dor a b)
   (lth c d)
 ::
-::  +sure: double Pedersen hash in ascending order, uses +dor as
-::  fallback
+::  +sure: double hash in ascending order, uses +dor as fallback
 ::
 ++  sure
   |=  [a=* b=*]
@@ -560,7 +562,7 @@
     $(a r.a, b $(a l.a, b (~(put in b) p.n.a)))
   --
 ::                                                      ::
-::  set, but using pedersen hash                        ::
+::  set, but using shag hash                            ::
 ::  TODO jet                                            ::
 ::
 ++  pset
@@ -568,7 +570,7 @@
   $|  (tree item)
   |=(a=(tree) ?:(=(~ a) & ~(apt pn a)))
 ::
-++  pn                                                  ::  pedersen-set engine
+++  pn                                                  ::  shag-set engine
   =|  a=(tree)  :: (set)
   |@
   ++  all                                               ::  logical AND
@@ -778,7 +780,7 @@
     ?~(a 0 +((add $(a l.a) $(a r.a))))
   --
 ::                                                      ::
-::  map logic, but with pedersen ordering               ::
+::  map logic, but with shag ordering                   ::
 ::  TODO jet                                            ::
 ::
 ++  pmap

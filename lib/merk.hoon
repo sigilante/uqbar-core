@@ -8,9 +8,13 @@
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
 ++  shag                                                ::  256bit noun hash
-  |=  yux=*  ^-  hash
-  ::  TODO: make LRU-cache-optimized version for granary retrivial & modification
-  `@ux`(sham yux)
+  |=  yux=*
+  ^-  hash
+  %-  keccak-256:keccak:crypto
+  ?@  yux
+    [(met 3 yux) yux]
+  =+  (jam yux)
+  [(met 3 -) -]
 ::
 ::  +sore: single sha-256 hash in ascending order, uses +dor as
 ::  fallback
