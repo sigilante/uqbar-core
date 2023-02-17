@@ -45,13 +45,13 @@
 ++  hash-pact
   |=  [source=id holder=id town=id code=*]
   ^-  id
-  ^-  @ux  %-  shax
+  ^-  @ux  %-  shag
   :((cury cat 3) town source holder (sham code))
 ::
 ++  hash-data
   |=  [source=id holder=id town=id salt=@]
   ^-  id
-  ^-  @ux  %-  shax
+  ^-  @ux  %-  shag
   :((cury cat 3) town source holder salt)
 ::
 ::  +result: generate a diff
@@ -175,7 +175,7 @@
 ::
 ::  EIP-712 mold for offchain data signing
 ::  :domain pact that this message will modify
-::  :type is the +sham of the message type jold
+::  :type is the +shag of the message type jold
 ::  :message the noun being signed
 +$  typed-message  [domain=id type=@ux message=*]
 ::
@@ -184,7 +184,7 @@
   ^-  id
   %-  address-from-pub
   %-  serialize-point:secp256k1:secp:crypto
-  (ecdsa-raw-recover:secp256k1:secp:crypto (sham typed-message) sig)
+  (ecdsa-raw-recover:secp256k1:secp:crypto (shag typed-message) sig)
 ::
 ::  typed paths inside contracts
 ::  taken from: https://github.com/urbit/urbit/pull/5887
