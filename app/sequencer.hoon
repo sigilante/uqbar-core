@@ -510,6 +510,15 @@
     ?~  town  [~ ~]
     ``noun+!>((~(has by p.chain.u.town) id))
   ::
+      [%state-tree ~]
+    ::  return working state merkle tree
+    ?~  town  [~ ~]
+    =/  working-chain=chain
+      ?~  proposed-batch
+        chain.u.town
+      chain.u.proposed-batch
+    ``noun+!>(p.working-chain)
+  ::
       [%all-data ~]
     ?~  town  [~ ~]
     =-  ``noun+!>(-)
@@ -520,7 +529,11 @@
   ::
       [%item @ ~]
     ?~  town  [~ ~]
-    (read-item t.path p.chain.u.town)
+     =/  working-chain=chain
+      ?~  proposed-batch
+        chain.u.town
+      chain.u.proposed-batch
+    ``noun+!>((get:big p.working-chain (slav %ux i.t.t.path)))
   ==
 ::
 ++  on-leave  on-leave:def

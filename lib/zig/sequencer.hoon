@@ -33,11 +33,4 @@
     ==
   ?>  ?=(%account -.wallet-update)
   caller.wallet-update
-::
-++  read-item
-  |=  [=path =state]
-  ^-  (unit (unit cage))
-  ?>  ?=([%grain @ ~] path)
-  =/  id  (slav %ux i.t.path)
-  ``noun+!>((get:big state id))
 --
