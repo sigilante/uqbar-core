@@ -7,6 +7,8 @@
 =<
 |%
 ::  merkle engine for chain-state
+::  NEVER use this outside of a contract, it's "unjetted"
+::  instead, use lib/merk.hoon
 ++  big  (bi id item)
 ::
 ::  +husk: check provenance and fit data to mold
@@ -40,7 +42,7 @@
   .*  0
   [%12 [%0 1] [%1 `pith`[%contract [%ux id] pit]]]
 ::
-::  +hash: standard hashing functions for items
+::  +hash-pact, +hash-data: standard hashing functions for items
 ::
 ++  hash-pact
   |=  [source=id holder=id town=id code=*]
@@ -310,7 +312,6 @@
 ::
 ++  shag
   |=  yux=*
-  ~>  %shag.+<
   ^-  hash
   %-  keccak-256:keccak:crypto
   ?@  yux
@@ -322,7 +323,6 @@
 ::
 ++  sore
   |=  [a=* b=*]
-  ~>  %sore.+<
   ^-  ?
   =+  [c=(shag a) d=(shag b)]
   ?:  =(c d)
@@ -333,7 +333,6 @@
 ::
 ++  sure
   |=  [a=* b=*]
-  ~>  %sure.+<
   ^-  ?
   =+  [c=(shag (shag a)) d=(shag (shag b))]
   ?:  =(c d)
@@ -1229,6 +1228,7 @@
   ::
   ++  encode
     |=  in=*
+    ~>  %rlp-encode.+<
     |^  ^-  @
         ?+  in  !!
             @
@@ -2943,7 +2943,9 @@
       ~>  %k512.+<
       (keccak 576 1.024 512 a)
     ::
-    ++  keccak  (cury (cury hash keccak-f) padding-keccak)
+    ++  keccak
+      ~>  %this-should-never-print
+      (cury (cury hash keccak-f) padding-keccak)
     ::
     ++  padding-keccak  (multirate-padding 0x1)
     ::
