@@ -1,5 +1,5 @@
 /-  *zig-zink
-/+  *zink-pedersen, *zink-json, merk
+/+  *zink-pedersen, *zink-json, smart=zig-sys-smart
 =>  |%
     +$  good      (unit *)
     +$  fail      (list [@ta *])
@@ -250,7 +250,7 @@
     app(hit [%10 axis.f u.hval u.htar u.holdleaf u.hsibs]^hit)
   ::
        [%11 tag=@ next=*]
-    ~&  >  `@tas`tag.f
+    ::  ~&  >  `@tas`tag.f
     =^  next=body  app
       $(f next.f)
     :_  app
@@ -262,10 +262,6 @@
   ::
       [%11 [tag=@ clue=*] next=*]
     ::  look for jet with this tag and compute sample
-    ::  ~&  >  "hint: {<`@tas`tag.f>}"
-    ::  ~?  ?=(%fast tag.f)
-    ::    ?>  ?=([@ @ [@ @] @] clue.f)
-    ::    "jet: {<`@tas`-.+.clue.f>}"
     =^  sam=body  app
       $(f clue.f)
     ?:  ?=(%| -.sam)  [%|^trace app]
@@ -323,8 +319,9 @@
       ::  this is a crash..
       [%|^trace app]
     ?~  cost=(~(get by jets.app) tag)
-      ~&  [%missing-jet `@tas`tag]
+      ::  ~&  [%missing-jet `@tas`tag]
       [%&^~ app]
+    ::  ~&  [%running-jet `@tas`tag]
     ?:  (lth gas u.cost)  [%&^~ app]
     :-  (run-jet tag sam `@ud`u.cost)
     app(gas (sub gas u.cost))
@@ -490,6 +487,22 @@
       ?.  ?=([@u @] sam)  %|^trace
       %&^(some (shay sam))
     ::                                                                       ::
+    ::  merklization                                                         ::
+    ::                                                                       ::
+    ::      %shag
+    ::    %&^(some (shag:smart sam))
+    ::  ::
+    ::      %sore
+    ::    ?.  ?=([* *] sam)  %|^trace
+    ::    %&^(some (sore:smart sam))
+    ::  ::
+    ::      %sure
+    ::    ?.  ?=([* *] sam)  %|^trace
+    ::    %&^(some (sure:smart sam))
+    ::
+        %rlp-encode
+      %&^(some (encode:rlp:smart sam))
+    ::                                                                       ::
     ::  etc                                                                  ::
     ::                                                                       ::
         %need
@@ -534,9 +547,6 @@
         %reco
       ?.  ?=([@ [@ @ @]] sam)  %|^trace
       %&^(some (ecdsa-raw-recover:secp256k1:secp:crypto sam))
-    ::
-        %shag
-      %&^(some (shag:merk sam))
     ==
   ::
   ++  frag

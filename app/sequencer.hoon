@@ -159,7 +159,7 @@
           chain.u.town
         chain.u.proposed-batch
       =/  acc-id=id:smart
-        %:  hash-data:smart
+        %:  hash-data:eng
             ueth-contract-id:smart
             destination-address.deposit
             town-id.hall.u.town

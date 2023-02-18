@@ -40,33 +40,33 @@
   ::
   ::  for the following three keys (1, 2, 3) the vertical priorities are:
   ::    > (shag (shag 1))
-  ::    0xe062.85a4...
+  ::    0x4e25.aacb...
   ::    > (shag (shag 2))
-  ::    0xd1b3.01b1...
+  ::    0xcb5e.f16d...
   ::    > (shag (shag 3))
-  ::    0x8b4a.4159...
+  ::    0x872d.1ff8...
   ::
-  ::  and the ordering 3 < 2 < 1
+  ::  and the ordering 1 < 3 < 2
   ::  a correctly balanced tree stored as a min-heap
-  ::  should have key=3 as the root
+  ::  should have key=1 as the root
   ::
   ::  The horizontal priorities are:
   ::    > (shag 1)
-  ::    0xd798.3546...
+  ::    0x5fe7.f977...
   ::    > (shag 2)
-  ::    0x29cb.04ad...
+  ::    0xf2ee.15ea...
   ::    > (shag 3)
-  ::    0xea59.fdfb...
+  ::    0x69c3.22e3...
   ::
-  ::  and the ordering 2 < 1 < 3.
+  ::  and the ordering 1 < 3 < 2.
   ::
-  ::  2 should be in the left branch and 1 in the right branch of the
+  ::  1 should be in the left branch and 3 in the right branch of the
   ::  left.
   ::
   =/  balanced-a=(merk @ @)
-    =-  [[3 (mer:bi [[3 0x0 3] - ~] 3 3) 3] - ~]
-    =-  [[2 (mer:bi [[2 0x0 2] ~ -] 2 2) 2] ~ -]
-    [[1 (mer:bi ~ 1 1) 1] ~ ~]
+    =-  [[1 (mer:bi [[1 0x0 1] ~ -] 1 1) 1] ~ -]
+    =-  [[3 (mer:bi [[3 0x0 3] ~ -] 3 3) 3] ~ -]
+    [[2 (mer:bi ~ 2 2) 2] ~ ~]
 ::  ::  doesn't follow vertical ordering
 ::  ::
 ::  =/  unbalanced-a=(merk @ @)  [[1 1] [[2 2] ~ ~] [[3 3] ~ ~]]

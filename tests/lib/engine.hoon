@@ -100,7 +100,7 @@
     ^-  item:smart
     =/  code  (cue engine-tester-contract)
     :*  %|
-        (hash-pact:smart 0x0 0x0 town-id code)  ::  id
+        (hash-pact 0x0 0x0 town-id code)  ::  id
         0x0  ::  source
         0x0  ::  holder
         town-id

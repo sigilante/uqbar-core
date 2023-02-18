@@ -1,10 +1,10 @@
-/+  smart=zig-sys-smart
+/+  smart=zig-sys-smart, merk
 |%
-++  big  (bi:smart id:smart item:smart)  ::  merkle engine for state
-++  pig  (bi:smart id:smart @ud)         ::                for nonces
+++  big  (bi:merk id:smart item:smart)  ::  merkle engine for state
+++  pig  (bi:merk id:smart @ud)         ::                for nonces
 ::
-+$  state   (merk:smart id:smart item:smart)
-+$  nonces  (merk:smart address:smart @ud)
++$  state   (merk:merk id:smart item:smart)
++$  nonces  (merk:merk address:smart @ud)
 +$  chain   (pair state nonces)
 ::
 +$  mempool  (map hash=@ux [from=@p tx=transaction:smart])

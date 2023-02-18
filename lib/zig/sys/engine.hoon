@@ -328,9 +328,9 @@
             !(has:big p.chain id.p.item)
             ?:  ?=(%| -.item)
               .=  id
-              (hash-pact:smart [source holder town code]:p.item)
+              (hash-pact [source holder town code]:p.item)
             .=  id
-            (hash-data:smart [source holder town salt]:p.item)
+            (hash-data [source holder town salt]:p.item)
         ==
       ::
         %-  ~(all in burned.diff)
@@ -400,7 +400,7 @@
       ?~  acc=(get:big state zigs.sequencer)
         =*  zc  zigs-contract-id:smart
         =/  =id:smart
-          %-  hash-data:smart
+          %-  hash-data
           [zc address.sequencer town-id `@`'zigs']
         :-  ~  :-  id
         =+  [total ~ `@ux`'zigs-metadata' ~]
@@ -430,6 +430,22 @@
   [hash tx ~]
 ::
 ::  utilities
+::
+::
+::  reproductions of hashing functions inside smart.hoon for use outside
+::  the contract engine.
+::
+++  hash-pact
+  |=  [source=id:smart holder=id:smart town=id:smart code=*]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder (sham code))
+::
+++  hash-data
+  |=  [source=id:smart holder=id:smart town=id:smart salt=@]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder salt)
 ::
 ++  verify-sig
   |=  tx=transaction:smart

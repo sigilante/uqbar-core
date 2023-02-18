@@ -7,13 +7,19 @@
   |=  a=(tree (pair key (pair hash value)))
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
-++  shag                                                ::  256bit noun hash
-  |=  yux=*  ^-  hash
-  ::  TODO: make LRU-cache-optimized version for granary retrivial & modification
-  `@ux`(sham yux)
+::  +shag: the standard noun hashing function for uqbar. uses a special
+::  form of RLP-encoding to make items discoverable in the state tree
 ::
-::  +sore: single sha-256 hash in ascending order, uses +dor as
-::  fallback
+++  shag
+  |=  yux=*
+  ^-  hash
+  %-  keccak-256:keccak:crypto
+  ?@  yux
+    [(met 3 yux) yux]
+  =+  (encode:rlp p+yux)
+  [(met 3 -) -]
+::
+::  +sore: single hash in ascending order, uses +dor as fallback
 ::
 ++  sore
   |=  [a=* b=*]
@@ -23,8 +29,7 @@
     (dor a b)
   (lth c d)
 ::
-::  +sure: double sha-256 hash in ascending order, uses +dor as
-::  fallback
+::  +sure: double hash in ascending order, uses +dor as fallback
 ::
 ++  sure
   |=  [a=* b=*]
@@ -253,5 +258,56 @@
     |-  ^+  b
     ?~  a  b
     $(a r.a, b $(a l.a, b (~(put in b) p.n.a)))
+  --
+::
+::  *custom* RLP encoding/decoding
+::  treats nouns as lists
+::
+++  rlp
+  |%
+  +$  item
+    $@  @
+    $%  [%p p=*]
+        [%b b=byts]
+    ==
+  ::
+  ++  encode
+    |=  in=*
+    |^  ^-  @
+        ?+  in  !!
+            @
+          $(in [%b (met 3 in) in])
+        ::
+            [%b b=byts]
+          ?:  &(=(1 wid.b.in) (lte dat.b.in 0x7f))
+            dat.b.in
+          =-  (can 3 ~[b.in [(met 3 -) -]])
+          (encode-length wid.b.in 0x80)
+        ::
+            [%p p=*]
+          ::  we +can because b+1^0x0 encodes to 0x00
+          ::
+          =/  l=(list byts)
+            =|  l=(list byts)
+            |-
+            ?@  p.in
+              =+  (encode p.in)
+              [(met 3 -)^- l]
+            ?@  -.p.in
+              =+  (encode -.p.in)
+              $(l [(met 3 -)^- l], p.in +.p.in)
+            =+  (encode [%p -.p.in])
+            $(l [(met 3 -)^- l], p.in +.p.in)
+          %+  can  3
+          =-  (snoc l (met 3 -)^-)
+          (encode-length (roll (turn l head) add) 0xc0)
+        ==
+    ::
+    ++  encode-length
+      |=  [len=@ off=@]
+      ?:  (lth len 56)  (add len off)
+      =-  (cat 3 len -)
+      :(add (met 3 len) off 55)
+    --
   --
 --

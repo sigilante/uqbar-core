@@ -69,11 +69,12 @@
       [%sham 1.000]
       [%shax 1.000]
       [%shay 1.000]
+      ::  merklization
+      [%rlp-encode 100]
       ::  etc
       [%need 1]
       [%scot 5]
       [%pedersen-hash 10]
-      [%shag 1.000]
       ::  crypto
       [%k224 100]  [%k256 100]  [%k384 100]  [%k512 100]
       [%make 100]  [%sign 100]  [%reco 100]

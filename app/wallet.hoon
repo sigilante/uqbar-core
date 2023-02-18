@@ -5,7 +5,7 @@
 ::
 /-  *zig-wallet, ui=zig-indexer
 /+  default-agent, dbug, verb, io=agentio,
-    ethereum, bip32, bip39,
+    ethereum, bip32, bip39, engine=zig-sys-engine,
     ui-lib=zig-indexer, zink=zink-zink,
     *zig-wallet, smart=zig-sys-smart
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
@@ -407,7 +407,7 @@
           ::  upon signing.
           `@ud`(cut 3 [0 3] eny.bowl)
         ::  generate our zigs token account ID
-        (hash-data:smart zigs-contract-id:smart from.act town.act `@`'zigs')
+        (hash-data:engine zigs-contract-id:smart from.act town.act `@`'zigs')
       ::  build calldata of transaction, depending on argument type
       =/  =calldata:smart
         ?-    -.action.act
@@ -589,7 +589,7 @@
     =/  pub  (slav %ux i.t.t.path)
     =/  town  (slav %ux i.t.t.t.path)
     =/  nonce  (~(gut by (~(gut by nonces.state) pub ~)) town 0)
-    =+  (hash-data:smart `@ux`'zigs-contract' pub town `@`'zigs')
+    =+  (hash-data:engine `@ux`'zigs-contract' pub town `@`'zigs')
     ``wallet-update+!>(`wallet-update`[%account `caller:smart`[pub nonce -]])
   ::
       [%signed-message @ ~]

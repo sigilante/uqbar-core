@@ -1,5 +1,5 @@
 /-  *zig-sequencer
-/+  ethereum, merk, smart=zig-sys-smart
+/+  ethereum, merk, smart=zig-sys-smart, engine=zig-sys-engine
 /=  fungible-mar  /con/mar/fungible
 /=  publish-mar   /con/mar/publish
 /=  zigs-mar      /con/mar/zigs
@@ -16,9 +16,9 @@
 =/  pubkey-1  0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70
 =/  pubkey-2  0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de
 =/  pubkey-3  0x5da4.4219.e382.ad70.db07.0a82.12d2.0559.cf8c.b44d
-=/  zigs-1  (hash-data:smart zigs-contract-id:smart pubkey-1 town-id `@`'zigs')
-=/  zigs-2  (hash-data:smart zigs-contract-id:smart pubkey-2 town-id `@`'zigs')
-=/  zigs-3  (hash-data:smart zigs-contract-id:smart pubkey-3 town-id `@`'zigs')
+=/  zigs-1  (hash-data:engine zigs-contract-id:smart pubkey-1 town-id `@`'zigs')
+=/  zigs-2  (hash-data:engine zigs-contract-id:smart pubkey-2 town-id `@`'zigs')
+=/  zigs-3  (hash-data:engine zigs-contract-id:smart pubkey-3 town-id `@`'zigs')
 ::
 =/  beef-zigs-item
   ^-  item:smart
@@ -81,7 +81,7 @@
       zigs-contract-id:smart  ::  holder
       town-id                 ::  town-id
       [- +]:(cue zigs-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart zigs-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham zigs-mar)]^~
   ==
 ::  publish.hoon contract
 =/  publish-pact
@@ -91,7 +91,7 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:(cue publish-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart publish-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham publish-mar)]^~
   ==
 ::  ueth metadata item
 =/  ueth-metadata
@@ -121,13 +121,13 @@
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:(cue ueth-contract)
-      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham fungible-mar)]^~
   ==
 ::  nft.hoon contract
 =/  nft-pact
   ^-  pact:smart
   =/  code  (cue nft-contract)
-  :*  (hash-pact:smart 0x0 0x0 town-id code)
+  :*  (hash-pact:engine 0x0 0x0 town-id code)
       0x0          ::  source
       0x0          ::  holder
       town-id     ::  town-id
@@ -179,12 +179,12 @@
 =/  fungible-pact
   ^-  pact:smart
   =/  code  (cue fungible-contract)
-  :*  (hash-pact:smart 0x0 0x0 town-id code)
+  :*  (hash-pact:engine 0x0 0x0 town-id code)
       0x0          ::  source
       0x0          ::  holder
       town-id      ::  town-id
       [- +]:code
-      interface=`pith:smart`[%ux `@ux`(shag:smart fungible-mar)]^~
+      interface=`pith:smart`[%ux `@ux`(sham fungible-mar)]^~
   ==
 ::
 =/  fake-state
