@@ -3,21 +3,21 @@
 ::
 /+  *test, smart=zig-sys-smart, *zig-sys-engine, merk
 /*  smart-lib-noun          %noun  /lib/zig/sys/smart-lib/noun
-/*  zink-cax-noun           %noun  /lib/zig/sys/hash-cache/noun
 /*  zigs-contract           %jam   /con/compiled/zigs/jam
 /*  engine-tester-contract  %jam   /con/compiled/engine-tester/jam
+=>
 |%
 ::
 ::  constants / dummy info for mill
 ::
 ++  big  (bi:merk id:smart item:smart)  ::  merkle engine for granary
 ++  pig  (bi:merk id:smart @ud)         ::                for populace
-++  town-id    0x0
-++  fake-sig   [0 0 0]
+++  town-id   0x0
+++  fake-sig  [0 0 0]
 ++  eng
   %~  engine  engine
   :^  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  *(map * @)  %.n  %.n  ::  sigs off, hints off
+  *(map * @)  jets:zink  [%.n %.n]  ::  sigs off, hints off
 ::
 ::  fake data
 ::
@@ -39,13 +39,12 @@
   |%
   ++  pact
     ^-  item:smart
-    =/  code  (cue zigs-contract)
     :*  %|
         zigs-contract-id:smart  ::  id
         zigs-contract-id:smart  ::  source
         zigs-contract-id:smart  ::  holder
         town-id
-        [-.code +.code]
+        [- +]:(cue zigs-contract)
         ~
     ==
   ++  sequencer-account
@@ -58,6 +57,17 @@
         `@`'zigs'
         %account
         [1.000.000 ~ `@ux`'zigs-metadata' ~]
+    ==
+  ++  zig-account
+    |=  [holder=id:smart amt=@ud]
+    ^-  item:smart
+    :*  %&
+        (hash-data:smart zigs-contract-id:smart holder town-id `@`'zigs')
+        zigs-contract-id:smart
+        holder
+        town-id
+        `@`'zigs'  %account
+        [amt ~ `@ux`'zigs-metadata' ~]
     ==
   ++  account-1
     ^-  item:smart
@@ -153,6 +163,13 @@
   ^-  chain
   [fake-state fake-nonces]
 ::
+++  make-modified
+  |=  [=address:smart spend=@ud]
+  =+  (zig-account:zigs address (sub 300.000.000 spend))
+  (gas:big *(merk:merk id:smart item:smart) ~[id.p.-^-])
+--
+|%
+::
 ::  begin single-transaction tests
 ::  calls +intake in eng core, examines single-transaction *output*
 ::  alphabet chars at beginning of test name are to make order roughly match
@@ -162,7 +179,7 @@
 ::
 ++  test-zz-engine-zigs-give
   =/  =calldata:smart
-    [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+    [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
   =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
   =/  =output
@@ -221,7 +238,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%9) !>(errorcode.output))
@@ -240,7 +256,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -257,7 +272,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -274,7 +288,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -291,7 +304,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -308,7 +320,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -325,7 +336,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -342,7 +352,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -359,7 +368,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -376,7 +384,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -393,7 +400,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -410,7 +416,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -427,7 +432,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -444,7 +448,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -461,7 +464,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -478,7 +480,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -495,7 +496,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -512,7 +512,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -529,7 +528,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ::  assert that our call failed validation
   ;:  weld
     (expect-eq !>(%7) !>(errorcode.output))
@@ -552,7 +550,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ;:  weld
     (expect-eq !>(%0) !>(errorcode.output))
     (expect-eq !>(~) !>(modified.output))
@@ -574,7 +571,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ;:  weld
     (expect-eq !>(%0) !>(errorcode.output))
     (expect-eq !>(~) !>(modified.output))
@@ -601,14 +597,15 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ;:  weld
     (expect-eq !>(%0) !>(errorcode.output))
     (expect-eq !>(~) !>(burned.output))
   ::
     %+  expect-eq
       =/  dd=data:smart  ;;(data:smart p:dummy-data:engine-tester)
-      !>  %+  gas:big  *(merk:merk id:smart item:smart)
+      !>  %+  uni:big
+            ~
+          %+  gas:big  *(merk:merk id:smart item:smart)
           ~[[id.dd %&^dd(noun 'my new noun!')]]
     !>(modified.output)
   ::
@@ -626,14 +623,15 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ;:  weld
     (expect-eq !>(%0) !>(errorcode.output))
     (expect-eq !>(~) !>(burned.output))
   ::
     %+  expect-eq
       =/  dd=data:smart  ;;(data:smart p:dummy-data:engine-tester)
-      !>  %+  gas:big  *(merk:merk id:smart item:smart)
+      !>  %+  uni:big
+            ~
+          %+  gas:big  *(merk:merk id:smart item:smart)
           ~[[id.dd %&^dd(noun 'my new noun!')]]
     !>(modified.output)
   ::
@@ -650,7 +648,6 @@
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
-  ~&  >  "gas spent: {<gas.output>}"
   ;:  weld
     (expect-eq !>(%6) !>(errorcode.output))
     (expect-eq !>(~) !>(modified.output))
@@ -786,7 +783,7 @@
   ::  this call takes about 16k gas, make sure to update
   ::  here if the gas calculation changes
   =/  =calldata:smart
-    [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+    [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
   =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
   =/  =output
@@ -813,12 +810,12 @@
   =/  =memlist
     :~  :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
           [caller-1 ~ id.p:pact:zigs [1 100.000] town-id 0]
         ~
         :+  0x0
           :+  fake-sig
-            [%give address:caller-1:zigs 1.000 id.p:account-2:zigs `id.p:account-1:zigs]
+            [%give address:caller-1:zigs 1.000 id.p:account-2:zigs]
           [caller-2 ~ id.p:pact:zigs [1 100.000] town-id 0]
         ~
     ==
@@ -840,12 +837,12 @@
   =/  =memlist
     :~  :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
           [caller ~ id.p:pact:zigs [1 100.000] town-id 0]
         ~
         :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
           [caller(nonce 2) ~ id.p:pact:zigs [1 100.000] town-id 0]
         ~
     ==
@@ -867,23 +864,23 @@
   =/  =memlist
     :~  :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
           [caller ~ id.p:pact:zigs [4 100.000] town-id 0]
         ~
         :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
-          [caller ~ id.p:pact:zigs [3 100.000] town-id 0]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
+          [caller(nonce 2) ~ id.p:pact:zigs [3 100.000] town-id 0]
         ~
         :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
-          [caller ~ id.p:pact:zigs [2 100.000] town-id 0]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
+          [caller(nonce 3) ~ id.p:pact:zigs [2 100.000] town-id 0]
         ~
         :+  0x0
           :+  fake-sig
-            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs `id.p:account-2:zigs]
-          [caller ~ id.p:pact:zigs [1 100.000] town-id 0]
+            [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
+          [caller(nonce 4) ~ id.p:pact:zigs [1 100.000] town-id 0]
         ~
     ==
   =/  st=state-transition
