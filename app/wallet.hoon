@@ -43,7 +43,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-%+  verb  &
+::  %+  verb  |
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -363,8 +363,8 @@
           ~|("%wallet: don't have private key for that address" !!)
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
         `@uvI`hash  u.priv.u.keypair
-      ~&  >>  "%wallet: submitting signed transaction"
-      ~&  >>  "with signature {<v.sig.tx^r.sig.tx^s.sig.tx>}"
+      ::  ~&  >>  "%wallet: submitting signed transaction"
+      ::  ~&  >>  "with signature {<v.sig.tx^r.sig.tx^s.sig.tx>}"
       ::  update stores
       :_  %=    state
               pending-store

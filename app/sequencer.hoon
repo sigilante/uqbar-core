@@ -247,7 +247,7 @@
         %run-pending
       ?>  =(src.bowl our.bowl)
       ?:  =(~ pending)
-        ~&  >  "%sequencer: no pending txns to run"
+        ::  ~&  >  "%sequencer: no pending txns to run"
         `state
       ?~  town  ~|("%sequencer: error: no state" !!)
       =/  addr  p.sequencer.hall.u.town
@@ -315,8 +315,8 @@
     ::
         %perform-batch
       ?>  =(src.bowl our.bowl)
-      ~&  %perform-batch
-      ~>  %bout
+      ::  ~&  %perform-batch
+      ::  ~>  %bout
       ?.  =(%available status)
         ~|("%sequencer: error: got poke while not active" !!)
       ?~  town
@@ -324,7 +324,7 @@
       ?~  rollup
         ~|("%sequencer: error: no known rollup host" !!)
       ?:  =(~ memlist)
-        ~&  >  "%sequencer: ignoring batch trigger, no transactions"
+        ::  ~&  >  "%sequencer: ignoring batch trigger, no transactions"
         `state
       ?>  ?=(%full-publish -.mode.hall.u.town)
       ::  publish full diff data
