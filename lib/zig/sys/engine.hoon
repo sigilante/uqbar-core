@@ -32,7 +32,12 @@
     =*  tx  tx.i.pending
     =/  =output
       ?~  output.i.pending
-        ~(intake eng chain.st tx)
+        =+  op=~(intake eng chain.st tx)
+        ::  charge cumulative gas fee for entire transaction
+        =/  gas-item
+          %-  ~(charge tax p.chain)
+          [modified.op caller.tx gas.op]
+        op(modified (put:big modified.op gas-item))
       u.output.i.pending
     %=  $
       pending     t.pending
@@ -78,10 +83,11 @@
         (exhaust bud.gas.tx %3 ~)
       ::
       =/  gas-payer  address.caller.tx
-      |-  ::  recursion point for calls
+      |-
+      ::  special burn transaction: remove an item from a town and
+      ::  reinstantiate it on a different town.
       ::
       ?:  &(=(0x0 contract.tx) =(%burn p.calldata.tx))
-        ::  special burn tx
         =/  fail  (exhaust bud.gas.tx %9 ~)
         ?.  ?=([id=@ux town=@ux] q.calldata.tx)         fail
         ?~  to-burn=(get:big p.chain id.q.calldata.tx)  fail
@@ -92,36 +98,48 @@
         ?:  ?=(%| -.u.to-burn)                          fail
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[~ - ~])
         (gas:big *state ~[id.p.u.to-burn^u.to-burn])
-      ::  withdraw tx: burn an NFT or some amount of token off a town,
-      ::  and make it available for withdraw on ETH.
+      ::  special withdraw transaction: burn wrapped ETH on a town
+      ::  and send it (by rollup contract) to a specified destination
+      ::  address on ethereum.
+      ::
       ?:  &(=(0x0 contract.tx) =(%withdraw p.calldata.tx))
         =/  fail  (exhaust bud.gas.tx %9 ~)
         ?.  ?=(withdraw-mold q.calldata.tx)            fail
-        ::  ETH-only: withdraw some amount of tokens
-        ::  make sure account item has balance,
-        ::  then subtract amount in call
         ?~  item=(get:big p.chain id.q.calldata.tx)    fail
-        ::  assert that token account item matches expected standard
         ?.  ?=(%& -.u.item)                            fail
         ?~  acc=((soft token-account) noun.p.u.item)   fail
-        ::  assert that caller holds this account
         ?.  =(holder.p.u.item address.caller.tx)       fail
-        ::  assert account has enough tokens to withdraw
         ?.  =(source.p.u.item ueth-contract-id:smart)  fail
         ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
-        ::  don't burn account item, just subtract withdrawn amount
+        ::  create "withdraw item"
+        =/  withdraw-salt=@
+          (rap 3 [amount.q.calldata.tx [address nonce ~]:caller.tx])
+        =/  withdraw-item-id=id:smart
+          %-  hash-data
+          [ueth-contract-id:smart 0x0 town-id withdraw-salt]
+        =/  withdraw-item=item:smart
+          :*  %&  withdraw-item-id
+              ueth-contract-id:smart
+              0x0  town-id  withdraw-salt
+              %withdraw
+              [amount.q.calldata.tx [address nonce]:caller.tx]
+          ==
         =/  event=contract-event
-          :+  ueth-contract-id:smart
-            %withdraw
+          :+  ueth-contract-id:smart  %withdraw
           [address.caller.tx amount.q.calldata.tx]
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[- ~ event^~])
-        =-  (gas:big *state ~[id.p.u.item^u.item(noun.p -)])
-        u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
-      ::  normal tx
+        =+  u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
+        %+  gas:big  *state
+        ~[id.p.u.item^u.item(noun.p -) id.p.withdraw-item^withdraw-item]
+      ::  normal transaction
+      ::
       =?    q.calldata.tx
           ?&  =(contract.tx zigs-contract-id:smart)
               =(p.calldata.tx %give)
           ==
+        ::  if transaction is a %give call to zigs contract, inject gas
+        ::  budget into the calldata. this is so zigs contract can make sure
+        ::  transactions that spend zigs can also afford to pay gas.
         ::  only assert budget check when gas-payer is interacting
         ?.  =(address.caller.tx gas-payer)
           [0 q.calldata.tx]
@@ -132,7 +150,6 @@
       ?.  ?=(%| -.u.pac)
         ~&  >>>  "engine: call to data, not pact"
         (exhaust bud.gas.tx %5 ~)
-      ::
       ::  build context for call,
       ::  call +combust to get move/hints/gas/error
       ::
@@ -140,7 +157,6 @@
         [contract.tx [- +<]:caller.tx batch-num eth-block-height town-id]
       =/  [mov=(unit move) gas-remaining=@ud =errorcode:smart]
         (combust code.p.u.pac context calldata.tx bud.gas.tx)
-      ::
       ?~  mov  (exhaust gas-remaining errorcode ~)
       =*  calls  -.u.mov
       =*  diff   +.u.mov
@@ -152,23 +168,17 @@
         %+  turn  events.diff
         |=  i=[@tas *]
         [contract.tx i]
-      |-  ::  INNER loop for handling continuations
+      |-  ::  inner loop for handling continuation-calls
       ?~  calls
         ::  diff-only result, finished calling
         (exhaust gas-remaining %0 `[all-diffs all-burns all-events])
       =.  p.chain
-        %+  dif:big
-          %+  uni:big  p.chain
-          all-diffs
-        burned.diff
+        (dif:big (uni:big p.chain all-diffs) burned.diff)
       ::  run continuation calls
       =/  inter=output
         %=    ^$
             p.chain
-          %+  dif:big
-            %+  uni:big  p.chain
-            all-diffs
-          burned.diff
+          (dif:big (uni:big p.chain all-diffs) burned.diff)
         ::
             tx
           %=  tx
@@ -178,9 +188,12 @@
             calldata        calldata.i.calls
           ==
         ==
-      ::
       ?.  ?=(%0 errorcode.inter)
+        ::  if continuation call resulted in an error, fail out immediately
+        ::
         (exhaust (sub gas-remaining gas.inter) errorcode.inter ~)
+      ::  otherwise, execute next continuation call in the stack
+      ::
       %=  $
         calls          t.calls
         gas-remaining  (sub gas-remaining gas.inter)
@@ -191,7 +204,7 @@
     ::
     ::  +exhaust: prepare final diff for entire call, including all
     ::  subsequent calls created. subtract gas remaining from budget
-    ::  to get total spend. charge gas from caller
+    ::  to get total spend
     ::
     ++  exhaust
       |=  $:  gas=@ud
@@ -199,17 +212,9 @@
               dif=(unit [mod=state =state e=(list contract-event)])
           ==
       ^-  output
-      =/  cost  (sub bud.gas.tx gas)
-      ~&  >  "gas cost: {<cost>}"
-      :+  cost
+      :+  (sub bud.gas.tx gas)
         errorcode
-      =/  priced-gas  (mul cost rate.gas.tx)
-      =/  gas-item
-        %+  ~(charge tax p.chain)
-          ?~(dif ~ mod.u.dif)
-        [caller.tx priced-gas]
-      ?~  dif  [(put:big ~ gas-item) ~ ~]
-      u.dif(mod (put:big mod.u.dif gas-item))
+      ?~  dif  [~ ~ ~]  u.dif
     ::
     ::  +combust: prime contract code for execution, then run using
     ::  ZK-hint-generating virtualized interpreter +zebra. return
@@ -328,9 +333,9 @@
             !(has:big p.chain id.p.item)
             ?:  ?=(%| -.item)
               .=  id
-              (hash-pact:smart [source holder town code]:p.item)
+              (hash-pact [source holder town code]:p.item)
             .=  id
-            (hash-data:smart [source holder town salt]:p.item)
+            (hash-data [source holder town salt]:p.item)
         ==
       ::
         %-  ~(all in burned.diff)
@@ -400,7 +405,7 @@
       ?~  acc=(get:big state zigs.sequencer)
         =*  zc  zigs-contract-id:smart
         =/  =id:smart
-          %-  hash-data:smart
+          %-  hash-data
           [zc address.sequencer town-id `@`'zigs']
         :-  ~  :-  id
         =+  [total ~ `@ux`'zigs-metadata' ~]
@@ -430,6 +435,22 @@
   [hash tx ~]
 ::
 ::  utilities
+::
+::
+::  reproductions of hashing functions inside smart.hoon for use outside
+::  the contract engine.
+::
+++  hash-pact
+  |=  [source=id:smart holder=id:smart town=id:smart code=*]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder (sham code))
+::
+++  hash-data
+  |=  [source=id:smart holder=id:smart town=id:smart salt=@]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder salt)
 ::
 ++  verify-sig
   |=  tx=transaction:smart

@@ -5,7 +5,7 @@
 ::
 /-  *zig-wallet, ui=zig-indexer
 /+  default-agent, dbug, verb, io=agentio,
-    ethereum, bip32, bip39,
+    ethereum, bip32, bip39, engine=zig-sys-engine,
     ui-lib=zig-indexer, zink=zink-zink,
     *zig-wallet, smart=zig-sys-smart
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
@@ -43,7 +43,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-%+  verb  &
+::  %+  verb  |
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -363,8 +363,8 @@
           ~|("%wallet: don't have private key for that address" !!)
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
         `@uvI`hash  u.priv.u.keypair
-      ~&  >>  "%wallet: submitting signed transaction"
-      ~&  >>  "with signature {<v.sig.tx^r.sig.tx^s.sig.tx>}"
+      ::  ~&  >>  "%wallet: submitting signed transaction"
+      ::  ~&  >>  "with signature {<v.sig.tx^r.sig.tx^s.sig.tx>}"
       ::  update stores
       :_  %=    state
               pending-store
@@ -407,7 +407,7 @@
           ::  upon signing.
           `@ud`(cut 3 [0 3] eny.bowl)
         ::  generate our zigs token account ID
-        (hash-data:smart zigs-contract-id:smart from.act town.act `@`'zigs')
+        (hash-data:engine zigs-contract-id:smart from.act town.act `@`'zigs')
       ::  build calldata of transaction, depending on argument type
       =/  =calldata:smart
         ?-    -.action.act
@@ -423,19 +423,15 @@
           [%give to.action.act item.action.act]
         ::
             %text
-          =/  smart-lib-vase  ;;(^vase (cue +.+:;;([* * @] smart-lib)))
-          =/  data-hoon  (ream ;;(@t +.action.act))
-          =+  gun=(~(mint ut p.smart-lib-vase) %noun data-hoon)
-          =/  res=book:zink
-            %:  zebra:zink
-                200.000  ~  jets:zink
-                *chain-state-scry:zink
-                [q.smart-lib-vase q.gun]  %.y
+          =/  smart-lib-vase
+            .^  ^vase  %gx
+              /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/smart-lib/noun
             ==
-          ?.  ?=(%& -.p.res)
-            ~|("wallet: failed to compile custom action!" !!)
-          =+  noun=(need p.p.res)
-          [;;(@tas -.noun) +.noun]
+          ~|  "wallet: failed to compile custom action!"
+          =/  data-hoon  (ream ;;(@t +.action.act))
+          =/  res
+            (slap smart-lib-vase data-hoon)
+          !<([@tas *] res)
         ::
             %noun
           ;;(calldata:smart +.action.act)
@@ -597,7 +593,7 @@
     =/  pub  (slav %ux i.t.t.path)
     =/  town  (slav %ux i.t.t.t.path)
     =/  nonce  (~(gut by (~(gut by nonces.state) pub ~)) town 0)
-    =+  (hash-data:smart `@ux`'zigs-contract' pub town `@`'zigs')
+    =+  (hash-data:engine `@ux`'zigs-contract' pub town `@`'zigs')
     ``wallet-update+!>(`wallet-update`[%account `caller:smart`[pub nonce -]])
   ::
       [%signed-message @ ~]
