@@ -423,19 +423,15 @@
           [%give to.action.act item.action.act]
         ::
             %text
-          =/  smart-lib-vase  ;;(^vase (cue +.+:;;([* * @] smart-lib)))
-          =/  data-hoon  (ream ;;(@t +.action.act))
-          =+  gun=(~(mint ut p.smart-lib-vase) %noun data-hoon)
-          =/  res=book:zink
-            %:  zebra:zink
-                200.000  ~  jets:zink
-                *chain-state-scry:zink
-                [q.smart-lib-vase q.gun]  %.y
+          =/  smart-lib-vase
+            .^  ^vase  %gx
+              /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/smart-lib/noun
             ==
-          ?.  ?=(%& -.p.res)
-            ~|("wallet: failed to compile custom action!" !!)
-          =+  noun=(need p.p.res)
-          [;;(@tas -.noun) +.noun]
+          ~|  "wallet: failed to compile custom action!"
+          =/  data-hoon  (ream ;;(@t +.action.act))
+          =/  res
+            (slap smart-lib-vase data-hoon)
+          !<([@tas *] res)
         ::
             %noun
           ;;(calldata:smart +.action.act)

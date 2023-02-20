@@ -502,6 +502,10 @@
     ?~  town  ``noun+!>(~)
     ``noun+!>(`town-id.hall.u.town)
   ::
+      [%smart-lib ~]
+    ::  grab the smart-lib-vase that's prebuilt here for usage elsewhere
+    ``noun+!>(smart-lib-vase)
+  ::
   ::  state reads fail if sequencer not active
   ::
       [%has @ ~]
