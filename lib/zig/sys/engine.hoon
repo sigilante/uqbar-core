@@ -1,6 +1,6 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-|_  [library=vase zink-cax=(map * @) sigs-on=? hints-on=?]
+|_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
 ::
@@ -10,15 +10,16 @@
   ::  +run: produce a state transition for a given town and mempool
   ::
   ++  run
-    |=  [=chain =mempool]
+    |=  [=chain pending=memlist]
     ^-  state-transition
-    =/  pending=memlist  (sort-mempool mempool)
     =|  st=state-transition
     =|  gas-reward=@ud
     =.  chain.st  chain
     |-
     ?~  pending
       ::  finished with execution:
+      ::  put processed in correct order
+      =.  processed.st  (flop processed.st)
       ::  pay accumulated gas to sequencer
       ?~  paid=(~(pay tax p.chain.st) gas-reward)
         st
@@ -27,17 +28,20 @@
         modified  (put:big modified.st u.paid)
       ==
     ::  execute a single transaction and integrate the diff
+    ::  if we've already optimistically executed, use that diff
     =*  tx  tx.i.pending
-    =/  =output  ~(intake eng chain.st tx)
-    =/  priced-gas  (mul gas.output rate.gas.tx)
-    =?  modified.output  (gth priced-gas 0)
-      %+  put:big  modified.output
-      %+  ~(charge tax p.chain.st)
-        modified.output
-      [caller.tx priced-gas]
+    =/  =output
+      ?~  output.i.pending
+        =+  op=~(intake eng chain.st tx)
+        ::  charge cumulative gas fee for entire transaction
+        =/  gas-item
+          %-  ~(charge tax p.chain)
+          [modified.op caller.tx gas.op]
+        op(modified (put:big modified.op gas-item))
+      u.output.i.pending
     %=  $
       pending     t.pending
-      gas-reward  (add gas-reward priced-gas)
+      gas-reward  (add gas-reward (mul gas.output rate.gas.tx))
         st
       %=    st
         modified  (uni:big modified.st modified.output)
@@ -67,7 +71,6 @@
     ::
     ++  intake
       ^-  output
-      ~>  %bout
       ?.  ?:(sigs-on (verify-sig tx) %.y)
         ~&  >>>  "engine: signature mismatch"
         (exhaust bud.gas.tx %1 ~)
@@ -80,10 +83,11 @@
         (exhaust bud.gas.tx %3 ~)
       ::
       =/  gas-payer  address.caller.tx
-      |-  ::  recursion point for calls
+      |-
+      ::  special burn transaction: remove an item from a town and
+      ::  reinstantiate it on a different town.
       ::
       ?:  &(=(0x0 contract.tx) =(%burn p.calldata.tx))
-        ::  special burn tx
         =/  fail  (exhaust bud.gas.tx %9 ~)
         ?.  ?=([id=@ux town=@ux] q.calldata.tx)         fail
         ?~  to-burn=(get:big p.chain id.q.calldata.tx)  fail
@@ -91,13 +95,51 @@
                 =(holder.p.u.to-burn address.caller.tx)
             ==                                          fail
         ?:  =(id.p.u.to-burn zigs.caller.tx)            fail
+        ?:  ?=(%| -.u.to-burn)                          fail
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[~ - ~])
         (gas:big *state ~[id.p.u.to-burn^u.to-burn])
-      ::  normal tx
+      ::  special withdraw transaction: burn wrapped ETH on a town
+      ::  and send it (by rollup contract) to a specified destination
+      ::  address on ethereum.
+      ::
+      ?:  &(=(0x0 contract.tx) =(%withdraw p.calldata.tx))
+        =/  fail  (exhaust bud.gas.tx %9 ~)
+        ?.  ?=(withdraw-mold q.calldata.tx)            fail
+        ?~  item=(get:big p.chain id.q.calldata.tx)    fail
+        ?.  ?=(%& -.u.item)                            fail
+        ?~  acc=((soft token-account) noun.p.u.item)   fail
+        ?.  =(holder.p.u.item address.caller.tx)       fail
+        ?.  =(source.p.u.item ueth-contract-id:smart)  fail
+        ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
+        ::  create "withdraw item"
+        =/  withdraw-salt=@
+          (rap 3 [amount.q.calldata.tx [address nonce ~]:caller.tx])
+        =/  withdraw-item-id=id:smart
+          %-  hash-data
+          [ueth-contract-id:smart 0x0 town-id withdraw-salt]
+        =/  withdraw-item=item:smart
+          :*  %&  withdraw-item-id
+              ueth-contract-id:smart
+              0x0  town-id  withdraw-salt
+              %withdraw
+              [amount.q.calldata.tx [address nonce]:caller.tx]
+          ==
+        =/  event=contract-event
+          :+  ueth-contract-id:smart  %withdraw
+          [address.caller.tx amount.q.calldata.tx]
+        =-  (exhaust (sub bud.gas.tx 1.000) %0 `[- ~ event^~])
+        =+  u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
+        %+  gas:big  *state
+        ~[id.p.u.item^u.item(noun.p -) id.p.withdraw-item^withdraw-item]
+      ::  normal transaction
+      ::
       =?    q.calldata.tx
           ?&  =(contract.tx zigs-contract-id:smart)
               =(p.calldata.tx %give)
           ==
+        ::  if transaction is a %give call to zigs contract, inject gas
+        ::  budget into the calldata. this is so zigs contract can make sure
+        ::  transactions that spend zigs can also afford to pay gas.
         ::  only assert budget check when gas-payer is interacting
         ?.  =(address.caller.tx gas-payer)
           [0 q.calldata.tx]
@@ -108,7 +150,6 @@
       ?.  ?=(%| -.u.pac)
         ~&  >>>  "engine: call to data, not pact"
         (exhaust bud.gas.tx %5 ~)
-      ::
       ::  build context for call,
       ::  call +combust to get move/hints/gas/error
       ::
@@ -116,7 +157,6 @@
         [contract.tx [- +<]:caller.tx batch-num eth-block-height town-id]
       =/  [mov=(unit move) gas-remaining=@ud =errorcode:smart]
         (combust code.p.u.pac context calldata.tx bud.gas.tx)
-      ::
       ?~  mov  (exhaust gas-remaining errorcode ~)
       =*  calls  -.u.mov
       =*  diff   +.u.mov
@@ -126,25 +166,19 @@
       =/  all-burns   burned.diff
       =/  all-events=(list contract-event)
         %+  turn  events.diff
-        |=  i=[@tas json]
+        |=  i=[@tas *]
         [contract.tx i]
-      |-  ::  INNER loop for handling continuations
+      |-  ::  inner loop for handling continuation-calls
       ?~  calls
         ::  diff-only result, finished calling
         (exhaust gas-remaining %0 `[all-diffs all-burns all-events])
       =.  p.chain
-        %+  dif:big
-          %+  uni:big  p.chain
-          all-diffs
-        burned.diff
+        (dif:big (uni:big p.chain all-diffs) burned.diff)
       ::  run continuation calls
       =/  inter=output
         %=    ^$
             p.chain
-          %+  dif:big
-            %+  uni:big  p.chain
-            all-diffs
-          burned.diff
+          (dif:big (uni:big p.chain all-diffs) burned.diff)
         ::
             tx
           %=  tx
@@ -154,9 +188,12 @@
             calldata        calldata.i.calls
           ==
         ==
-      ::
       ?.  ?=(%0 errorcode.inter)
+        ::  if continuation call resulted in an error, fail out immediately
+        ::
         (exhaust (sub gas-remaining gas.inter) errorcode.inter ~)
+      ::  otherwise, execute next continuation call in the stack
+      ::
       %=  $
         calls          t.calls
         gas-remaining  (sub gas-remaining gas.inter)
@@ -167,19 +204,17 @@
     ::
     ::  +exhaust: prepare final diff for entire call, including all
     ::  subsequent calls created. subtract gas remaining from budget
-    ::  to get total spend.
+    ::  to get total spend
     ::
     ++  exhaust
       |=  $:  gas=@ud
               =errorcode:smart
-              dif=(unit [=state =state e=(list contract-event)])
+              dif=(unit [mod=state =state e=(list contract-event)])
           ==
       ^-  output
-      ~&  >  "gas cost: {<(sub bud.gas.tx gas)>}"
       :+  (sub bud.gas.tx gas)
         errorcode
-      ?~  dif  [~ ~ ~]
-      u.dif
+      ?~  dif  [~ ~ ~]  u.dif
     ::
     ::  +combust: prime contract code for execution, then run using
     ::  ZK-hint-generating virtualized interpreter +zebra. return
@@ -192,7 +227,7 @@
       =/  dor=vase  (load code)
       =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
       =/  =book:zink
-        (zebra:zink bud zink-cax search gun !hints-on)
+        (zebra:zink bud zink-cax jets search gun hints-on)
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
         [~ gas.q.book %6]
@@ -233,26 +268,28 @@
             [%0 %state [%ux @ux] ~]
           ::  /state/[item-id]
           =/  item-id=id:smart  +.-.+.+.+.pit
-          ~&  >>  "looking for item: {<item-id>}"
+          ::  ~&  >>  "looking for item: {<item-id>}"
           ?~  item=(get:big p.chain item-id)
-            ~&  >>>  "didn't find it"  rem^~
+            ::  ~&  >>>  "didn't find it"
+            rem^~
           rem^item
         ::
-            [%0 %contract ?(%noun %json) [%ux @ux] ^]
-          ::  /contract/[%noun or %json]/[contract-id]/pith/in/contract
-          =/  kind                      -.+.+.+.pit
-          =/  contract-id=id:smart  +.-.+.+.+.+.pit
+            [%0 %contract [%ux @ux] ^]
+          ::  /contract/[contract-id]/pith/in/contract
+          =/  contract-id=id:smart  +.-.+.+.+.pit
           ::  pith includes fee, as it must match fee in contract
-          =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.+.pit)
-          ~&  >>  "looking for pact: {<contract-id>}"
+          =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.pit)
+          ::  ~&  >>  "looking for pact: {<contract-id>}"
           ?~  item=(get:big p.chain contract-id)
-            ~&  >>>  "didn't find it"  rem^~
+            ::  ~&  >>>  "didn't find it"
+            rem^~
           ?.  ?=(%| -.u.item)
-            ~&  >>>  "wasn't a pact"  rem^~
+            ::  ~&  >>>  "wasn't a pact"
+            rem^~
           =/  dor=vase  (load code.p.u.item)
           =/  gun
-            (ajar dor %read !>(context(this contract-id)) !>(read-pith) kind)
-          =/  =book:zink  (zebra:zink rem zink-cax search gun hints-on)
+            (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
+          =/  =book:zink  (zebra:zink rem zink-cax jets search gun hints-on)
           ?:  ?=(%| -.p.book)
             gas.q.book^~
           ?~  p.p.book
@@ -296,9 +333,9 @@
             !(has:big p.chain id.p.item)
             ?:  ?=(%| -.item)
               .=  id
-              (hash-pact:smart [source holder town code]:p.item)
+              (hash-pact [source holder town code]:p.item)
             .=  id
-            (hash-data:smart [source holder town salt]:p.item)
+            (hash-data [source holder town salt]:p.item)
         ==
       ::
         %-  ~(all in burned.diff)
@@ -368,7 +405,7 @@
       ?~  acc=(get:big state zigs.sequencer)
         =*  zc  zigs-contract-id:smart
         =/  =id:smart
-          %-  hash-data:smart
+          %-  hash-data
           [zc address.sequencer town-id `@`'zigs']
         :-  ~  :-  id
         =+  [total ~ `@ux`'zigs-metadata' ~]
@@ -388,13 +425,32 @@
 ++  sort-mempool
   |=  =mempool
   ^-  memlist
-  %+  sort  ~(tap in mempool)
-  |=  [a=[@ux tx=transaction:smart] b=[@ux tx=transaction:smart]]
-  ?:  =(address.caller.tx.a address.caller.tx.b)
-    (lth nonce.caller.tx.a nonce.caller.tx.b)
-  (gth rate.gas.tx.a rate.gas.tx.b)
+  %+  turn
+    %+  sort  ~(tap by mempool)
+    |=  [a=[@ux @p tx=transaction:smart] b=[@ux @p tx=transaction:smart]]
+    ?:  =(address.caller.tx.a address.caller.tx.b)
+      (lth nonce.caller.tx.a nonce.caller.tx.b)
+    (gth rate.gas.tx.a rate.gas.tx.b)
+  |=  [hash=@ux @p tx=transaction:smart]
+  [hash tx ~]
 ::
 ::  utilities
+::
+::
+::  reproductions of hashing functions inside smart.hoon for use outside
+::  the contract engine.
+::
+++  hash-pact
+  |=  [source=id:smart holder=id:smart town=id:smart code=*]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder (sham code))
+::
+++  hash-data
+  |=  [source=id:smart holder=id:smart town=id:smart salt=@]
+  ^-  id:smart
+  ^-  @ux  %-  shag:merk
+  :((cury cat 3) town source holder salt)
 ::
 ++  verify-sig
   |=  tx=transaction:smart

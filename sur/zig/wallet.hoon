@@ -1,6 +1,11 @@
-/-  eng=zig-engine
+/-  eng=zig-engine, uqbar=zig-uqbar
 /+  smart=zig-sys-smart
 |%
++$  token-metadata  token-metadata:eng
++$  token-account  token-account:eng
++$  nft-metadata    nft-metadata:eng
++$  nft             nft:eng
+::
 +$  signature   [p=@ux q=ship r=life]
 ::  for app-generated transactions to be notified of their txn results
 +$  origin  (unit (pair term wire))
@@ -27,14 +32,17 @@
   (map @ux [=typed-message:smart =sig:smart])
 ::
 +$  unfinished-transaction-store
-  (map @ux [=origin =transaction:smart action=supported-actions])
+  (map @ux unfinished-transaction)
+::
++$  unfinished-transaction
+  [=origin =transaction:smart action=supported-actions output=(unit output:eng)]
 ::
 ::  inner maps keyed by transaction hash
 ::
 +$  transaction-store
   %+  map  address:smart
   (map @ux finished-transaction)
-
+::
 +$  finished-transaction
   [=origin batch=@ux =transaction:smart action=supported-actions =output:eng]
 ::
@@ -49,17 +57,27 @@
       %103  ::  103: failure: transaction rejected by sequencer
       ::
       ::  200-class refers to codes that come from a completed transaction
-      ::  informed by egg status codes in smart.hoon
-      %200  ::  200: successfully performed
-      %201  ::  201: bad signature
-      %202  ::  202: incorrect nonce
-      %203  ::  203: lack zigs to fulfill budget
-      %204  ::  204: couldn't find contract
-      %205  ::  205: data was under contract ID
-      %206  ::  206: crash in contract execution
-      %207  ::  207: validation of diff failed
-      %208  ::  208: ran out of gas while executing
-      %209  ::  209: dedicated burn transaction failed
+      ::  that sequencer has given us a receipt for,
+      ::  informed by status codes in smart.hoon
+      ::
+      ::  300-class are equivalent, but the transaction has been officially
+      ::  included in a batch.
+      ::
+      %200  %300 ::  successfully performed
+      %201  %301 ::  bad signature
+      %202  %302 ::  incorrect nonce
+      %203  %303 ::  lack zigs to fulfill budget
+      %204  %304 ::  couldn't find contract
+      %205  %305 ::  data was under contract ID
+      %206  %306 ::  crash in contract execution
+      %207  %307 ::  validation of diff failed
+      %208  %308 ::  ran out of gas while executing
+      %209  %309 ::  dedicated burn transaction failed
+      ::
+      ::  error code %BYZANTINE occurs when the result of a transaction
+      ::  indicates to us that the sequencer is byzantine.
+      ::
+      %'BYZANTINE'
   ==
 ::
 ::  noun type that comes from wallet scries, used thru uqbar.hoon
@@ -76,6 +94,9 @@
           =transaction:smart
           action=supported-actions
       ==
+      ::  poked back to origin after sequencer optimistically processes
+      [%sequencer-receipt =origin sequencer-receipt:uqbar]
+      ::  poked back to origin when transaction is included in batch
       [%finished-transaction finished-transaction]
   ==
 ::
@@ -143,71 +164,4 @@
       [%text @t]
       [%noun *]
   ==
-::
-::  hardcoded molds comporting to account-token standard
-::
-+$  token-metadata
-  $:  name=@t
-      symbol=@t
-      decimals=@ud
-      supply=@ud
-      cap=(unit @ud)
-      mintable=?
-      minters=(pset:smart address:smart)
-      deployer=id:smart
-      salt=@
-  ==
-::
-+$  token-account
-  $:  balance=@ud
-      allowances=(pmap:smart sender=address:smart @ud)
-      metadata=id:smart
-      nonces=(pmap:smart taker=address:smart @ud)
-  ==
-::
-::  hardcoded molds comporting to account-NFT standard
-::
-+$  nft-metadata
-  $:  name=@t
-      symbol=@t
-      properties=(pset:smart @tas)
-      supply=@ud
-      cap=(unit @ud)  ::  (~ if mintable is false)
-      mintable=?      ::  automatically set to %.n if supply == cap
-      minters=(pset:smart address:smart)
-      deployer=id:smart
-      salt=@
-  ==
-::
-+$  nft  ::  a non-fungible token
-  $:  id=@ud
-      uri=@t
-      metadata=id:smart
-      allowances=(pset:smart address:smart)
-      properties=(pmap:smart @tas @t)
-      transferrable=?
-  ==
-::
-::  historical app states
-::
-+$  state-0
-  $:  %0
-      seed=[mnem=@t pass=@t address-index=@ud]
-      keys=(map address:smart [priv=(unit @ux) nick=@t])
-      nonces=(map address:smart (map town=@ux nonce=@ud))
-      =signed-message-store
-      tokens=(map address:smart =book)
-      =metadata-store
-      =old-unfinished-transaction-store
-      =old-transaction-store
-      =old-pending-store
-  ==
-+$  old-unfinished-transaction-store
-  (list [hash=@ux tx=transaction:smart action=supported-actions])
-+$  old-transaction-store
-  %+  map  address:smart
-  (map @ux [=transaction:smart action=supported-actions =output:eng])
-+$  old-pending-store
-  %+  map  address:smart
-  (map @ux [=transaction:smart action=supported-actions])
 --

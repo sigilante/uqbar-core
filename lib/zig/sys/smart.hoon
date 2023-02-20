@@ -7,6 +7,8 @@
 =<
 |%
 ::  merkle engine for chain-state
+::  NEVER use this outside of a contract, it's "unjetted"
+::  instead, use lib/merk.hoon
 ++  big  (bi id item)
 ::
 ::  +husk: check provenance and fit data to mold
@@ -38,20 +40,20 @@
   |=  [=id pit=pith]
   ;;  (unit *)
   .*  0
-  [%12 [%0 1] [%1 (weld `pith`[%contract %noun [%ux id] ~] pit)]]
+  [%12 [%0 1] [%1 `pith`[%contract [%ux id] pit]]]
 ::
-::  +hash: standard hashing functions for items
+::  +hash-pact, +hash-data: standard hashing functions for items
 ::
 ++  hash-pact
   |=  [source=id holder=id town=id code=*]
   ^-  id
-  ^-  @ux  %-  shax
+  ^-  @ux  %-  shag
   :((cury cat 3) town source holder (sham code))
 ::
 ++  hash-data
   |=  [source=id holder=id town=id salt=@]
   ^-  id
-  ^-  @ux  %-  shax
+  ^-  @ux  %-  shag
   :((cury cat 3) town source holder salt)
 ::
 ::  +result: generate a diff
@@ -72,7 +74,10 @@
 +$  address  @ux            ::  42-char hex address, ETH compatible
 +$  sig      [v=@ r=@ s=@]  ::  ETH compatible ECDSA signature
 ::
-++  zigs-contract-id  `@ux`'zigs-contract'  ::  hardcoded "native" token contract
+::  hardcoded "native" token contract
+++  zigs-contract-id  `@ux`'zigs-contract'
+::  hardcoded contract for ETH deposited on Uqbar
+++  ueth-contract-id  `@ux`'ueth-contract'
 ::
 ::  items populate the state.
 ::
@@ -100,8 +105,9 @@
 +$  pact
   $:  =id  source=id  holder=id  town=id
       code=[bat=* pay=*]
-      interface=(map @tas json)
-      types=(map @tas json)
+      ::  pith with last value equal to +sham of compiled core
+      ::  if ~, developer did not provide an interface
+      interface=pith
   ==
 ::
 ::  context: state context fed into contract
@@ -124,12 +130,8 @@
     (quip call diff)
   ::
   ++  read
-    ^|  |_  pith
-    ++  json
-      *^json
-    ++  noun
-      *^noun
-    --
+    |~  pith
+    *
   --
 ::
 ::  contract output types
@@ -141,7 +143,7 @@
       =events
   ==
 +$  call  [contract=id town=id =calldata]
-+$  event   (pair @tas json)
++$  event   (pair @tas *)
 +$  events  (list event)
 ::
 ::  transaction types
@@ -170,12 +172,12 @@
       %6  ::  6: crash in contract execution
       %7  ::  7: validation of diff failed
       %8  ::  8: ran out of gas while executing
-      %9  ::  9: dedicated burn transaction failed
+      %9  ::  9: dedicated burn/withdraw transaction failed
   ==
 ::
 ::  EIP-712 mold for offchain data signing
 ::  :domain pact that this message will modify
-::  :type is the +sham of the message type jold
+::  :type is the +shag of the message type jold
 ::  :message the noun being signed
 +$  typed-message  [domain=id type=@ux message=*]
 ::
@@ -184,7 +186,7 @@
   ^-  id
   %-  address-from-pub
   %-  serialize-point:secp256k1:secp:crypto
-  (ecdsa-raw-recover:secp256k1:secp:crypto (sham typed-message) sig)
+  (ecdsa-raw-recover:secp256k1:secp:crypto (shag typed-message) sig)
 ::
 ::  typed paths inside contracts
 ::  taken from: https://github.com/urbit/urbit/pull/5887
@@ -207,6 +209,13 @@
       [%p @p]    [%q @q]
       [%rs @rs]  [%rd @rd]  [%rh @rh]  [%rq @rq]
   ==
+::
+++  pout
+  |=  =pith
+  ^-  path
+  %+  turn  pith
+  |=  i=iota
+  ?@(i i (scot i))
 --  =<
 ::  ::
 ::  ::  three: formatting (json from zuse/lull)
@@ -298,18 +307,19 @@
   |=  a=(tree (pair key (pair hash value)))
   ?:(=(~ a) & (apt:(bi key value) a))
 ::
-++  shag                                                ::  256bit noun hash
-  |=  yux=*
-  ~>  %shag.+<
-  ^-  hash
-  `@ux`(sham yux)
-  ::  TODO: make LRU-cache-optimized version for granary retrivial
-  ::  ?@  yux
-  ::    (hash:pedersen yux 0)
-  ::  (hash:pedersen $(yux -.yux) $(yux +.yux))
+::  +shag: the standard noun hashing function for uqbar. uses a special
+::  form of RLP-encoding to make items discoverable in the state tree
 ::
-::  +sore: single Pedersen hash in ascending order, uses +dor as
-::  fallback
+++  shag
+  |=  yux=*
+  ^-  hash
+  %-  keccak-256:keccak:crypto
+  ?@  yux
+    [(met 3 yux) yux]
+  =+  (encode:rlp p+yux)
+  [(met 3 -) -]
+::
+::  +sore: single hash in ascending order, uses +dor as fallback
 ::
 ++  sore
   |=  [a=* b=*]
@@ -319,8 +329,7 @@
     (dor a b)
   (lth c d)
 ::
-::  +sure: double Pedersen hash in ascending order, uses +dor as
-::  fallback
+::  +sure: double hash in ascending order, uses +dor as fallback
 ::
 ++  sure
   |=  [a=* b=*]
@@ -473,7 +482,7 @@
       $(b r.b, l.a ~, p.q.n.a (mer a(l ~) [p q.q]:n.a))
     $(a l.a)
   ::
-  ++  mek                                               ::  merkle hashes for key
+  ++  mek                                              ::  merkle hashes for key
     |=  [a=mert b=kee]
     ^-  (list hash)
     =|  =(list hash)
@@ -554,7 +563,7 @@
     $(a r.a, b $(a l.a, b (~(put in b) p.n.a)))
   --
 ::                                                      ::
-::  set, but using pedersen hash                        ::
+::  set, but using shag hash                            ::
 ::  TODO jet                                            ::
 ::
 ++  pset
@@ -562,7 +571,7 @@
   $|  (tree item)
   |=(a=(tree) ?:(=(~ a) & ~(apt pn a)))
 ::
-++  pn                                                  ::  pedersen-set engine
+++  pn                                                  ::  shag-set engine
   =|  a=(tree)  :: (set)
   |@
   ++  all                                               ::  logical AND
@@ -772,7 +781,7 @@
     ?~(a 0 +((add $(a l.a) $(a r.a))))
   --
 ::                                                      ::
-::  map logic, but with pedersen ordering               ::
+::  map logic, but with shag ordering                   ::
 ::  TODO jet                                            ::
 ::
 ++  pmap
@@ -1205,6 +1214,122 @@
   %+  end  [3 20]
   %+  keccak-256  64
   (rev 3 64 pub)
+::
+::  *custom* RLP encoding/decoding
+::  treats nouns as lists
+::
+++  rlp
+  |%
+  +$  item
+    $@  @
+    $%  [%p p=*]
+        [%b b=byts]
+    ==
+  ::
+  ++  encode
+    |=  in=*
+    ~>  %rlp-encode.+<
+    |^  ^-  @
+        ?+  in  !!
+            @
+          $(in [%b (met 3 in) in])
+        ::
+            [%b b=byts]
+          ?:  &(=(1 wid.b.in) (lte dat.b.in 0x7f))
+            dat.b.in
+          =-  (can 3 ~[b.in [(met 3 -) -]])
+          (encode-length wid.b.in 0x80)
+        ::
+            [%p p=*]
+          ::  we +can because b+1^0x0 encodes to 0x00
+          ::
+          =/  l=(list byts)
+            =|  l=(list byts)
+            |-
+            ?@  p.in
+              =+  (encode p.in)
+              [(met 3 -)^- l]
+            ?@  -.p.in
+              =+  (encode -.p.in)
+              $(l [(met 3 -)^- l], p.in +.p.in)
+            =+  (encode [%p -.p.in])
+            $(l [(met 3 -)^- l], p.in +.p.in)
+          %+  can  3
+          =-  (snoc l (met 3 -)^-)
+          (encode-length (roll (turn l head) add) 0xc0)
+        ==
+    ::
+    ++  encode-length
+      |=  [len=@ off=@]
+      ?:  (lth len 56)  (add len off)
+      =-  (cat 3 len -)
+      :(add (met 3 len) off 55)
+    --
+  ::
+  ++  decode
+    |=  dat=@
+    ^-  *
+    =/  bytes=(list @)  (flop (rip 3 dat))
+    =?  bytes  ?=(~ bytes)  ~[0]
+    |^  noun:decode-head
+    ::
+    ++  decode-head
+      ^-  [done=@ud =noun]
+      ?~  bytes  !!
+      =*  byt  i.bytes
+      ::  byte in 0x00-0x79 range encodes itself
+      ::
+      ?:  (lte byt 0x79)
+        1^byt
+      ::  byte in 0x80-0xb7 range encodes string length
+      ::
+      ?:  (lte byt 0xb7)
+        =+  len=(sub byt 0x80)
+        :-  +(len)
+        (get-value 1 len)
+      ::  byte in 0xb8-0xbf range encodes string length length
+      ::
+      ?:  (lte byt 0xbf)
+        =+  led=(sub byt 0xb7)
+        =+  len=(get-value 1 led)
+        :-  (add +(led) len)
+        (get-value +(led) len)
+      ::  byte in 0xc0-f7 range encodes list length
+      ::
+      ?:  (lte byt 0xf7)
+        =+  len=(sub byt 0xc0)
+        :-  +(len)
+        %.  len
+        decode-list(bytes (slag 1 `(list @)`bytes))
+      ::  byte in 0xf8-ff range encodes list length length
+      ::
+      ?:  (lte byt 0xff)
+        =+  led=(sub byt 0xf7)
+        =+  len=(get-value 1 led)
+        :-  (add +(led) len)
+        %.  len
+        decode-list(bytes (slag +(led) `(list @)`bytes))
+      !!
+    ::
+    ++  decode-list
+      |=  rem=@ud
+      ^-  *
+      ?:  =(1 rem)
+        noun:decode-head
+      =+  ^-  [don=@ud =noun]
+        decode-head
+      :-  noun
+      %=  $
+        rem    (sub rem don)
+        bytes  (slag don bytes)
+      ==
+    ::
+    ++  get-value
+      |=  [at=@ud to=@ud]
+      ^-  @
+      (rep 3 (flop (swag [at to] bytes)))
+    --
+--
 ::
 ::  AMES from lull.hoon
 ::
@@ -2818,7 +2943,9 @@
       ~>  %k512.+<
       (keccak 576 1.024 512 a)
     ::
-    ++  keccak  (cury (cury hash keccak-f) padding-keccak)
+    ++  keccak
+      ~>  %this-should-never-print
+      (cury (cury hash keccak-f) padding-keccak)
     ::
     ++  padding-keccak  (multirate-padding 0x1)
     ::

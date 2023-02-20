@@ -1,1 +1,1 @@
-../../base-dev/lib/pill.hoon
+../../arvo/lib/pill.hoon

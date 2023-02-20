@@ -1,5 +1,25 @@
 /-  *zig-sequencer
+/+  ethereum
 |%
+::
+::  uqbar address signature validation
+::
+++  uqbar-validate
+  |=  [=address:smart msg=@ =sig:smart]
+  ^-  ?
+  =?    v.sig
+      (gte v.sig 27)
+    (sub v.sig 27)
+  =/  virt=toon
+    %+  mong
+      :-  ecdsa-raw-recover:secp256k1:secp:crypto
+      [msg sig]
+    ,~
+  ?.  ?=(%0 -.virt)  %.n  ::  invalid sig
+  .=  address
+  %-  address-from-pub:key:ethereum
+  %-  serialize-point:secp256k1:secp:crypto
+  ;;([x=@ y=@] p.virt)
 ::
 ::  ship signing
 ::

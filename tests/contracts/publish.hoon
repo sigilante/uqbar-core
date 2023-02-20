@@ -56,7 +56,7 @@
   [bat=[8 [1 0 [0 0] 0 0] [1 [8 [1 0] [1 [1 0] 1 0] 0 1] 8 [1 0] [1 8 [8 [9 2.398 0 16.127] 9 2 10 [6 7 [0 3] 1 100] 0 2] 1 0 0 0 0 0] 0 1] 0 1] pay=[1 0]]
 ::
 ++  upgradable-id
-  (hash-pact:smart id.p:publish-pact address:caller-1 town-id trivial-nok)
+  (hash-pact id.p:publish-pact address:caller-1 town-id trivial-nok)
 ++  upgradable
   ^-  item:smart
   :*  %|
@@ -70,7 +70,7 @@
   ==
 ::
 ++  immutable-id
-  (hash-pact:smart 0x0 address:caller-1 town-id immutable-nok)
+  (hash-pact 0x0 address:caller-1 town-id immutable-nok)
 ++  immutable
   ^-  item:smart
   :*  %|
@@ -124,7 +124,7 @@
     [fake-chain tx]
   ::
   =/  deployed-id
-    (hash-pact:smart id.p:publish-pact address:caller-1 town-id trivial-nok-upgrade)
+    (hash-pact id.p:publish-pact address:caller-1 town-id trivial-nok-upgrade)
   =/  deployed-pact
     ^-  item:smart
     :*  %|
@@ -154,7 +154,7 @@
     [fake-chain tx]
   ::
   =/  deployed-id
-    (hash-pact:smart 0x0 address:caller-1 town-id trivial-nok-upgrade)
+    (hash-pact 0x0 address:caller-1 town-id trivial-nok-upgrade)
   =/  deployed-pact
     ^-  item:smart
     :*  %|
