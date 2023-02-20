@@ -167,7 +167,7 @@
       salt=`@`'nftsalt1'
       label=%nft
       :*  1
-          'ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9'
+          'https://i.seadn.io/gcs/files/813fc1380779e15604e8846c6ebd5f62.png'
           id:nft-metadata-data
           ~
           %-  ~(gas py:smart *(pmap:smart @tas @t))
