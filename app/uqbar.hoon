@@ -117,6 +117,7 @@
           %uqbar-action  (handle-action !<(action:u v))
           %uqbar-write   (handle-write !<(write:u v))
           %wallet-poke   handle-wallet-poke
+          %uqbar-share-address  handle-wallet-poke
       ==
     [cards this]
     ::
