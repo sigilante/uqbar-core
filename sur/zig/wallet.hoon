@@ -7,8 +7,19 @@
 +$  nft             nft:eng
 ::
 +$  signature   [p=@ux q=ship r=life]
+::
 ::  for app-generated transactions to be notified of their txn results
+::
 +$  origin  (unit (pair term wire))
+::
+::  for choosing which address to share if asked, if any
+::
++$  share-prefs
+  $~  [%any ~]  ::  default
+  $%  [%one =address:smart]  ::  specify which address we want to share
+      [%any ~]               ::  just grab any one address in our wallet
+      [%none ~]              ::  don't share uqbar addresses with anyone
+  ==
 ::
 ::  book: the primary map of assets that we track
 ::  supports fungibles and NFTs
@@ -124,6 +135,7 @@
       [%edit-nickname address=@ux nick=@t]
       [%sign-typed-message from=address:smart domain=id:smart type=json msg=*]
       [%add-tracked-address address=@ux nick=@t]
+      [%set-share-prefs =share-prefs]
       ::  testing and internal
       [%set-nonce address=@ux town=@ux new=@ud]
       [%approve-origin (pair term wire) gas=[rate=@ud bud=@ud]]

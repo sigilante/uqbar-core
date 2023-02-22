@@ -37,9 +37,36 @@
       ::  transactions we've been asked to sign, keyed by hash
       =pending-store
   ==
++$  state-3
+  $:  %3
+      ::  wallet holds a single seed at once
+      ::  address-index notes where we are in derivation path
+      seed=[mnem=@t pass=@t address-index=@ud]
+      ::  many keys can be derived or imported
+      ::  if the private key is ~, that means it's a hardware wallet import
+      keys=(map address:smart [priv=(unit @ux) nick=@t])
+      =share-prefs
+      ::  we track the nonce of each address we're handling
+      ::  TODO: introduce a poke to check nonce from chain and re-align
+      nonces=(map address:smart (map town=@ux nonce=@ud))
+      ::  signatures tracks any signed calls we've made
+      =signed-message-store
+      ::  tokens tracked for each address we're handling
+      tokens=(map address:smart =book)
+      ::  metadata for tokens we track
+      =metadata-store
+      ::  origins we automatically sign and approve txns from
+      approved-origins=(map (pair term wire) [rate=@ud bud=@ud])
+      ::  transactions we've sent that haven't been finalized by sequencer
+      =unfinished-transaction-store
+      ::  finished transactions we've sent
+      =transaction-store
+      ::  transactions we've been asked to sign, keyed by hash
+      =pending-store
+  ==
 --
 ::
-=|  state-2
+=|  state-3
 =*  state  -
 ::
 %-  agent:dbug
@@ -51,7 +78,7 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  :_  this(state *state-2)
+  :_  this(state *state-3)
   ::  auto-populate %wallet with a random seed on install
   :_  ~
   :*  %pass  /self-poke
@@ -65,8 +92,12 @@
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
+      %3
+    `this(state !<(state-3 old-vase))
       %2
-    `this(state !<(state-2 old-vase))
+    =+  old=!<(state-2 old-vase)
+    =+  new=[%3 -.+.old -.+.+.old *^share-prefs +.+.+.old]
+    `this(state `state-3`new)
   ==
 ::
 ++  on-watch
@@ -104,7 +135,27 @@
       (poke-wallet !<(wallet-poke vase))
     [cards this]
   ::
+      %uqbar-share-address
+    ::  share an address with another ship, depending on preferences
+    ::
+    =/  action=share-address:uqbar  !<(share-address:uqbar vase)
+    ?.  ?=(%request -.action)
+      ::  ignore receives, for now
+      ~&  >>  action
+      `this
+    :_  this  :_  ~
+    %+  ~(poke pass:io /share-address-reply)
+      [src.bowl app.action]
+    :-  %uqbar-share-address
+    !>  ^-  share-address:uqbar
+    ?-    -.share-prefs
+      %none  [%deny ~]
+      %one   [%share +.share-prefs]
+      %any   ?~(keys [%deny ~] [%share p.n.keys])
+    ==
+  ::
       %uqbar-write-result
+    ?>  =(src our):bowl
     =/  result  !<(write-result:uqbar vase)
     =/  tx-hash  p.result
     ?~  found=(~(get by unfinished-transaction-store) tx-hash)
@@ -160,7 +211,7 @@
   ++  poke-wallet
     |=  act=wallet-poke
     ^-  (quip card _state)
-    ?>  =(src.bowl our.bowl)
+    ?>  =(src our):bowl
     ?-    -.act
         %import-seed
       ::  will lose seed in current wallet, should warn on frontend!
@@ -250,6 +301,9 @@
         keys    (~(put by keys) address.act [~ nick.act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
+    ::
+        %set-share-prefs
+      `state(share-prefs share-prefs.act)
     ::
         %delete-address
       ::  can recover by re-deriving same path

@@ -26,6 +26,12 @@
       [%receipt tx-hash=hash:smart sequencer-receipt]  ::  from the sequencer
   ==
 ::
++$  share-address
+  $%  [%request app=term]
+      [%deny ~]
+      [%share =address:smart]
+  ==
+::
 ::  responses from sending a %submit poke
 ::
 +$  write-result
