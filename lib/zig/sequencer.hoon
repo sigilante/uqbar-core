@@ -3,7 +3,8 @@
 ++  parse-deposit-bytes
   |=  bytes=@
   ^-  deposit
-  :*  token=(cut 3 [160 32] bytes)
+  :*  token=(cut 3 [192 32] bytes)
+      town-id=(cut 3 [160 32] bytes)
       destination-address=(cut 3 [128 32] bytes)
       amount=(cut 3 [96 32] bytes)
       deposit-index=(cut 3 [64 32] bytes)
