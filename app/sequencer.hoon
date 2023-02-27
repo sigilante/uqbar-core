@@ -147,6 +147,7 @@
       =/  deposit-bytes=@ux
         `@ux`(scan `tape`(slag 2 deposit-bytes.act) hex)
       =/  =deposit  (parse-deposit-bytes deposit-bytes)
+      ?>  =(town-id.deposit town-id.hall.u.town)
       ?>  =(token.deposit 1)  ::  ETH
       ::  assert we haven't used this transaction hash as a deposit before
       ?<  (~(has in deposits.hall.u.town) message-hash.deposit)
