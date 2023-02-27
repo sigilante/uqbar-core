@@ -146,11 +146,12 @@
         ~|("%sequencer: error: got asset while not active" !!)
       =/  deposit-bytes=@ux
         `@ux`(scan `tape`(slag 2 deposit-bytes.act) hex)
-      =/  =deposit  (parse-deposit-bytes deposit-bytes)
+      =/  =deposit      (parse-deposit-bytes `byts`[192 deposit-bytes])
+      =/  message-hash  (keccak-256:keccak:crypto [192 deposit-bytes])
       ?>  =(town-id.deposit town-id.hall.u.town)
       ?>  =(token.deposit 1)  ::  ETH
       ::  assert we haven't used this transaction hash as a deposit before
-      ?<  (~(has in deposits.hall.u.town) message-hash.deposit)
+      ?<  (~(has in deposits.hall.u.town) message-hash)
       ?>  (gth deposit-index.deposit ~(wyt in deposits.hall.u.town))
       ~&  >>  "%sequencer: received asset from rollup: {<deposit>}"
       ::  add deposit amount to the wrapped ETH balance
@@ -216,7 +217,7 @@
         proposed-batch        `[0 ~ working-chain 0x0 0x0]
         memlist  [[tx-hash transaction `[0 %0 modified ~ ~]] memlist]
           deposits.hall.u.town
-        (~(put in deposits.hall.u.town) message-hash.deposit)
+        (~(put in deposits.hall.u.town) message-hash)
       ==
     ::
     ::  transactions
