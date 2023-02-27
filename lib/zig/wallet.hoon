@@ -123,6 +123,56 @@
     addrs  t.addrs
     new  (~(put by new) i.addrs (indexer-update-to-book upd))
   ==
+::  +scan-transactions: upon receiving a new batch update, for each of our
+::  token or NFT assets across all addresses, query the indexer for any
+::  transactions in the new batch that affected these assets and add them
+::  to our transaction-store.  (unify result with store)
+::  NOTE: skip transactions that *failed*
+++  scan-transactions
+  |=  [tokens=(map address:smart book) our=@p now=@da]
+  ^-  transaction-store
+  =/  megabook=(list [id:smart asset])
+    (zing (turn ~(val by tokens) |=(b=book ~(tap by b))))
+  =|  res=transaction-store
+  |-
+  ?~  megabook  res
+  =*  id  -.i.megabook
+  =*  asset  +.i.megabook
+  =/  upd
+    .^  update:ui  %gx
+      (scot %p our)  %uqbar  (scot %da now)
+      /indexer/newest/item-transactions/0x0/(scot %ux id)/noun
+    ==
+  ?~  upd  $(megabook t.megabook)
+  ?.  ?=(%transaction -.upd)
+    ?.  ?=(%newest-transaction -.upd)
+      $(megabook t.megabook)
+    ::  handle single transaction: add to our store
+    ::
+    ?.  =(0 status.transaction.upd)
+      $(megabook t.megabook)
+    =.  status.transaction.upd  %300
+    =.  res
+      =*  a  address.caller.transaction.upd
+      =/  outer  (~(gut by res) a ~)
+      =-  (~(put by res) a (~(put by outer) transaction-id.upd -))
+      [~ batch-id.location transaction noun+calldata.transaction output]:upd
+    $(megabook t.megabook)
+  ::  handle map of transactions: add all to our store
+  ::
+  =.  res
+    =/  txns  ~(tap by transactions.upd)
+    |-
+    ?~  txns  res
+    ?.  =(0 status.transaction.q.i.txns)
+      $(txns t.txns)
+    =.  status.transaction.q.i.txns  %300
+    =*  a  address.caller.transaction.q.i.txns
+    =/  outer  (~(gut by res) a ~)
+    =-  $(res -, txns t.txns)
+    =-  (~(put by res) a (~(put by outer) p.i.txns -))
+    [~ batch-id.location transaction noun+calldata.transaction output]:q.i.txns
+  $(megabook t.megabook)
 ::
 ++  indexer-update-to-book
   |=  =update:ui

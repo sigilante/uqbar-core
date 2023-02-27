@@ -317,7 +317,7 @@ To deploy on town `0x0`, in the Dojo:
 =contract-path /=zig=/con/compiled/multisig/jam
 =contract-jam .^(@ %cx contract-path)
 =contract [- +]:(cue contract-jam)
-:uqbar &wallet-poke [%transaction ~ from=[youraddress] contract=0x1111.1111 town=0x0 action=[%noun [%deploy mutable=%.n cont=contract interface=~ types=~]]]
+:uqbar &wallet-poke [%transaction ~ from=[youraddress] contract=0x1111.1111 town=0x0 action=[%noun [%deploy mutable=%.n cont=contract interface=~]]]
 ```
 
 
