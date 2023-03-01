@@ -214,8 +214,8 @@
         `@ux`(sham +.transaction)
       :-  ~
       %=  state
-        proposed-batch        `[0 ~ working-chain 0x0 0x0]
-        memlist  [[tx-hash transaction `[0 %0 modified ~ ~]] memlist]
+        proposed-batch  `[0 ~ working-chain 0x0 0x0]
+        memlist  (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
           deposits.hall.u.town
         (~(put in deposits.hall.u.town) message-hash)
       ==
