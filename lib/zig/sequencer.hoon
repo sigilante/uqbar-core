@@ -1,19 +1,21 @@
 /-  *zig-sequencer, w=zig-wallet
 |%
 ++  parse-deposit-bytes
-  |=  bytes=@
+  |=  =byts
   ^-  deposit
-  :*  token=(cut 3 [192 32] bytes)
-      town-id=(cut 3 [160 32] bytes)
-      destination-address=(cut 3 [128 32] bytes)
-      amount=(cut 3 [96 32] bytes)
-      deposit-index=(cut 3 [64 32] bytes)
-      block-number=(cut 3 [32 32] bytes)
-      message-hash=(end [3 32] bytes)
+  =+  (rev 3 byts)
+  :*  town-id=(rev 3 32 (end [3 32] -))
+      deposit-index=(rev 3 32 (cut 3 [32 32] -))
+      token=(rev 3 32 (cut 3 [64 32] -))
+      destination-address=(rev 3 32 (cut 3 [96 32] -))
+      amount=(rev 3 32 (cut 3 [128 32] -))
+      block-number=(rev 3 32 (cut 3 [160 32] -))
   ==
 ::
 ++  transition-state
-  |=  [old=(unit town) proposed=[num=@ud =processed-txs =chain diff-hash=@ux root=@ux]]
+  |=  $:  old=(unit town)
+          proposed=[num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
+      ==
   ^-  (unit town)
   ?~  old  old
   :-  ~
