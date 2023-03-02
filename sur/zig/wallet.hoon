@@ -168,6 +168,7 @@
           from=address:smart
           contract=id:smart
           town=@ux
+          ship=(unit ship)
           action=supported-actions
       ==
   ==
