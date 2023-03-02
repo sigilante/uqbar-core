@@ -1,5 +1,6 @@
 /-  docket,
     engine=zig-engine,
+    ui=zig-indexer,
     wallet=zig-wallet,
     zink=zig-zink
 /+  engine-lib=zig-sys-engine,
@@ -28,7 +29,9 @@
 ::
 +$  settings
   $:  test-result-num-characters=@ud
+      state-num-characters=@ud
       compiler-error-num-lines=@ud
+      code-max-characters=@ud
   ==
 ::
 +$  status
@@ -112,6 +115,7 @@
       ships=(list @p)
       install=?
       start=(list @tas)
+      state-views=(list [who=@p app=(unit @tas) file=path])
       setup=(map @p test-steps)
       imports=(list [@tas path])
   ==
@@ -186,7 +190,8 @@
       ::
           [%send-pyro-dojo who=@p command=tape]
       ::
-          [%pyro-agent-state who=@p app=@tas grab=@t]
+          [%pyro-agent-state who=@p app=@tas =test-imports grab=@t]
+          [%pyro-chain-state =test-imports grab=@t]
       ::
           [%cis-panic ~]
       ::
@@ -200,7 +205,6 @@
   $?  %project-names
       %projects
       %project
-      %state
       %new-project
       %add-config
       %delete-config
@@ -219,12 +223,16 @@
       %poke
       %test-queue
       %pyro-agent-state
+      %shown-pyro-agent-state
+      %pyro-chain-state
+      %shown-pyro-chain-state
       %sync-desk-to-vship
       %cis-setup-done
       %status
       %focused-linked
       %save-file
       %settings
+      %state-views
   ==
 +$  update-level  ?(%success error-level)
 +$  error-level   ?(%info %warning %error)
@@ -244,7 +252,6 @@
   $%  [%project-names update-info payload=(data ~) project-names=(set @t)]
       [%projects update-info payload=(data ~) projects=shown-projects]
       [%project update-info payload=(data ~) shown-project]
-      [%state update-info payload=(data ~) state=(map @ux chain:engine)]
       [%new-project update-info payload=(data =sync-desk-to-vship) ~]
       [%add-config update-info payload=(data [who=@p what=@tas item=@]) ~]
       [%delete-config update-info payload=(data [who=@p what=@tas]) ~]
@@ -264,12 +271,15 @@
       [%test-queue update-info payload=(data (qeu [@t @ux])) ~]
       [%pyro-agent-state update-info payload=(data [agent-state=vase wex=boat:gall sup=bitt:gall]) ~]
       [%shown-pyro-agent-state update-info payload=(data [agent-state=@t wex=boat:gall sup=bitt:gall]) ~]
+      [%pyro-chain-state update-info payload=(data (map @ux batch:ui)) ~]
+      [%shown-pyro-chain-state update-info payload=(data @t) ~]
       [%sync-desk-to-vship update-info payload=(data sync-desk-to-vship) ~]
       [%cis-setup-done update-info payload=(data ~) ~]
       [%status update-info payload=(data status) ~]
       [%focused-linked update-info payload=(data focused-linked-data) ~]
       [%save-file update-info payload=(data path) ~]
       [%settings update-info payload=(data settings) ~]
+      [%state-views update-info payload=(data (list [@p (unit @tas) path])) ~]
   ==
 ::
 +$  shown-projects  (map @t shown-project)
