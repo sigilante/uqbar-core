@@ -2,10 +2,10 @@
     info+'The wallet and block explorer from Uqbar'
     color+0xf2.f3ef  :: purple is 0x72.7bf2 pink is 0xdd.7c8a
     :: https://developers.urbit.org/reference/additional/dist/glob
-    glob-http+['https://personal-server.fra1.digitaloceanspaces.com/glob-0v5.7jtj7.rma7e.0l2mn.lipin.6f5ce.glob' 0v5.7jtj7.rma7e.0l2mn.lipin.6f5ce]
-    base+'ziggurat'
+    glob-http+['https://ziggurat-app-distro.s3.us-east-2.amazonaws.com/glob-0v4.jd5dq.vf157.5fb2n.qk722.vfokt.glob' 0v4.jd5dq.vf157.5fb2n.qk722.vfokt]
+    base+'uqbar'
     image+'https://hodzod-walrus.s3.us-east-2.amazonaws.com/hodzod-walrus/2022.9.12..23.15.34-R8S9LBS4.png'
-    version+[0 1 1]
+    version+[0 1 2]
     website+'https://uqbar.network'
     license+'MIT'
 ==
