@@ -182,7 +182,7 @@
         %+  ~(poke pass:io /receipt)
           [our.bowl p.u.origin.u.found]
         :-  %wallet-update
-        !>(`wallet-update`[%sequencer-receipt origin.u.found +.q.result])
+        !>(`wallet-update`[%sequencer-receipt origin.u.found p.result +.q.result])
       ==
     =^  cards  tokens
       ?.  ?=(%receipt -.q.result)  [cards tokens]
