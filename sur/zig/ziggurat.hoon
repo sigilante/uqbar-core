@@ -64,10 +64,7 @@
   ==
 ::
 +$  status
-  :: $%  [%running-test-steps ~]
   $%  [%running-thread ~]
-      [%commit-install-starting cis-running=(map @p [@t ?])]
-      [%changing-project-desks project-cis-running=(mip:mip @tas @p [@t ?])]
       [%ready ~]
       [%uninitialized ~]  ::  last is default
   ==
@@ -178,7 +175,6 @@
       request-id=(unit @t)
       $%  [%new-project sync-ships=(list @p) fetch-desk-from-remote-ship=(unit @p) special-configuration-args=vase]
           [%delete-project ~]
-          [%save-config-to-file ~]
       ::
           [%add-sync-desk-vships ships=(list @p) install=? start-apps=(list @tas)]
           [%delete-sync-desk-vships ships=(list @p)]
@@ -243,8 +239,6 @@
       ::
           [%pyro-agent-state who=@p app=@tas =imports grab=@t]
           [%pyro-chain-state =imports grab=@t]
-      ::
-          [%cis-panic ~]
       ::
           [%change-settings =settings]
       ::
