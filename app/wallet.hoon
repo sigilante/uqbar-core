@@ -122,7 +122,7 @@
     ::  any local app can watch this to send things through
     `this
   ::
-      [%address-get-updates ~]
+      [%token-send-updates ~]
     ::  for a thread
     `this
   ==
@@ -145,8 +145,7 @@
     ?.  ?=(%request -.action)
       ::  give to thread
       %+  fact:io
-        :-  %thread-update
-        !>(action)
+        wallet-thread-update+!>(action)
       ~[/token-send-updates]
     %+  ~(poke pass:io /share-address-reply)
       [src.bowl app.action]

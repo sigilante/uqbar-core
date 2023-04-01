@@ -4,14 +4,14 @@
 =>
 |%
 ++  take-update
-  =/  m  (strand ,@ux)
+  =/  m  (strand ,(unit @ux))
   ^-  form:m
   ;<  =cage  bind:m  (take-fact /thread-watch)
   =/  share=share-address:uqbar  !<(share-address:uqbar q.cage)
   ?.  ?=(%share -.share)
     ::  failed  ! surface this somehow
-    !!
-  (pure:m address.share)
+    (pure:m ~)
+  (pure:m `address.share)
 --
 ::
 ^-  thread:spider
@@ -22,7 +22,7 @@
 ^-  form:m
 ::  first, watch updates from wallet
 ::
-;<  ~  bind:m  (watch-our /thread-watch %wallet /address-get-updates)
+;<  ~  bind:m  (watch-our /thread-watch %wallet /token-send-updates)
 ::  next, poke wallet of ship we want address for
 ::
 ;<  ~  bind:m
@@ -33,8 +33,10 @@
   ==
 ::  take fact from wallet with result of poke
 ::
-;<  address=@ux  bind:m  take-update
-;<  our=@p       bind:m  get-our
+;<  address=(unit @ux)  bind:m  take-update
+?~  address
+  (pure:m !>(~))
+;<  our=@p              bind:m  get-our
 ::  poke wallet with transaction
 ::
 ;<  ~  bind:m
@@ -43,14 +45,12 @@
       %agent  [our %wallet]
       %poke   %wallet-poke
       !>  ^-  wallet-poke:wallet
-      %=  act
-        ship  ~
-          action
-        ?+  -.action.act  action.act
-          %give      action.act(to address)
-          %give-nft  action.act(to address)
-        ==
-      ==
+      :*  %transaction  origin.act
+          from.act  contract.act  town.act
+          ?+  -.action.act  action.act
+            %give      action.act(to u.address)
+            %give-nft  action.act(to u.address)
+      ==  ==
   ==
 ::
 (pure:m !>(~))
