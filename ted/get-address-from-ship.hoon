@@ -18,8 +18,7 @@
 |=  arg=vase
 =/  m  (strand ,vase)
 =/  act  !<(wallet-poke:wallet arg)
-?.  ?=(%transaction -.act)  (pure:m !>(~))
-?~  ship.act                (pure:m !>(~))
+?.  ?=(%transaction-to-ship -.act)  (pure:m !>(~))
 ^-  form:m
 ::  first, watch updates from wallet
 ::
@@ -29,7 +28,7 @@
 ;<  ~  bind:m
   %-  send-raw-card
   :*  %pass   /uqbar-address-from-ship
-      %agent  [u.ship.act %wallet]
+      %agent  [ship.act %wallet]
       %poke   uqbar-share-address+!>([%request %wallet])
   ==
 ::  take fact from wallet with result of poke

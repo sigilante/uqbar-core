@@ -463,19 +463,6 @@
     ::
         %transaction
       ::  take in a new pending transaction
-      ::  if the ship field is full, instead of making transaction,
-      ::  poke thread that will ask their ship for an address, then
-      ::  re-poke wallet with filled in info
-      ?^  ship.act
-        =/  tid  `@ta`(cat 3 'address-get_' (scot %uv (sham eny.bowl)))
-        =/  ta-now  `@ta`(scot %da now.bowl)
-        =/  start-args
-          :^  ~  `tid  byk.bowl(r da+now.bowl)
-          get-address-from-ship+!>(act)
-        :_  state  :_  ~
-        %+  ~(poke pass:io /thread/[ta-now])
-          [our.bowl %spider]
-        spider-start+!>(start-args)
       =/  =caller:smart
         :+  from.act
           ::  this is an ephemeral nonce used to differentiate between
@@ -543,6 +530,19 @@
       %=  state
         pending-store  (~(put by pending-store) from.act my-pending)
       ==
+    ::
+        %transaction-to-ship
+      ::  instead of making transaction, poke thread that will ask ship
+      ::  for an address, then re-poke wallet with filled in info
+      =/  tid  `@ta`(cat 3 'address-get_' (scot %uv (sham eny.bowl)))
+      =/  ta-now  `@ta`(scot %da now.bowl)
+      =/  start-args
+        :^  ~  `tid  byk.bowl(r da+now.bowl)
+        get-address-from-ship+!>(act)
+      :_  state  :_  ~
+      %+  ~(poke pass:io /thread/[ta-now])
+        [our.bowl %spider]
+      spider-start+!>(start-args)
     ==
   --
 ::

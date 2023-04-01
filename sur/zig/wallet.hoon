@@ -168,8 +168,16 @@
           from=address:smart
           contract=id:smart
           town=@ux
-          ship=(unit ship)
           action=supported-actions
+      ==
+      ::
+      $:  %transaction-to-ship
+          =origin
+          from=address:smart
+          contract=id:smart
+          town=@ux
+          =ship
+          action=supported-actions  ::  address field will be ignored
       ==
   ==
 ::
