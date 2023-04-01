@@ -103,25 +103,27 @@
 ++  on-watch
   |=  =path
   ^-  (quip card _this)
+  ?>  =(src our):bowl
   ?+    path  !!
       [%book-updates ~]
-    ?>  =(src.bowl our.bowl)
     ::  send frontend updates along this path
     :_  this
     =-  ~[[%give %fact ~ %wallet-frontend-update -]]
     !>(`wallet-frontend-update`[%new-book tokens.state])
   ::
       [%metadata-updates ~]
-    ?>  =(src.bowl our.bowl)
     ::  send frontend updates along this path
     :_  this
     =-  ~[[%give %fact ~ %wallet-frontend-update -]]
     !>(`wallet-frontend-update`[%new-metadata metadata-store.state])
   ::
       [%tx-updates ~]
-    ?>  =(src.bowl our.bowl)
     ::  provide updates about submitted transactions
     ::  any local app can watch this to send things through
+    `this
+  ::
+      [%token-send-updates ~]
+    ::  for a thread
     `this
   ==
 ::
@@ -139,11 +141,12 @@
     ::  share an address with another ship, depending on preferences
     ::
     =/  action=share-address:uqbar  !<(share-address:uqbar vase)
-    ?.  ?=(%request -.action)
-      ::  ignore receives, for now
-      ~&  >>  action
-      `this
     :_  this  :_  ~
+    ?.  ?=(%request -.action)
+      ::  give to thread
+      %+  fact:io
+        wallet-thread-update+!>([src.bowl action])
+      ~[/token-send-updates]
     %+  ~(poke pass:io /share-address-reply)
       [src.bowl app.action]
     :-  %uqbar-share-address
@@ -526,6 +529,19 @@
       %=  state
         pending-store  (~(put by pending-store) from.act my-pending)
       ==
+    ::
+        %transaction-to-ship
+      ::  instead of making transaction, poke thread that will ask ship
+      ::  for an address, then re-poke wallet with filled in info
+      =/  tid  `@ta`(cat 3 'address-get_' (scot %uv (sham eny.bowl)))
+      =/  ta-now  `@ta`(scot %da now.bowl)
+      =/  start-args
+        :^  ~  `tid  byk.bowl(r da+now.bowl)
+        get-address-from-ship+!>(act)
+      :_  state  :_  ~
+      %+  ~(poke pass:io /thread/[ta-now])
+        [our.bowl %spider]
+      spider-start+!>(start-args)
     ==
   --
 ::
