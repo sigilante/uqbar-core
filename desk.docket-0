@@ -5,7 +5,7 @@
     glob-http+['https://ziggurat-app-distro.s3.us-east-2.amazonaws.com/glob-0v4.jd5dq.vf157.5fb2n.qk722.vfokt.glob' 0v4.jd5dq.vf157.5fb2n.qk722.vfokt]
     base+'uqbar'
     image+'https://hodzod-walrus.s3.us-east-2.amazonaws.com/hodzod-walrus/2022.9.12..23.15.34-R8S9LBS4.png'
-    version+[0 1 2]
+    version+[0 1 3]
     website+'https://uqbar.network'
     license+'MIT'
 ==
