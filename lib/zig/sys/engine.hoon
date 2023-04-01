@@ -112,21 +112,20 @@
         ?.  =(source.p.u.item ueth-contract-id:smart)  fail
         ?.  (gte balance.u.acc amount.q.calldata.tx)   fail
         ::  create "withdraw item"
-        =/  withdraw-salt=@
-          (rap 3 [amount.q.calldata.tx [address nonce ~]:caller.tx])
+        ::  use nonce as salt to assert unique item ids for every withdraw
+        =*  withdraw-salt  nonce.caller.tx
         =/  withdraw-item-id=id:smart
           %-  hash-data
-          [ueth-contract-id:smart 0x0 town-id withdraw-salt]
+          [ueth-contract-id:smart address.caller.tx town-id withdraw-salt]
         =/  withdraw-item=item:smart
           :*  %&  withdraw-item-id
               ueth-contract-id:smart
-              0x0  town-id  withdraw-salt
-              %withdraw
-              [amount.q.calldata.tx [address nonce]:caller.tx]
+              address.caller.tx
+              town-id  withdraw-salt
+              %withdraw  q.calldata.tx
           ==
         =/  event=contract-event
-          :+  ueth-contract-id:smart  %withdraw
-          [address.caller.tx amount.q.calldata.tx]
+          [ueth-contract-id:smart %withdraw q.calldata.tx]
         =-  (exhaust (sub bud.gas.tx 1.000) %0 `[- ~ event^~])
         =+  u.acc(balance (sub balance.u.acc amount.q.calldata.tx))
         %+  gas:big  *state
