@@ -145,7 +145,7 @@
     ?.  ?=(%request -.action)
       ::  give to thread
       %+  fact:io
-        wallet-thread-update+!>(action)
+        wallet-thread-update+!>([src.bowl action])
       ~[/token-send-updates]
     %+  ~(poke pass:io /share-address-reply)
       [src.bowl app.action]

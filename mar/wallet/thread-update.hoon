@@ -1,9 +1,9 @@
 /-  *zig-uqbar
 ::
-|_  upd=share-address
+|_  upd=[@p share-address]
 ++  grab
   |%
-  ++  noun  share-address
+  ++  noun  [@p share-address]
   --
 ::
 ++  grow

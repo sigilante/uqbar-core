@@ -4,11 +4,15 @@
 =>
 |%
 ++  take-update
+  |=  to=@p
   =/  m  (strand ,(unit @ux))
   ^-  form:m
   ;<  =cage  bind:m  (take-fact /thread-watch)
-  =/  share=share-address:uqbar  !<(share-address:uqbar q.cage)
-  ?.  ?=(%share -.share)
+  =/  [from=@p share=share-address:uqbar]
+    !<([@p share-address:uqbar] q.cage)
+  ?.  ?&  ?=(%share -.share)
+          =(to from)
+      ==
     ::  failed  ! surface this somehow
     (pure:m ~)
   (pure:m `address.share)
@@ -31,12 +35,17 @@
       %agent  [ship.act %wallet]
       %poke   uqbar-share-address+!>([%request %wallet])
   ==
+::  set timer so that if we don't hear back from ship in 2 minutes,
+::  we cancel the token send
+;<  now=@da  bind:m  get-time
 ::  take fact from wallet with result of poke
 ::
-;<  address=(unit @ux)  bind:m  take-update
-?~  address
-  (pure:m !>(~))
-;<  our=@p              bind:m  get-our
+;<  address=(unit @ux)  bind:m  (take-update ship.act)
+?~  address  !!
+::  if it's too late, don't send anymore
+;<  later=@da  bind:m  get-time
+?:  (gth (sub later now) ~m5)  !!
+;<  our=@p  bind:m  get-our
 ::  poke wallet with transaction
 ::
 ;<  ~  bind:m
