@@ -159,7 +159,12 @@
     =/  result  !<(write-result:uqbar vase)
     =/  tx-hash  p.result
     ?~  found=(~(get by unfinished-transaction-store) tx-hash)
-      `this  ::  TODO more here
+      ::  this is a receipt forwarded to us: use it to update our token
+      ::  store. the receipt was validated in %uqbar and sent to %wallet
+      ?.  ?=(%receipt -.q.result)  `this
+      =+  (integrate-output tokens output.q.result)
+      :_  this(tokens -)
+      (fact:io wallet-frontend-update+!>([%new-book -]) ~[/book-updates])^~
     =*  tx  u.found
     =^  cards  tx
       ?-    -.q.result
