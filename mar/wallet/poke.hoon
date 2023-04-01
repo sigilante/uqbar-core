@@ -50,7 +50,6 @@
       :~  [%from (se %ux)]
           [%contract (se %ux)]
           [%town (se %ux)]
-          [%ship (se-soft %p)]
           [%action parse-action]
       ==
     ++  parse-action
