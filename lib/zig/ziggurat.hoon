@@ -157,6 +157,32 @@
   :^  project-name  desk-name  request-id
   [%compile-contracts ~]
 ::
+++  make-compile-contract
+  |=  [=update-info:zig file-path=path]
+  ^-  card
+  =*  project-name  project-name.update-info
+  =*  desk-name     desk-name.update-info
+  =*  request-id    request-id.update-info
+  ?>  ?=(%con -.file-path)
+  %-  ~(poke-self pass:io /self-wire)
+  :-  %ziggurat-action
+  !>  ^-  action:zig
+  :^  project-name  desk-name  request-id
+  [%compile-contract file-path]
+::
+++  make-compile-non-contract
+  |=  [=update-info:zig file-path=path]
+  ^-  card
+  =*  project-name  project-name.update-info
+  =*  desk-name     desk-name.update-info
+  =*  request-id    request-id.update-info
+  ?<  ?=(%con -.file-path)
+  %-  ~(poke-self pass:io /self-wire)
+  :-  %ziggurat-action
+  !>  ^-  action:zig
+  :^  project-name  desk-name  request-id
+  [%compile-non-contract file-path]
+::
 ++  make-read-desk
   |=  [project-name=@t desk-name=@tas request-id=(unit @t)]
   ^-  card
@@ -296,7 +322,7 @@
   %^  make-save-jam  desk-name  contract-jam-path
   p.build-result
 ::
-++  build-contract-projects
+++  build-contracts
   |=  $:  smart-lib=vase
           desk=path
           to-compile=(set path)
@@ -305,10 +331,10 @@
   %+  turn  ~(tap in to-compile)
   |=  p=path
   ~&  "building {<p>}..."
-  [p (build-contract-project smart-lib desk p)]
+  [p (build-contract smart-lib desk p)]
 ::
-++  build-contract-project
-  :: !.
+++  build-contract
+  !.
   |=  [smart-lib=vase desk=path to-compile=path]
   ^-  build-result:zig
   ::
@@ -694,6 +720,20 @@
   |=  thread-name=@tas
   ^-  path
   /ted/ziggurat/[thread-name]/hoon
+::
+++  add-to-queue
+  |=  $:  =thread-queue:zig
+          thread-name=@tas
+          payload=thread-queue-payload:zig
+          =update-info:zig
+      ==
+  ^-  [vase thread-queue:zig]
+  =*  project-name  project-name.update-info
+  =*  desk-name     desk-name.update-info
+  :_  %-  ~(put to thread-queue)
+      [project-name desk-name thread-name payload]
+  %.  thread-queue
+  ~(thread-queue make-update-vase update-info)
 ::
 ++  convert-test-steps-to-thread
   |=  $:  project-name=@t
@@ -1828,6 +1868,12 @@
     !>  ^-  update:zig
     :^  %suspend-uninstall-to-make-dev-desk  update-info
     [%| level message]  ~
+  ::
+  ++  build-result
+    |=  message=@t
+    ^-  vase
+    !>  ^-  update:zig
+    [%build-result update-info [%| level message] ~]
   --
 ::
 ::  json
@@ -1987,6 +2033,9 @@
     ::
         %ship-to-address-map
       ['data' ~]~  :: TODO
+    ::
+        %build-result
+      ['data' ~]~
     ==
   ::
   ++  settings
@@ -2305,13 +2354,17 @@
         [%add-config (ot ~[[%who (se %p)] [%what (se %tas)] [%item ni]])]
         [%delete-config (ot ~[[%who (se %p)] [%what (se %tas)]])]
     ::
-        [%register-contract-for-compilation (ot ~[[%file pa]])]
-        [%unregister-contract-for-compilation (ot ~[[%file pa]])]
+        [%register-for-compilation (ot ~[[%file pa]])]
+        [%unregister-for-compilation (ot ~[[%file pa]])]
         [%deploy-contract deploy]
     ::
         [%compile-contracts ul]
         [%compile-contract (ot ~[[%path pa]])]
         [%read-desk ul]
+    ::
+        [%queue-thread queue-thread]
+        [%save-thread save-thread]
+        [%delete-thread (ot ~[[%thread-name (se %tas)]])]
     ::
         :: [%run-queue ul]
         :: [%clear-queue ul]
@@ -2335,11 +2388,68 @@
         [%suspend-uninstall-to-make-dev-desk ul]
     ==
   ::
+  ++  queue-thread
+    ^-  $-(json [@tas thread-queue-payload:zig])
+    %-  ot
+    :+  [%thread-name (se %tas)]
+      [%payload thread-queue-payload]
+    ~
+  ::
+  ++  save-thread
+    ^-  $-(json [@tas imports:zig test-steps:zig])
+    %-  ot
+    :^    [%thread-name (se %tas)]
+        [%test-imports (om pa)]
+      [%test-steps (ar test-step)]
+    ~
+  ::
+  ++  thread-queue-payload
+    ^-  $-(json thread-queue-payload:zig)
+    %-  of
+    :_  ~
+    [%fard special-configuration-args]
+  ::
+  ++  test-step
+    ^-  $-(json test-step:zig)
+    %-  of
+    :~  [%scry (ot ~[[%payload scry-payload] [%expected so]])]
+        [%wait (ot ~[[%until (se %dr)]])]
+        [%dojo (ot ~[[%payload dojo-payload]])]
+        [%poke (ot ~[[%payload poke-payload]])]
+    ==
+  ::
+  ++  scry-payload
+    ^-  $-(json scry-payload:zig)
+    %-  ot
+    :~  [%who (se %p)]
+        [%mold-name so]
+        [%care (se %tas)]
+        [%app (se %tas)]
+        [%path pa]
+    ==
+  ::
+  ++  dojo-payload
+    ^-  $-(json dojo-payload:zig)
+    %-  ot
+    :+  [%who (se %p)]
+      [%payload so]
+    ~
+  ::
+  ++  poke-payload
+    ^-  $-(json poke-payload:zig)
+    %-  ot
+    :~  [%who (se %p)]
+        [%to (se %p)]
+        [%app (se %tas)]
+        [%mark (se %tas)]
+        [%payload special-configuration-args]
+    ==
+  ::
   ++  new-project
     ^-  $-(json [(list @p) (unit @p) vase])
     %-  ot
     :^    [%sync-ships (ar (se %p))]
-        [%fetch-data-from-remote-ship (se-soft %p)]
+        [%fetch-desk-from-remote-ship (se-soft %p)]
       :-  %special-configuration-args
       special-configuration-args
     ~

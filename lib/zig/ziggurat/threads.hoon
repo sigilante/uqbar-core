@@ -8,6 +8,7 @@
     zig-lib=zig-ziggurat
 ::
 =*  strand         strand:spider
+=*  build-file     build-file:strandio
 =*  get-bowl       get-bowl:strandio
 =*  get-time       get-time:strandio
 =*  poke-our       poke-our:strandio
@@ -415,6 +416,17 @@
     [%ziggurat-action u.followup-action]
   (pure:m !>(~))
 ::
+++  build
+  |=  [request-id=(unit @t) file-path=path]
+  =/  m  (strand ,vase)
+  ^-  form:m
+  ;<  =bowl:strand  bind:m  get-bowl
+  ;<  build-result=(unit vase)  bind:m
+    (build-file [our.bowl desk-name %da now.bowl] file-path)
+  ;<  now=@da  bind:m  get-time
+  ~&  %ziggurat-build^%time-elapsed^`@dr`(sub now now.bowl)
+  (pure:m ?~(build-result !>(~) u.build-result))
+::
 ++  create-desk
   |=  =update-info:zig
   =/  m  (strand ,vase)
@@ -424,8 +436,6 @@
   ;<  ~  bind:m  make-mount
   ;<  ~  bind:m  make-bill
   ;<  ~  bind:m  make-deletions
-  :: ;<  ~  bind:m  make-read-desk
-  ;<  ~  bind:m  make-configuration-file
   ;<  ~  bind:m  (sleep ~s1)
   (pure:m !>(~))
   ::
