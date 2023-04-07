@@ -40,7 +40,12 @@
 ::  only handling uETH currently.
 ::
 +$  withdraw-mold
-  $%  [%token id=id:smart destination-address=address:smart amount=@ud]
+  $%  $:  %token
+          id=id:smart
+          eth-token-id=@ud
+          destination-address=address:smart
+          amount=@ud
+      ==
       ::  [%nft id=id:smart]
   ==
 ::
