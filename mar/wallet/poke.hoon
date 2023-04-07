@@ -69,6 +69,10 @@
       :~  [%to (se %ux)]
           [%item (se %ux)]
       ==
+    ++  se-soft
+      |=  aur=@tas
+      |=  jon=^json
+      ?>(?=([%s *] jon) (slaw aur p.jon))
     --
   --
 ++  grow

@@ -1,1 +1,1 @@
-../../webterm/sur/settings.hoon
+../../landscape/sur/settings.hoon

@@ -108,7 +108,7 @@
           action=supported-actions
       ==
       ::  poked back to origin after sequencer optimistically processes
-      [%sequencer-receipt =origin sequencer-receipt:uqbar]
+      [%sequencer-receipt =origin =hash:smart sequencer-receipt:uqbar]
       ::  poked back to origin when transaction is included in batch
       [%finished-transaction finished-transaction]
   ==
@@ -169,6 +169,15 @@
           contract=id:smart
           town=@ux
           action=supported-actions
+      ==
+      ::
+      $:  %transaction-to-ship
+          =origin
+          from=address:smart
+          contract=id:smart
+          town=@ux
+          =ship
+          action=supported-actions  ::  address field will be ignored
       ==
   ==
 ::
