@@ -1,213 +1,163 @@
 ::
 ::  tests for con/zigs.hoon
 ::
-/+  *test, smart=zig-sys-smart, *zig-sys-engine, merk
-/*  smart-lib-noun          %noun  /lib/zig/sys/smart-lib/noun
-/*  zink-cax-noun           %noun  /lib/zig/sys/hash-cache/noun
-/*  zigs-contract           %jam   /con/compiled/zigs/jam
+/+  *test, *transaction-sim
 |%
 ::
-::  constants / dummy info for engine
+::  test data
 ::
-++  big  (bi:merk id:smart item:smart)  ::  merkle engine for granary
-++  pig  (bi:merk id:smart @ud)         ::                for populace
-++  town-id    0x0
-++  fake-sig   [0 0 0]
-++  eng
-  %~  engine  engine
-  :^  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-    ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun)))
-  %.n  %.n
+++  sequencer  caller-1
+++  caller-1  ^-  caller:smart  [addr-1 1 (id addr-1)]:zigs
+++  caller-2  ^-  caller:smart  [addr-2 1 (id addr-2)]:zigs
+++  caller-3  ^-  caller:smart  [addr-3 1 (id addr-3)]:zigs
+++  caller-4  ^-  caller:smart  [addr-4 1 (id addr-4)]:zigs
 ::
-::  fake data
+++  my-shell  [caller-1 ~ id.p:pact:zigs [1 1.000.000] default-town-id 0]
 ::
-::  separate addresses necessary to avoid circular definitions in zigs
-++  address-1  0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-++  caller-1  ^-  caller:smart
-  [address-1 1 id.p:account-1:zigs]
-++  address-2  0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
-++  caller-2  ^-  caller:smart
-  [address-2 1 id.p:account-2:zigs]
-++  address-3  0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
-++  caller-3  ^-  caller:smart
-  [address-3 6 id.p:account-3:zigs]
-::
-++  zigs
-  |%
-  ++  pact
-    ^-  item:smart
-    =/  code  (cue zigs-contract)
-    :*  %|
-        zigs-contract-id:smart  ::  id
-        zigs-contract-id:smart  ::  source
-        zigs-contract-id:smart  ::  holder
-        town-id
-        [-.code +.code]
-        ~
-        ~
-    ==
-  ++  account-1
-    ^-  item:smart
-    =/  allowances
-      (make-pmap:smart ~[[address-2 10.000]])
-    :*  %&
-        (hash-data:smart zigs-contract-id:smart address-1 town-id `@`'zigs')
-        zigs-contract-id:smart
-        address-1
-        town-id
-        `@`'zigs'
-        %account
-        [300.000.000 allowances `@ux`'zigs-metadata' ~]
-    ==
-  ++  account-2
-    ^-  item:smart
-    :*  %&
-        (hash-data:smart zigs-contract-id:smart address-2 town-id `@`'zigs')
-        zigs-contract-id:smart
-        address-2
-        town-id
-        `@`'zigs'
-        %account
-        [200.000 ~ `@ux`'zigs-metadata' ~]
-    ==
-  ++  account-3
-    ^-  item:smart
-    :*  %&
-        (hash-data:smart zigs-contract-id:smart address-3 town-id `@`'zigs')
-        zigs-contract-id:smart
-        address-3
-        town-id
-        `@`'zigs'
-        %account
-        [100.000 ~ `@ux`'zigs-metadata' ~]
-    ==
-  --
-::
-++  fake-state
-  ^-  state
-  %+  gas:big  *(merk:merk id:smart item:smart)
-  :~  [id.p:pact pact]:zigs
-      [id.p:account-1 account-1]:zigs
-      [id.p:account-2 account-2]:zigs
-      [id.p:account-3 account-3]:zigs
+++  state
+  %-  make-chain-state
+  :~  pact:zigs
+      (account addr-1 300.000.000 [addr-2 1.000.000]^~):zigs
+      (account addr-2 200.000.000 ~):zigs
+      (account addr-3 100.000.000 [addr-1 50.000]^~):zigs
+      (account addr-4 500.000 ~):zigs
   ==
-++  fake-chain
-  ^-  chain
-  [fake-state ~]
+++  chain
+  ^-  chain:engine
+  [state ~]
 ::
 ::  tests for %give
 ::
-++  test-zz-zigs-give
+++  test-zz-zigs-give  ^-  test-txn
   =/  =calldata:smart
-    [%give address-2 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%0) !>(errorcode.output))
+    [%give addr-2:zigs 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account addr-1 299.999.000 [addr-2 1.000.000]^~):zigs
+          (account addr-2 200.001.000 ~):zigs
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-zy-zigs-give-new-address
+++  test-zy-zigs-give-new-address  ^-  test-txn
   =/  =calldata:smart
-    [%give 0xdead.beef 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%0) !>(errorcode.output))
+    [%give 0xdead.beef 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account addr-1 299.999.000 [addr-2 1.000.000]^~):zigs
+          (account 0xdead.beef 1.000 ~):zigs
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-zx-zigs-give-self  ::  should fail
+++  test-zx-zigs-give-self  ^-  test-txn  ::  should fail
   =/  =calldata:smart
-    [%give address-1 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  ~&  >  output
-  (expect-eq !>(%6) !>(errorcode.output))
+    [%give addr-1:zigs 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  tx-fail
 ::
-++  test-zw-zigs-give-too-much  ::  should fail
+++  test-zw-zigs-give-too-much  ^-  test-txn  ::  should fail
   =/  =calldata:smart
-    [%give address-2 500.000.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%6) !>(errorcode.output))
+    [%give addr-2:zigs 500.000.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  tx-fail
 ::
 ::  tests for %take
 ::
-++  test-yz-zigs-take
+++  test-yz-zigs-take  ^-  test-txn
   =/  =calldata:smart
-    [%take address-3 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-2 ~ id.p:pact:zigs [1 50.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%0) !>(errorcode.output))
+    [%take addr-3:zigs 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart
+    :+  fake-sig  calldata
+    [caller-2 ~ id.p:pact:zigs [1 50.000] default-town-id 0]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account addr-3 100.001.000 [addr-1 50.000]^~):zigs
+          (account addr-1 299.999.000 [addr-2 999.000]^~):zigs
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-yy-zigs-take-no-allowance  ::  should fail
+++  test-yy-zigs-take-no-allowance  ^-  test-txn  ::  should fail
   =/  =calldata:smart
-    [%take address-3 1.000 id.p:account-2:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%6) !>(errorcode.output))
+    [%take addr-3:zigs 1.000 (id addr-2):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  tx-fail
 ::
 ::  tests for %set-allowance
 ::
-++  test-xz-set-allowance
+++  test-xz-set-allowance  ^-  test-txn
   =/  =calldata:smart
-    [%set-allowance address-3 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%0) !>(errorcode.output))
+    [%set-allowance addr-3:zigs 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      ~[(account addr-1 300.000.000 ~[[addr-2 1.000.000] [addr-3 1.000]]):zigs]
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-xy-set-allowance-again
+++  test-xy-set-allowance-again  ^-  test-txn
   =/  =calldata:smart
-    [%set-allowance address-2 0 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%0) !>(errorcode.output))
+    [%set-allowance addr-2:zigs 0 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      ~[(account addr-1 300.000.000 [addr-2 0]^~):zigs]
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-xx-set-allowance-self  ::  should fail
+++  test-xx-set-allowance-self  ^-  test-txn  ::  should fail
   =/  =calldata:smart
-    [%set-allowance address-1 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
-    %~  intake  %~  eng  eng
-      [caller-1 town-id batch=1 eth-block-height=0]
-    [fake-chain tx]
-  ::
-  (expect-eq !>(%6) !>(errorcode.output))
-::
+    [%set-allowance addr-1:zigs 1.000 (id addr-1):zigs]
+  =/  tx=transaction:smart  [fake-sig calldata my-shell]
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    tx
+  tx-fail
 --
