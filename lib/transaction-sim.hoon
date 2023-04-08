@@ -84,13 +84,14 @@
   ^-  ?
   ::  for each non-unit aspect in expected, compare to result
   ::
+  ~&  "gas paid: {<gas.res>}"
   ?&  ?~  gas.exp  &
         ?:  =(gas.res u.gas.exp)
           ~&  "OK gas"  &
         ~&  >>>  "expected gas {<u.gas.exp>}, got {<gas.res>}"  |
       ?~  errorcode.exp  &
         ?:  =(errorcode.res u.errorcode.exp)
-          ~&  "OK errorcode"  &
+          ~&  "OK errorcode: {<errorcode.res>}"  &
         ~&  >>>  "expected errorcode {<u.errorcode.exp>}, got {<errorcode.res>}"  |
       ?~  modified.exp  &
         ?:  =(modified.res u.modified.exp)

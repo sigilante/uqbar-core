@@ -39,11 +39,11 @@
 =/  res=(list path)
   %+  murn  (resolve-test-paths test-arms)
   |=  [=path =test-txn]
+  ~&  >  "running {<path>}"
   =/  =output
     %~  intake  %~  eng  eng
       engine-data.test-txn
     [chain transaction]:test-txn
-  ~&  >  "running {<path>}"
   ?:  (check-output output expected.test-txn)
     ~
   `path
