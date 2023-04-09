@@ -21,6 +21,8 @@
   ^-  (quip call diff)
   ?:  ?=(%create -.act)
     ::  called by publish contract: %deploy-and-init
+    ::  swap this out for 0x1111.1111 on testnet
+    ?>  =(0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169 id.caller.context)
     ?<  ?=(%deleted org.act)
     =/  =item
       :*  %&
