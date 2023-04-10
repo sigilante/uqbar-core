@@ -208,4 +208,52 @@
       burned=`~
       events=`~
   ==
+::
+++  test-yx-edit-sub-org
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%edit-org my-test-org-id /my-test-org/my-sub-org `'newdesc' ~]
+    my-shell
+  :*  gas=~
+      errorcode=`%0
+      ::  modified the org
+      :-  ~
+      %-  make-chain-state
+      :_  ~
+      %-  my-test-org
+      :*  'my-test-org'
+          `'an org controlled by 0xd387...'
+          addr-1:zigs
+          ~
+          %-  make-pmap:smart
+          ~['my-sub-org'^['my-sub-org' `'newdesc' addr-2:zigs ~ ~]]
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+++  test-yx-edit-org-controller
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%edit-org my-test-org-id /my-test-org/my-sub-org ~ `addr-1:zigs]
+    my-shell
+  :*  gas=~
+      errorcode=`%0
+      ::  modified the org
+      :-  ~
+      %-  make-chain-state
+      :_  ~
+      %-  my-test-org
+      :*  'my-test-org'
+          `'an org controlled by 0xd387...'
+          addr-1:zigs
+          ~
+          %-  make-pmap:smart
+          ~['my-sub-org'^['my-sub-org' ~ addr-1:zigs ~ ~]]
+      ==
+      burned=`~
+      events=`~
+  ==
 --
