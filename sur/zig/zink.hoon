@@ -1,7 +1,7 @@
 |%
 +$  chain-state-scry
   $-  [gas=@ud ^]
-  [gas=@ud product=(unit *)]
+  [gas=@ud pays=(map @ux @ud) product=(unit *)]
 ::
 +$  child  *
 +$  parent  *
@@ -78,5 +78,7 @@
       ::  crypto
       [%k224 100]  [%k256 100]  [%k384 100]  [%k512 100]
       [%make 100]  [%sign 100]  [%reco 100]
+      ::  smart
+      [%husk 1.000]
   ==
 --
