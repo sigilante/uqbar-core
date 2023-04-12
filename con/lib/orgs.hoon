@@ -1,21 +1,21 @@
 ::  lib/orgs.hoon  [UQ| DAO]
 /+  *zig-sys-smart
+::  this type has to live in its own core because the compiler is retarded
+=>  |%
+    ::  sub-orgs are stacked to create tags
+    ::  note: each org can have its own controller,
+    ::  but every org "above" in its tag-path can
+    ::  unilaterally modify.
+    +$  org
+      $:  name=@t
+          desc=(unit @t)  ::  optional label or description
+          controller=id   ::  contract that is permitted to edit org
+          members=(pset address)
+          sub-orgs=(pmap @t org)
+      ==
+    --
 |%
 +$  tag  path
-::
-::  sub-orgs are stacked to create tags
-::  note: each org can have its own controller,
-::  but every org "above" in its tag-path can
-::  unilaterally modify.
-::
-+$  org
-  $@  %deleted
-  $:  name=@t
-      desc=(unit @t)  ::  optional label or description
-      controller=id   ::  contract that is permitted to edit org
-      members=(pset address)
-      sub-orgs=(pmap @t org)
-  ==
 ::
 +$  action
   $%  ::  call this upon contract deployment
@@ -80,7 +80,6 @@
 ++  produce-org-events
   |=  [pre=path =org]
   ^-  (list org-event)
-  ?:  ?=(%deleted org)  ~
   =/  =tag
     ?~  pre  /[name.org]
     (snoc pre name.org)
@@ -103,7 +102,6 @@
 ++  modify-org
   |=  [=org at=tag =org-mod]
   ^+  org
-  ?<  ?=(%deleted org)
   ?~  at
     (org-mod org)
   ?>  =(i.at name.org)

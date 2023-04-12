@@ -143,36 +143,6 @@
       events=`~
   ==
 ::
-++  test-zy-create-deleted  ^-  test-txn
-  =/  my-org
-    ^-  org:org-lib
-    %deleted
-  =/  org-item
-    ^-  item:smart
-    :*  %&
-        %:  hash-data:smart
-            id.p:orgs-pact
-            addr-1:zigs
-            default-town-id
-            'squidz'
-        ==
-        id.p:orgs-pact
-        addr-1:zigs
-        default-town-id
-        'squidz'
-        %org
-        my-org
-    ==
-  :^    chain
-      [sequencer default-town-id batch=1 eth-block-height=0]
-    [fake-sig [%create my-org] my-shell]
-  :*  gas=~
-      errorcode=`%6
-      modified=`~
-      burned=`~
-      events=`~
-  ==
-::
 ::  tests for %edit-org
 ::
 ++  test-yz-edit-org-not-controller  ^-  test-txn

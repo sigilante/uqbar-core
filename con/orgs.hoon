@@ -23,7 +23,6 @@
     ::  called by publish contract: %deploy-and-init
     ::  swap this out for 0x1111.1111 on testnet
     ?>  =(0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169 id.caller.context)
-    ?<  ?=(%deleted org.act)
     =/  =item
       :*  %&
           %:  hash-data
@@ -45,19 +44,15 @@
   =/  org
     =+  (need (scry-state org-id.act))
     (husk org:lib - `this.context ~)
-  ::  if org has been deleted, crash
-  ?<  ?=(%deleted noun.org)
   ::  caller must control identified org
   ?>  =(id.caller.context controller.noun.org)
   =^  events  noun.org
-    =-  ?<  ?=(%deleted +.-)  -
     ?-    -.act
         %edit-org
       :-  ~
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      ?<  ?=(%deleted org)
       %=    org
           desc
         ?~(desc.act desc.org desc.act)
@@ -66,36 +61,28 @@
       ==
     ::
         %add-sub-org
-      ?<  ?=(%deleted org.act)
       :-  (produce-org-events:lib where.act org.act)
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      ?<  ?=(%deleted org)
       =-  org(sub-orgs -)
       (~(put py sub-orgs.org) [name.org org]:act)
     ::
         %delete-org
-      :-  (nuke-tag:lib where.act)
-      %^  modify-org:lib
-        noun.org  where.act
-      |=(=org:lib %deleted)
+      !!  ::  TODO
     ::
         %replace-members
       :-  %+  weld  (nuke-tag:lib where.act)
           (make-tag:lib where.act name.noun.org new.act)
       %^  modify-org:lib
         noun.org  where.act
-      |=  =org:lib
-      ?<  ?=(%deleted org)
-      org(members new.act)
+      |=(=org:lib org(members new.act))
     ::
         %add-member
       :-  (add-tag:lib where.act name.noun.org address.act)
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      ?<  ?=(%deleted org)
       org(members (~(put pn members.org) address.act))
     ::
         %del-member
@@ -103,7 +90,6 @@
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      ?<  ?=(%deleted org)
       org(members (~(del pn members.org) address.act))
     ==
   `(result [&+org ~] ~ ~ events)
