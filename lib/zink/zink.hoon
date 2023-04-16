@@ -5,7 +5,8 @@
     +$  fail      (list [@ta *])
     +$  body      (each good fail)
     +$  cache     (map * phash)
-    +$  appendix  [cax=cache jets=jetmap hit=hints gas=@]
+    +$  pays      (map id:smart @ud)  ::  payments for fee-gated scry paths
+    +$  appendix  [cax=cache jets=jetmap hit=hints =pays gas=@]
     +$  book      (pair body appendix)
     --
 |%
@@ -15,34 +16,8 @@
   ~>  %bout
   %.  [s f scry hints-on]
   %*  .  zink
-    app  [cax jetmap ~ gas]
+    app  [cax jetmap ~ ~ gas]
   ==
-::
-::  ++  hash
-::    |=  [n=* cax=(map * phash)]
-::    ^-  phash
-::    ?@  n
-::      ?:  (lte n 12)
-::        =/  ch  (~(get by cax) n)
-::        ?^  ch  u.ch
-::        (hash:pedersen n 0)
-::      (hash:pedersen n 0)
-::    ?^  ch=(~(get by cax) n)
-::      u.ch
-::    =/  hh  $(n -.n)
-::    =/  ht  $(n +.n)
-::    (hash:pedersen hh ht)
-::
-::  ++  create-hints
-::    |=  [n=^ h=hints cax=cache]
-::    ^-  json
-::    =/  hs  (hash -.n cax)
-::    =/  hf  (hash +.n cax)
-::    %-  pairs:enjs:format
-::    :~  hints+(hints:enjs h)
-::        subject+s+(num:enjs hs)
-::        formula+s+(num:enjs hf)
-::    ==
 ::
 ++  zink
   =|  appendix
@@ -304,6 +279,9 @@
     ?:  ?=(%| -.path)    [%|^trace app]
     ?~  p.path           [%&^~ app]
     =/  result  (scry gas p.ref p.path)
+    =.  pays.app
+      %-  (~(uno by pays.app) pays.result)
+      |=([k=@ux f1=@ud f2=@ud] (add f1 f2))
     ?~  product.result
       [%&^~^~ app(gas gas.result)]
     [%&^[~ product.result] app(gas gas.result)]
