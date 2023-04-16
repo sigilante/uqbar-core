@@ -84,7 +84,7 @@ In the future, with remote scry, users will not need to run their own `%indexer`
 ## Starting a Fakeship Testnet
 
 To develop this repo or new contracts, it is convenient to start with a fakeship testnet.
-First, make sure the fakeship you're using is in the [whitelist](https://github.com/uqbar-dao/uqbar-core/blob/master/lib/rollup.hoon).
+First, make sure the fakeship you're using is in the [whitelist](https://github.com/uqbar-dao/uqbar-core/blob/3d0514e366435553abbe4fecde7e28e43f77a45d/lib/zig/rollup.hoon#L11-L17).
 
 Uqbar provides a generator to set up a fakeship testnet for local development.
 That generator, used as a poke to the `%sequencer` app as `:sequencer|init`, populates a new town with some [`item`](#item)s: [`pact`](#pact) (contract code) and [`data`](#data) (contract data).
