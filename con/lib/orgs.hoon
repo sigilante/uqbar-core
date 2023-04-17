@@ -1,6 +1,5 @@
 ::  lib/orgs.hoon  [UQ| DAO]
 /+  *zig-sys-smart
-::  this type has to live in its own core because the compiler is retarded
 =>  |%
     ::  sub-orgs are stacked to create tags
     ::  note: each org can have its own controller,
@@ -10,7 +9,7 @@
       $:  name=@t
           desc=(unit @t)  ::  optional label or description
           controller=id   ::  contract that is permitted to edit org
-          members=(pset address)
+          members=(pset ship)
           sub-orgs=(pmap @t org)
       ==
     --
@@ -32,21 +31,21 @@
     [%delete-org org-id=id where=tag]
   ::
   ::  replace existing member-set of an org/sub-org
-    [%replace-members org-id=id where=tag new=(pset address)]
+    [%replace-members org-id=id where=tag new=(pset ship)]
   ::
   ::  add address to member-set of an org/sub-org
-    [%add-member org-id=id where=tag =address]
+    [%add-member org-id=id where=tag =ship]
   ::
   ::  remove address from member-set of an org/sub-org
-    [%del-member org-id=id where=tag =address]
+    [%del-member org-id=id where=tag =ship]
   ==
 ::
-::  matches %social-graph API, but nodes always entities/addresses
+::  matches %social-graph API, but nodes always entities/ships
 ::  nests under contract `event`
 ::
 +$  org-event
-  $%  [%add-tag =tag from=[%entity %orgs name=@t] to=[%address @ux]]
-      [%del-tag =tag from=[%entity %orgs name=@t] to=[%address @ux]]
+  $%  [%add-tag =tag from=[%entity %orgs name=@t] to=[%ship @p]]
+      [%del-tag =tag from=[%entity %orgs name=@t] to=[%ship @p]]
       [%nuke-tag =tag]  ::  remove this tag from all edges
       [%nuke-top-level-tag =tag]  :: remove all tags with same first element
   ==
@@ -54,14 +53,14 @@
 ::  helpers for producing events
 ::
 ++  add-tag
-  |=  [=tag entity=@t =address]
+  |=  [=tag entity=@t =ship]
   ^-  (list org-event)
-  [%add-tag tag [%entity %orgs entity] [%address address]]^~
+  [%add-tag tag [%entity %orgs entity] [%ship ship]]^~
 ::
 ++  del-tag
-  |=  [=tag entity=@t =address]
+  |=  [=tag entity=@t =ship]
   ^-  (list org-event)
-  [%del-tag tag [%entity %orgs entity] [%address address]]^~
+  [%del-tag tag [%entity %orgs entity] [%ship ship]]^~
 ::
 ++  nuke-tag
   |=  =tag
@@ -69,11 +68,11 @@
   [%nuke-tag tag]^~
 ::
 ++  make-tag
-  |=  [=tag entity=@t members=(pset address)]
+  |=  [=tag entity=@t members=(pset ship)]
   ^-  (list event)
   %+  turn  ~(tap pn members)
-  |=  =address
-  [%add-tag tag [%entity %orgs entity] [%address address]]
+  |=  =ship
+  [%add-tag tag [%entity %orgs entity] [%ship ship]]
 ::
 ::  make all the add-tag events for a new org
 ::
@@ -86,8 +85,8 @@
   ?>  ?=(^ tag)
   %+  weld
     %+  turn  ~(tap pn members.org)
-    |=  =address
-    [%add-tag tag [%entity %orgs i.tag] [%address address]]
+    |=  =ship
+    [%add-tag tag [%entity %orgs i.tag] [%ship ship]]
   ^-  (list org-event)
   %-  zing
   %+  turn  ~(val py sub-orgs.org)
