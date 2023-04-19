@@ -79,18 +79,18 @@
       |=(=org:lib org(members new.act))
     ::
         %add-member
-      :-  (add-tag:lib where.act name.noun.org address.act)
+      :-  (add-tag:lib where.act name.noun.org ship.act)
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      org(members (~(put pn members.org) address.act))
+      org(members (~(put pn members.org) ship.act))
     ::
         %del-member
-      :-  (del-tag:lib where.act name.noun.org address.act)
+      :-  (del-tag:lib where.act name.noun.org ship.act)
       %^  modify-org:lib
         noun.org  where.act
       |=  =org:lib
-      org(members (~(del pn members.org) address.act))
+      org(members (~(del pn members.org) ship.act))
     ==
   `(result [&+org ~] ~ ~ events)
 ::

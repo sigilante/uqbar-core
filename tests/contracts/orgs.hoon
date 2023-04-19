@@ -75,7 +75,7 @@
     :*  'squidz'
         `'an organization for squids'
         addr-1:zigs
-        (make-pset:smart ~[addr-1:zigs])
+        (make-pset:smart `(list @p)`~[~hodzod ~walrus])
         ~
     ==
   =/  org-item
@@ -102,9 +102,12 @@
       modified=`(make-chain-state ~[org-item])
       burned=`~
       ::  events
-      :-  ~  :_  ~
-      :+  id.p:orgs-pact  %add-tag
-      [/squidz [%entity %orgs 'squidz'] [%address addr-1:zigs]]
+      :-  ~
+      :~  :+  id.p:orgs-pact  %add-tag
+          [/squidz [%entity %orgs 'squidz'] [%ship ~hodzod]]
+          :+  id.p:orgs-pact  %add-tag
+          [/squidz [%entity %orgs 'squidz'] [%ship ~walrus]]
+      ==
   ==
 ::
 ++  test-zy-create-not-publisher  ^-  test-txn
@@ -113,7 +116,7 @@
     :*  'squidz'
         `'an organization for squids'
         addr-1:zigs
-        (make-pset:smart ~[addr-1:zigs])
+        (make-pset:smart ~[~hodzod ~walrus])
         ~
     ==
   =/  org-item

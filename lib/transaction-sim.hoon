@@ -115,13 +115,6 @@
         ~&  >>  "got events:"
         ~&  >>  events.res  |
   ==
-::  +filter-tests-by-prefix: TODO document
-::
-++  filter-tests-by-prefix
-  |=  [prefix=path tests=(list test)]
-  ^+  tests
-  =/  prefix-length=@ud  (lent prefix)
-  (skim tests |=([p=path *] =(prefix (scag prefix-length p))))
 ::  +resolve-test-paths: add test names to file paths to form full identifiers
 ::
 ++  resolve-test-paths

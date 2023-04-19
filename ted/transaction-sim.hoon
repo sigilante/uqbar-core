@@ -33,6 +33,10 @@
     gather-tests(fiz t.fiz, build-ok |)
   ~>  %slog.0^leaf+"built   {(spud s.beam.i.fiz)}"
   =/  arms=(list test-arm)  (get-test-arms u.cor)
+  =?  arms  ?=(^ test.i.fiz)
+    %+  skim  arms
+    |=  test-arm
+    =((end [3 (met 3 u.test.i.fiz)] name) u.test.i.fiz)
   =.  test-arms  (~(put by test-arms) (snip s.beam.i.fiz) arms)
   gather-tests(fiz t.fiz)
 ::
