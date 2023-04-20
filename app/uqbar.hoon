@@ -116,7 +116,7 @@
       ?+    m  ~|("%uqbar: rejecting erroneous poke {<m>}" !!)
           %uqbar-action  (handle-action !<(action:u v))
           %uqbar-write   (handle-write !<(write:u v))
-          %wallet-poke   handle-wallet-poke
+          %wallet-poke          handle-wallet-poke
           %uqbar-share-address  handle-wallet-poke
       ==
     [cards this]
@@ -143,14 +143,10 @@
         ==
       ::
           %set-sources
-        =/  p=path  /capitol-updates
-        :-  %+  turn  towns.act
-            |=  [town=id:smart indexer=dock]
-            (~(watch pass:io p) indexer p)
-        %=  state
-            indexers
-          (~(gas by *(map id:smart dock)) towns.act)
-        ==
+        :_  state(indexers (~(gas by *(map id:smart dock)) towns.act))
+        %+  turn  towns.act
+        |=  [town=id:smart indexer=dock]
+        (~(watch pass:io /rollup-updates) indexer /rollup-updates)
       ::
           %open-faucet
         ::  poke known sequencer for this town, will fail if they don't
@@ -209,16 +205,16 @@
     |^
     ^-  (quip card _this)
     ?+    -.wire  (on-agent:def wire sign)
-        %capitol-updates
+        %rollup-updates
       ::  set sequencers based on rollup state, given by indexer
       ?+    -.sign  (on-agent:def wire sign)
           %kick
         [rejoin this]
       ::
           %fact
-        =^  cards  state
-          (update-sequencers !<(rollup-update:s q.cage.sign))
-        [cards this]
+        =+  !<(upd=rollup-update:s q.cage.sign)
+        ?>  ?=(%new-peer-root -.upd)
+        `this(sequencers (~(put by sequencers.state) [town sequencer]:upd))
       ==
     ::
         %indexer
@@ -255,17 +251,6 @@
         (get-wex-dock-by-wire:uc wire)
       ?~  old-source  ~
       ~[(~(watch pass:io wire) u.old-source)]
-    ::
-    ++  update-sequencers
-      |=  upd=rollup-update:s
-      ^-  (quip card _state)
-      ?>  ?=(%new-capitol -.upd)
-      :-  ~
-      %=    state
-          sequencers
-        %-  ~(run by capitol.upd)
-        |=(=hall:s sequencer.hall)
-      ==
     --
   ::
   ++  on-peek

@@ -97,8 +97,6 @@
     =/  upd  !<(rollup-update vase)
     =^  cards  state
       ?-    -.upd
-          %new-capitol
-        `state
           %new-peer-root
         `state(peer-roots (~(put by peer-roots) town.upd root.upd))
       ::
@@ -443,7 +441,7 @@
       %-  malt
       %+  skim  ~(tap by indexers)
       |=  [dock last-ack=@da]
-      (gth last-ack last-batch-time)
+      (gte last-ack last-batch-time)
     :_  %=  this
           last-batch-time  now.bowl
           town  new-town

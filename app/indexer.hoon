@@ -107,7 +107,7 @@
 ::
 ::      %catchup:
 ::        Copy state from target indexer
-::        from given batch hash onward.
+::        from given batch number onward.
 ::
 ::      %set-sequencer:
 ::        Subscribe to sequencer for new batches.
@@ -243,21 +243,20 @@
       =+  !<(catchup-request:ui vase)
       =/  [=batches:ui =batch-order:ui]
         (~(gut by batches-by-town) town-id [~ ~])
-      =.  batch-order  (flop batch-order)
+      =/  order=(list @ux)  (slag batch-num batch-order)
+      =/  mapping=batches:ui
+        %-  ~(gas by *batches:ui)
+        %+  murn  order
+        |=  batch-id=@ux
+        ?~  b=(~(get by batches) batch-id)
+          ~
+        `[batch-id u.b]
       :_  this  :_  ~
       %+  ~(poke pass:io /give-catchup)
         [src.bowl %indexer]
       :-  %indexer-catchup
       !>  ^-  catchup-response:ui
-      |-
-      ?~  batch-order
-        [*batches:ui *batch-order:ui town-id batch-id]
-      ?:  =(batch-id i.batch-order)
-        [batches (flop batch-order) town-id batch-id]
-      %=  $
-          batches      (~(del by batches) i.batch-order)
-          batch-order  t.batch-order
-      ==
+      [mapping order town-id batch-num]
     ::
         %indexer-catchup
       :-  ~
@@ -270,12 +269,10 @@
           %+  ~(put by batches-by-town)  town-id
           [batches batch-order]
         ==
-      =/  batch-id-index=@ud
-        ?~(i=(find ~[batch-id] q.u.old) 0 +(u.i))
       =.  batches-by-town
         %+  ~(put by batches-by-town)  town-id
         :-  (~(uni by p.u.old) batches)
-        (weld batch-order (slag batch-id-index q.u.old))
+        (weld batch-order (slag batch-num q.u.old))
       %=  this
           sequencer-update-queue  ~
           town-update-queue       ~
@@ -324,7 +321,7 @@
         %+  ~(poke pass:io /indexer-catchup)
           dock.action
         :-  %catchup-request
-        !>(`catchup-request:ui`[town-id batch-id]:action)
+        !>(`catchup-request:ui`[town-id batch-num]:action)
       ::
           %consume-batch
         =*  town-id   town-id.hall.town.args.action
@@ -397,40 +394,29 @@
       |^  ^-  (quip card _state)
       ?-    -.update
           %new-sequencer
-        `state
-      ::
-          %new-capitol
-        :_  state(capitol capitol.update)
-        :-  %+  fact:io
-              [%rollup-update !>(update)]
-            :+  /capitol-updates
-              (snoc /capitol-updates %no-init)
-            ~
-        ?:  (only-missing-newest capitol.update)  ~
-        %+  murn  ~(val by capitol.update)
-        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
-        =/  [* =batch-order:ui]
-          %+  ~(gut by batches-by-town)  town-id
-          [~ batch-order=~]
-        =/  needed-list=(list id:smart)
-          (find-needed-batches batch-ids batch-order)
-        ?~  needed-list  ~
-        =*  batch-id  i.needed-list
-        :-  ~
-        %+  ~(poke pass:io /indexer-catchup)
-          catchup-indexer
-        catchup-request+!>(`catchup-request:ui`[town-id batch-id])
+        ::  set sequencer based on rollup
+        :_  state  :_  ~
+        %-  ~(poke-self pass:io /update-sequencer)
+        :-  %indexer-action
+        !>([%set-sequencer [town [who %sequencer]]:update])
       ::
           %new-peer-root
-        =*  town-id   town.update
-        =*  batch-id  root.update
-        =/  timestamp=@da
-          ?:  =(*@da timestamp.update)  now.bowl
-          timestamp.update
-        ?:  (has-batch-id-already town-id batch-id)  `state
+        =*  town-id  town.update
+        =/  last-seen-batch-num=@ud
+          batch-num:(~(gut by capitol.state) town-id *hall:seq)
+        =.  capitol.state
+          %+  ~(put by capitol.state)  town-id
+          =+  old=(~(gut by capitol.state) town-id *hall:seq)
+          %=  old
+            town-id  town-id
+            batch-num  batch-num.update
+            sequencer  sequencer.update
+            roots  (snoc roots.old root.update)
+          ==
+        ?:  (has-batch-id-already town-id root.update)  `state
         =/  sequencer-update
           ^-  (unit [transactions=processed-txs:eng =town:seq])
-          %.  batch-id
+          %.  root.update
           %~  get  by
           %+  ~(gut by sequencer-update-queue)  town-id
           *(map @ux batch:ui)
@@ -439,23 +425,32 @@
           %=  state
               town-update-queue
             %+  ~(put by town-update-queue)  town-id
-            %+  %~  put  by
-                %+  ~(gut by town-update-queue)  town-id
-                *(map batch-id=@ux timestamp=@da)
-            batch-id  timestamp
+            %.  [root timestamp]:update
+            %~  put  by
+            %+  ~(gut by town-update-queue)  town-id
+            *(map batch-id=@ux timestamp=@da)
           ==
         :_  state
+        :+  %+  fact:io
+              [%rollup-update !>(update)]
+            ~[/rollup-updates]
+          %-  ~(poke-self pass:io /consume-batch-poke)
+          :-  %indexer-action
+          !>  ^-  action:ui
+          :*  %consume-batch
+              root.update
+              transactions.u.sequencer-update
+              town.u.sequencer-update
+              timestamp.update
+              %.y
+          ==
+        ?.  (gth batch-num.update +(last-seen-batch-num))
+          ~
         :_  ~
-        %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %indexer-action
-        !>  ^-  action:ui
-        :*  %consume-batch
-            batch-id
-            transactions.u.sequencer-update
-            town.u.sequencer-update
-            timestamp
-            %.y
-        ==
+        %+  ~(poke pass:io /indexer-catchup)
+          catchup-indexer
+        :-  %catchup-request
+        !>(`catchup-request:ui`[town-id last-seen-batch-num])
       ==
       ::
       ++  find-needed-batches  ::  TODO: only return id where diff begins?
@@ -503,6 +498,8 @@
     ::  only allow local subscriptions
     ?>  =(src our):bowl
     ?+    path  (on-watch:def path)
+        [%rollup-updates ~]
+      `this
         ?([%batch-order @ ~] [%json %batch-order @])
       `this
     ::
@@ -511,21 +508,15 @@
       %-  fact-init-kick:io
       :-  %loob
       !>(`?`%.y)
-    ::
-        [%capitol-updates ~]
-      :_  this  :_  ~
-      %-  fact:io  :_  ~
-      :-  %sequencer-capitol-update
-      !>(`rollup-update:seq`[%new-capitol capitol])
     ==
   ::
   ++  on-leave
     |=  =path
     ^-  (quip card _this)
     ?+    path  (on-leave:def path)
-        $?  [%batch-order @ ~]
+        $?  [%rollup-updates ~]
+            [%batch-order @ ~]
             [%json %batch-order @ ~]
-            [%capitol-updates ~]
         ==
       `this
     ==

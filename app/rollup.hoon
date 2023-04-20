@@ -93,9 +93,17 @@
         %+  skim  ~(tap by trackers)
         |=  [dock last-ack=@da]
         (gth last-ack last-update-time)
-      =+  (~(put by capitol) town-id.hall.act hall.act(roots ~[first-root]))
+      =+  %+  ~(put by capitol)
+            town-id.hall.act
+          %=  hall.act
+            roots  ~[first-root]
+            batch-num  1
+            sequencer  [from.act src.bowl]
+          ==
       :_  state(capitol -)
-      (give-rollup-updates - town-id.hall.act first-root now.bowl)
+      %+  give-rollup-updates
+        [from.act src.bowl]
+      [town-id.hall.act first-root 1 now.bowl]
     ::
         %bridge-assets
       ::  for simulation purposes
@@ -120,7 +128,7 @@
         ~|("%rollup: rejecting batch; diff hash not valid" !!)
       ::  check that other town state roots are up-to-date
       ::  recent-enough is a variable here that can be adjusted
-      =/  recent-enough  2
+      =/  recent-enough  1
       ?.  %+  levy
             %+  turn  ~(tap by peer-roots.act)
             |=  [=id:smart root=@ux]
@@ -139,38 +147,35 @@
         !!
       ::  handle full-publish mode
       ::
-      =+  %=  u.hall
-            latest-diff-hash  diff-hash.act
-            roots  (snoc roots.u.hall new-root.act)
-          ==
       ::  remove trackers that haven't acked since last update
       =.  trackers
         %-  malt
         %+  skim  ~(tap by trackers)
         |=  [dock last-ack=@da]
         (gth last-ack last-update-time)
-      =+  (~(put by capitol) town-id.act -)
+      =/  new-hall
+        %=  u.hall
+          batch-num  +(batch-num.u.hall)
+          latest-diff-hash  diff-hash.act
+          roots  (snoc roots.u.hall new-root.act)
+        ==
+      =+  (~(put by capitol) town-id.act new-hall)
       :_  state(capitol -)
-      (give-rollup-updates [- town-id.act new-root.act now.bowl])
+      %+  give-rollup-updates  sequencer.new-hall
+      [town-id.act new-root.act batch-num.new-hall now.bowl]
     ==
   ::
   ++  give-rollup-updates
-    |=  [=^capitol town=@ux root=@ux now=@da]
+    |=  [=sequencer new=[town=@ux root=@ux num=@ud now=@da]]
     ^-  (list card)
     =/  trackers  ~(tap by trackers)
-    %+  weld
-      %+  turn  trackers
-      |=  [=dock @da]
-      %+  ~(poke pass:io /rollup-updates/[q.dock])
-        dock
-      :-  %rollup-update
-      !>(`rollup-update`[%new-peer-root town root now])
     %+  turn  trackers
     |=  [=dock @da]
     %+  ~(poke pass:io /rollup-updates/[q.dock])
       dock
     :-  %rollup-update
-    !>(`rollup-update`[%new-capitol capitol])
+    !>  ^-  rollup-update
+    [%new-peer-root sequencer new]
   --
 ::
 ++  on-peek
