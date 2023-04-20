@@ -113,7 +113,7 @@
 ::        Subscribe to sequencer for new batches.
 ::
 ::      %set-rollup:
-::        Subscribe to rollup for new batch-idss.
+::        Subscribe to rollup for new batch-ids.
 ::
 ::
 /-  eng=zig-engine,
@@ -135,7 +135,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-::  %+  verb  |
+%+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall
@@ -163,29 +163,18 @@
         !>  ^-  action:uqbar
         :-  %set-sources
         [0x0 [our dap]:bowl]~
-    ?:  ?|  =(testnet-host our.bowl)
-            =(indexer-bootstrap-host our.bowl)
-        ==
-      ~
-    :~  %^    watch-target:ic
-            sequencer-wire
+    :~  ::  start tracking new batches from sequencer
+        %+  ~(poke pass:io /track-sequencer)
           sequencer-dock
-        sequencer-path
-    ::
-        %^    watch-target:ic
-            rollup-capitol-wire
+        tracker-request+!>(~)
+    ::  start tracking chain updates from rollup
+        %+  ~(poke pass:io /track-rollup)
           rollup-dock
-        rollup-capitol-path
-    ::
-        %^    watch-target:ic
-            rollup-root-wire
-          rollup-dock
-        rollup-root-path
-    ::
-        %^    watch-target:ic
-            indexer-bootstrap-wire
+        tracker-request+!>(%indexer)
+    ::  sync chain history from a designated indexer
+        %+  ~(poke pass:io /bootstrap)
           indexer-bootstrap-dock
-        indexer-bootstrap-path
+        bootstrap-request+!>(~)
     ==
   ++  on-save  !>(-.state)
   ++  on-load
@@ -195,7 +184,7 @@
         %1
       =+  !<(bs=base-state-1:ui state-vase)
       =-  `this(state -)
-      :-  bs(catchup-indexer catchup-indexer)
+      :-  bs
       %-  inflate-state
       ~(tap by batches-by-town.bs)
     ==
@@ -203,47 +192,139 @@
   ++  on-poke
     |=  [=mark =vase]
     ^-  (quip card _this)
-    ?>  (team:title our.bowl src.bowl)
+    |^
     ?+    mark  (on-poke:def mark vase)
         %indexer-action
-      =+  !<(=action:ui vase)
+      ?>  =(src our):bowl
+      =^  cards  state
+        (handle-action !<(action:ui vase))
+      [cards this]
+    ::
+        %sequencer-indexer-update
+      =^  cards  state
+        %-  consume-sequencer-update
+        !<(indexer-update:seq vase)
+      [cards this]
+    ::
+        %rollup-update
+      =^  cards  state
+        %-  consume-rollup-update
+        !<(rollup-update:seq vase)
+      [cards this]
+    ::
+        %bootstrap-request
+      ::  respond to a bootstrap request with our state
+      :_  this  :_  ~
+      %+  ~(poke pass:io /give-bootstrap)
+        [src.bowl %indexer]
+      indexer-bootstrap+!>(`base-state-1:ui`-.state)
+    ::
+        %indexer-bootstrap
+      ::  Reset state to initial conditions: this happens
+      ::   automagically `+on-load`, but not here.
+      ::   If don't do this, can get bad state starting
+      ::   up a new indexer.
+      =:  batches-by-town          ~
+          capitol                  ~
+          sequencer-update-queue   ~
+          town-update-queue        ~
+          transaction-index        ~
+          from-index               ~
+          item-index               ~
+          item-transactions-index  ~
+          holder-index             ~
+          source-index             ~
+          to-index                 ~
+          newest-batch-by-town     ~
+      ==
+      (on-load vase)
+    ::
+        %catchup-request
+      =+  !<(catchup-request:ui vase)
+      =/  [=batches:ui =batch-order:ui]
+        (~(gut by batches-by-town) town-id [~ ~])
+      =.  batch-order  (flop batch-order)
+      :_  this  :_  ~
+      %+  ~(poke pass:io /give-catchup)
+        [src.bowl %indexer]
+      :-  %indexer-catchup
+      !>  ^-  catchup-response:ui
+      |-
+      ?~  batch-order
+        [*batches:ui *batch-order:ui town-id batch-id]
+      ?:  =(batch-id i.batch-order)
+        [batches (flop batch-order) town-id batch-id]
+      %=  $
+          batches      (~(del by batches) i.batch-order)
+          batch-order  t.batch-order
+      ==
+    ::
+        %indexer-catchup
+      :-  ~
+      =+  !<(catchup-response:ui vase)
+      =/  old=(unit (pair batches:ui batch-order:ui))
+        (~(get by batches-by-town) town-id)
+      ?~  old
+        %=  this
+            batches-by-town
+          %+  ~(put by batches-by-town)  town-id
+          [batches batch-order]
+        ==
+      =/  batch-id-index=@ud
+        ?~(i=(find ~[batch-id] q.u.old) 0 +(u.i))
+      =.  batches-by-town
+        %+  ~(put by batches-by-town)  town-id
+        :-  (~(uni by p.u.old) batches)
+        (weld batch-order (slag batch-id-index q.u.old))
+      %=  this
+          sequencer-update-queue  ~
+          town-update-queue       ~
+          +.state  (inflate-state ~(tap by batches-by-town))
+      ==
+    ==
+    ::
+    ++  handle-action
+      |=  =action:ui
+      ^-  (quip card _state)
       ?-    -.action
           %set-catchup-indexer
-        `this(catchup-indexer dock.action)
+        `state(catchup-indexer dock.action)
       ::
           %set-sequencer
-        :_  this
-        %^    set-watch-target:ic
-            sequencer-wire
-          dock.action
-        sequencer-path
+        :_  state
+        :-  %+  ~(poke pass:io /track-sequencer)
+              dock.action
+            tracker-request+!>(~)
+        ?~  hall=(~(get by capitol) town-id.action)
+          ~
+        ?:  =(q.sequencer.u.hall p.dock.action)
+          ~
+        :_  ~
+        %+  ~(poke pass:io /stop-tracking-sequencer)
+          [q.sequencer.u.hall %sequencer]
+        tracker-stop+!>(~)
       ::
           %set-rollup
-        :_  this
-        %+  weld
-          %^    set-watch-target:ic
-              rollup-capitol-wire
-            dock.action
-          rollup-capitol-path
-        %^    set-watch-target:ic
-            rollup-root-wire
+        ::  TODO remove this poke, should never ever be needed
+        :_  state  :_  ~
+        %+  ~(poke pass:io /track-rollup)
           dock.action
-        rollup-root-path
+        tracker-request+!>(%indexer)
       ::
           %bootstrap
-        :_  this(catchup-indexer dock.action)
-        %^    set-watch-target:ic
-            indexer-bootstrap-wire
+        :_  state(catchup-indexer dock.action)
+        :_  ~
+        %+  ~(poke pass:io /bootstrap)
           dock.action
-        indexer-bootstrap-path
+        bootstrap-request+!>(~)
       ::
           %catchup
-        =+  !<([=dock town=id:smart batch-id=id:smart] vase)
-        :_  this(catchup-indexer dock.action)
-        %^    set-watch-target:ic
-            (indexer-catchup-wire [town-id batch-id]:action)
+        :_  state(catchup-indexer dock.action)
+        :_  ~
+        %+  ~(poke pass:io /indexer-catchup)
           dock.action
-        (indexer-catchup-path [town-id batch-id]:action)
+        :-  %catchup-request
+        !>(`catchup-request:ui`[town-id batch-id]:action)
       ::
           %consume-batch
         =*  town-id   town-id.hall.town.args.action
@@ -251,7 +332,7 @@
         =^  cards  state
           (consume-batch:ic args.action)
         :-  cards
-        %=  this
+        %=  state
             sequencer-update-queue
           %+  ~(put by sequencer-update-queue)  town-id
           %.  batch-id
@@ -263,13 +344,167 @@
           ~(del by (~(gut by town-update-queue) town-id ~))
         ==
       ==
-    ==
+    ::
+    ++  has-batch-id-already
+      |=  [town-id=id:smart batch-id=id:smart]
+      ^-  ?
+      =/  [=batches:ui *]
+        %+  %~  gut  by  batches-by-town
+        town-id  [*batches:ui *batches-by-town:ui]
+      (~(has by batches) batch-id)
+    ::
+    ++  consume-sequencer-update
+      |=  update=indexer-update:seq
+      ^-  (quip card _state)
+      ?-    -.update
+          %update
+        =*  town-id   town-id.hall.update
+        =*  batch-id  root.update
+        ?:  (has-batch-id-already town-id batch-id)  `state
+        ?.  =(batch-id (sham chain.update))          `state
+        =/  timestamp=(unit @da)
+          %.  batch-id
+          %~  get  by
+          %+  ~(gut by town-update-queue)  town-id
+          *(map @ux @da)
+        ?~  timestamp
+          :-  ~
+          %=  state
+              sequencer-update-queue
+            %+  ~(put by sequencer-update-queue)  town-id
+            %+  %~  put  by
+                %+  ~(gut by sequencer-update-queue)  town-id
+                *(map @ux batch:ui)
+              batch-id
+            [transactions.update [chain.update hall.update]]
+          ==
+        :_  state
+        :_  ~
+        %-  ~(poke-self pass:io /consume-batch-poke)
+        :-  %indexer-action
+        !>  ^-  action:ui
+        :*  %consume-batch
+            batch-id
+            transactions.update
+            [chain.update hall.update]
+            u.timestamp
+            %.y
+        ==
+      ==
+    ::
+    ++  consume-rollup-update
+      |=  update=rollup-update:seq
+      |^  ^-  (quip card _state)
+      ?-    -.update
+          %new-sequencer
+        `state
+      ::
+          %new-capitol
+        :_  state(capitol capitol.update)
+        :-  %+  fact:io
+              [%rollup-update !>(update)]
+            :+  /capitol-updates
+              (snoc /capitol-updates %no-init)
+            ~
+        ?:  (only-missing-newest capitol.update)  ~
+        %+  murn  ~(val by capitol.update)
+        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
+        =/  [* =batch-order:ui]
+          %+  ~(gut by batches-by-town)  town-id
+          [~ batch-order=~]
+        =/  needed-list=(list id:smart)
+          (find-needed-batches batch-ids batch-order)
+        ?~  needed-list  ~
+        =*  batch-id  i.needed-list
+        :-  ~
+        %+  ~(poke pass:io /indexer-catchup)
+          catchup-indexer
+        catchup-request+!>(`catchup-request:ui`[town-id batch-id])
+      ::
+          %new-peer-root
+        =*  town-id   town.update
+        =*  batch-id  root.update
+        =/  timestamp=@da
+          ?:  =(*@da timestamp.update)  now.bowl
+          timestamp.update
+        ?:  (has-batch-id-already town-id batch-id)  `state
+        =/  sequencer-update
+          ^-  (unit [transactions=processed-txs:eng =town:seq])
+          %.  batch-id
+          %~  get  by
+          %+  ~(gut by sequencer-update-queue)  town-id
+          *(map @ux batch:ui)
+        ?~  sequencer-update
+          :-  ~
+          %=  state
+              town-update-queue
+            %+  ~(put by town-update-queue)  town-id
+            %+  %~  put  by
+                %+  ~(gut by town-update-queue)  town-id
+                *(map batch-id=@ux timestamp=@da)
+            batch-id  timestamp
+          ==
+        :_  state
+        :_  ~
+        %-  ~(poke-self pass:io /consume-batch-poke)
+        :-  %indexer-action
+        !>  ^-  action:ui
+        :*  %consume-batch
+            batch-id
+            transactions.u.sequencer-update
+            town.u.sequencer-update
+            timestamp
+            %.y
+        ==
+      ==
+      ::
+      ++  find-needed-batches  ::  TODO: only return id where diff begins?
+        |=  [capitol=(list id:smart) batch-order=(list id:smart)]
+        ^-  (list id:smart)
+        =.  batch-order  (flop batch-order)
+        ?:  =(capitol batch-order)  ~
+        =|  needed=(list id:smart)
+        |-
+        ?~  capitol  (flop needed)
+        ?~  batch-order
+          $(capitol t.capitol, needed [i.capitol needed])
+        ?:  =(i.capitol i.batch-order)
+          $(capitol t.capitol, batch-order t.batch-order)
+        %=  $
+            capitol      t.capitol
+            batch-order  t.batch-order
+            needed       [i.capitol needed]
+        ==
+      ::
+      ++  only-missing-newest
+        |=  new-capitol=capitol:seq
+        ^-  ?
+        =/  town-ids=(list id:smart)
+          ~(tap in ~(key by new-capitol))
+        |-
+        ?~  town-ids  %.y
+        =*  town-id  i.town-ids
+        =/  old-batch-ids=batch-order:ui
+          roots:(~(gut by capitol) town-id *hall:seq)
+        =/  new-batch-ids=batch-order:ui
+          roots:(~(gut by new-capitol) town-id *hall:seq)
+        ?~  old-batch-ids  $(town-ids t.town-ids)
+        ?~  new-batch-ids  %.n
+        =/  l-old=@ud  (lent old-batch-ids)
+        =/  l-new=@ud  (lent new-batch-ids)
+        ?.  |(=(l-old l-new) =(l-old (dec l-new)))  %.n
+        $(town-ids t.town-ids)
+      --
+    --
   ::
   ++  on-watch
     |=  =path
     ^-  (quip card _this)
+    ::  only allow local subscriptions
+    ?>  =(src our):bowl
     ?+    path  (on-watch:def path)
-        ?([%batch-order @ ~] [%json %batch-order @])  `this
+        ?([%batch-order @ ~] [%json %batch-order @])
+      `this
     ::
         [%ping ~]
       :_  this
@@ -277,38 +512,11 @@
       :-  %loob
       !>(`?`%.y)
     ::
-        [%indexer-bootstrap ~]
-      :_  this
-      %-  fact-init-kick:io
-      :-  %indexer-bootstrap
-      !>(`base-state-1:ui`-.state)
-    ::
-        [%indexer-catchup @ @ ~]
-      =/  town-id=id:smart   (slav %ux i.t.path)
-      =/  batch-id=id:smart  (slav %ux i.t.t.path)
-      =/  [=batches:ui =batch-order:ui]
-        (~(gut by batches-by-town) town-id [~ ~])
-      =.  batch-order  (flop batch-order)
-      :_  this
-      %-  fact-init-kick:io
-      :-  %indexer-catchup
-      !>  ^-  [batches:ui batch-order:ui]
-      |-
-      ?~  batch-order  [*batches:ui *batch-order:ui]
-      ?:  =(batch-id i.batch-order)
-        [batches (flop batch-order)]
-      %=  $
-          batches      (~(del by batches) i.batch-order)
-          batch-order  t.batch-order
-      ==
-    ::
         [%capitol-updates ~]
-      :_  this
-      :_  ~
-      %-  fact:io
-      :_  ~
+      :_  this  :_  ~
+      %-  fact:io  :_  ~
       :-  %sequencer-capitol-update
-      !>(`capitol-update:seq`[%new-capitol capitol])
+      !>(`rollup-update:seq`[%new-capitol capitol])
     ==
   ::
   ++  on-leave
@@ -416,340 +624,14 @@
       `[(slav %ux i.t.args) (slav %ux i.t.t.args)]
     --
   ::
-  ++  on-agent
-    |=  [=wire =sign:agent:gall]
-    |^  ^-  (quip card _this)
-    ?+    wire  (on-agent:def wire sign)
-        ?([%rollup-capitol-update ~] [%rollup-root-update ~])
-      ?+    -.sign  (on-agent:def wire sign)
-          %fact
-        =^  cards  state
-          %-  consume-rollup-update
-          !<(rollup-update:seq q.cage.sign)
-        [cards this]
-      ::
-          %kick
-        :_  this
-        %^    set-watch-target:ic
-            wire
-          [src.bowl %rollup]  ::  TODO: remove hardcode
-        ?:  ?=(%rollup-root-update -.wire)
-          rollup-root-path
-        rollup-capitol-path
-      ==
-    ::
-        [%sequencer-update ~]
-      ?+    -.sign  (on-agent:def wire sign)
-          %fact
-        =^  cards  state
-          %-  consume-sequencer-update
-          !<(indexer-update:seq q.cage.sign)
-        [cards this]
-      ::
-          %kick
-        :_  this
-        %^    set-watch-target:ic
-            sequencer-wire
-          [src.bowl %sequencer]  ::  TODO: remove hardcode
-        sequencer-path
-      ==
-    ::
-        [%indexer-bootstrap-update ~]
-      ?+    -.sign  (on-agent:def wire sign)
-          %fact
-        ::  Reset state to initial conditions: this happens
-        ::   automagically `+on-load`, but not here.
-        ::   If don't do this, can get bad state starting
-        ::   up a new indexer.
-        =:  batches-by-town          ~
-            capitol                  ~
-            sequencer-update-queue   ~
-            town-update-queue        ~
-            transaction-index        ~
-            from-index               ~
-            item-index               ~
-            item-transactions-index  ~
-            holder-index             ~
-            source-index             ~
-            to-index                 ~
-            newest-batch-by-town     ~
-        ==
-        (on-load q.cage.sign)
-      ==
-    ::
-        [%indexer-catchup-update @ @ ~]
-      =/  town-id=id:smart   (slav %ux i.t.wire)
-      =/  batch-id=id:smart  (slav %ux i.t.t.wire)
-      ?+    -.sign  (on-agent:def wire sign)
-          %fact
-        :-  ~
-        =+  !<([=batches:ui =batch-order:ui] q.cage.sign)
-        =/  old=(unit (pair batches:ui batch-order:ui))
-          (~(get by batches-by-town) town-id)
-        ?~  old
-          %=  this
-              batches-by-town
-            %+  ~(put by batches-by-town)  town-id
-            [batches batch-order]
-          ==
-        =/  batch-id-index=@ud
-          ?~(i=(find ~[batch-id] q.u.old) 0 +(u.i))
-        =.  batches-by-town
-          %+  ~(put by batches-by-town)  town-id
-          :-  (~(uni by p.u.old) batches)
-          (weld batch-order (slag batch-id-index q.u.old))
-        %=  this
-            sequencer-update-queue  ~
-            town-update-queue       ~
-            +.state
-          %-  inflate-state
-          ~(tap by batches-by-town)
-        ==
-      ==
-    ==
-    ::
-    ++  has-batch-id-already
-      |=  [town-id=id:smart batch-id=id:smart]
-      ^-  ?
-      =/  [=batches:ui *]
-        %+  %~  gut  by  batches-by-town
-        town-id  [*batches:ui *batches-by-town:ui]
-      (~(has by batches) batch-id)
-    ::
-    ++  consume-sequencer-update
-      |=  update=indexer-update:seq
-      ^-  (quip card _state)
-      ?-    -.update
-          %update
-        =*  town-id   town-id.hall.update
-        =*  batch-id  root.update
-        ?:  (has-batch-id-already town-id batch-id)  `state
-        ?.  =(batch-id (sham chain.update))          `state
-        =/  timestamp=(unit @da)
-          %.  batch-id
-          %~  get  by
-          %+  ~(gut by town-update-queue)  town-id
-          *(map @ux @da)
-        ?~  timestamp
-          :-  ~
-          %=  state
-              sequencer-update-queue
-            %+  ~(put by sequencer-update-queue)  town-id
-            %+  %~  put  by
-                %+  ~(gut by sequencer-update-queue)  town-id
-                *(map @ux batch:ui)
-              batch-id
-            [transactions.update [chain.update hall.update]]
-          ==
-        :_  state
-        :_  ~
-        %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %indexer-action
-        !>  ^-  action:ui
-        :*  %consume-batch
-            batch-id
-            transactions.update
-            [chain.update hall.update]
-            u.timestamp
-            %.y
-        ==
-      ==
-    ::
-    ++  consume-rollup-update
-      |=  update=rollup-update:seq
-      |^  ^-  (quip card _state)
-      ?-    -.update
-          %new-sequencer
-        `state
-      ::
-          %new-capitol
-        :_  state(capitol capitol.update)
-        :-  %+  fact:io
-              :-  %sequencer-capitol-update
-              !>(`capitol-update:seq`update)
-            :+  rollup-capitol-path
-              (snoc rollup-capitol-path %no-init)
-            ~
-        ?:  (only-missing-newest capitol.update)  ~
-        %+  murn  ~(val by capitol.update)
-        |=  [town-id=id:smart @ [@ @] [@ *] @ batch-ids=(list @ux) *]
-        =/  [* =batch-order:ui]
-          %+  ~(gut by batches-by-town)  town-id
-          [~ batch-order=~]
-        =/  needed-list=(list id:smart)
-          (find-needed-batches batch-ids batch-order)
-        ?~  needed-list  ~
-        =*  batch-id  i.needed-list
-        :-  ~
-        %^    watch-target:ic
-            (indexer-catchup-wire town-id batch-id)
-          catchup-indexer
-        (indexer-catchup-path town-id batch-id)
-      ::
-          %new-peer-root
-        =*  town-id   town.update
-        =*  batch-id  root.update
-        =/  timestamp=@da
-          ?:  =(*@da timestamp.update)  now.bowl
-          timestamp.update
-        ?:  (has-batch-id-already town-id batch-id)  `state
-        =/  sequencer-update
-          ^-  (unit [transactions=processed-txs:eng =town:seq])
-          %.  batch-id
-          %~  get  by
-          %+  ~(gut by sequencer-update-queue)  town-id
-          *(map @ux batch:ui)
-        ?~  sequencer-update
-          :-  ~
-          %=  state
-              town-update-queue
-            %+  ~(put by town-update-queue)  town-id
-            %+  %~  put  by
-                %+  ~(gut by town-update-queue)  town-id
-                *(map batch-id=@ux timestamp=@da)
-            batch-id  timestamp
-          ==
-        :_  state
-        :_  ~
-        %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %indexer-action
-        !>  ^-  action:ui
-        :*  %consume-batch
-            batch-id
-            transactions.u.sequencer-update
-            town.u.sequencer-update
-            timestamp
-            %.y
-        ==
-      ==
-      ::
-      ++  find-needed-batches  ::  TODO: only return id where diff begins?
-        |=  [capitol=(list id:smart) batch-order=(list id:smart)]
-        ^-  (list id:smart)
-        =.  batch-order  (flop batch-order)
-        ?:  =(capitol batch-order)  ~
-        =|  needed=(list id:smart)
-        |-
-        ?~  capitol  (flop needed)
-        ?~  batch-order
-          $(capitol t.capitol, needed [i.capitol needed])
-        ?:  =(i.capitol i.batch-order)
-          $(capitol t.capitol, batch-order t.batch-order)
-        %=  $
-            capitol      t.capitol
-            batch-order  t.batch-order
-            needed       [i.capitol needed]
-        ==
-      ::
-      ++  only-missing-newest
-        |=  new-capitol=capitol:seq
-        ^-  ?
-        =/  town-ids=(list id:smart)
-          ~(tap in ~(key by new-capitol))
-        |-
-        ?~  town-ids  %.y
-        =*  town-id  i.town-ids
-        =/  old-batch-ids=batch-order:ui
-          roots:(~(gut by capitol) town-id *hall:seq)
-        =/  new-batch-ids=batch-order:ui
-          roots:(~(gut by new-capitol) town-id *hall:seq)
-        ?~  old-batch-ids  $(town-ids t.town-ids)
-        ?~  new-batch-ids  %.n
-        =/  l-old=@ud  (lent old-batch-ids)
-        =/  l-new=@ud  (lent new-batch-ids)
-        ?.  |(=(l-old l-new) =(l-old (dec l-new)))  %.n
-        $(town-ids t.town-ids)
-      --
-    --
-  ::
-  ++  on-arvo  on-arvo:def
-  ++  on-fail  on-fail:def
+  ++  on-agent  on-agent:def
+  ++  on-arvo   on-arvo:def
+  ++  on-fail   on-fail:def
   --
 ::
 |_  =bowl:gall
 +*  io      ~(. agentio bowl)
     ui-lib  ~(. indexer-lib bowl)
-::
-++  rollup-capitol-wire
-  ^-  wire
-  /rollup-capitol-update
-::
-++  rollup-root-wire
-  ^-  wire
-  /rollup-root-update
-::
-++  sequencer-wire
-  ^-  wire
-  /sequencer-update
-::
-++  indexer-bootstrap-wire
-  ^-  wire
-  /indexer-bootstrap-update
-::
-++  indexer-catchup-wire
-  |=  [town-id=id:smart batch-id=id:smart]
-  ^-  wire
-  :-  %indexer-catchup-update
-  /(scot %ux town-id)/(scot %ux batch-id)
-::
-++  rollup-capitol-path
-  ^-  path
-  /capitol-updates
-::
-++  rollup-root-path
-  ^-  path
-  /peer-root-updates
-::
-++  sequencer-path
-  ^-  path
-  /indexer/updates
-::
-++  indexer-bootstrap-path
-  ^-  path
-  /indexer-bootstrap
-::
-++  indexer-catchup-path
-  |=  [town-id=id:smart batch-id=id:smart]
-  ^-  path
-  /indexer-catchup/(scot %ux town-id)/(scot %ux batch-id)
-::
-++  watch-target
-  |=  [w=wire d=dock p=path]
-  ^-  card
-  (~(watch pass:io w) d p)
-::
-++  leave-wire
-  |=  w=wire
-  ^-  (unit card)
-  =/  old-source=(unit dock)
-    (get-wex-dock-by-wire w)
-  ?~  old-source  ~
-  :-  ~
-  %-  ~(leave pass:io w)
-  u.old-source
-::
-++  set-watch-target
-  |=  [w=wire d=dock p=path]
-  ^-  (list card)
-  =/  watch-card=card  (watch-target w d p)
-  =/  leave-card=(unit card)  (leave-wire w)
-  ?~  leave-card  ~[watch-card]
-  ~[u.leave-card watch-card]
-::
-++  get-wex-dock-by-wire
-  |=  w=wire
-  ^-  (unit dock)
-  ?:  =(0 ~(wyt by wex.bowl))  ~
-  =/  wexs=(list [w=wire s=ship t=term])
-    ~(tap in ~(key by wex.bowl))
-  |-
-  ?~  wexs  ~
-  =*  wex  i.wexs
-  ?.  =(w w.wex)
-    $(wexs t.wexs)
-  :-  ~
-  [s.wex t.wex]
-::
 ++  get-batch
   |=  [town-id=id:smart batch-id=id:smart]
   ^-  (unit [batch-id=id:smart timestamp=@da =batch:ui])

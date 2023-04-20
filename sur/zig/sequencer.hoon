@@ -80,12 +80,8 @@
   ==
 ::
 +$  rollup-update
-  $%  capitol-update
-      town-update
-  ==
-+$  capitol-update  [%new-capitol =capitol]
-+$  town-update
-  $%  [%new-peer-root town=id:smart root=@ux timestamp=@da]
+  $%  [%new-capitol =capitol]
+      [%new-peer-root town=id:smart root=@ux timestamp=@da]
       [%new-sequencer town=id:smart who=ship]
   ==
 ::

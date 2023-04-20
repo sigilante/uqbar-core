@@ -4,14 +4,13 @@
 ::  Accepts transactions and batches them periodically as moves to town.
 ::
 /-  uqbar=zig-uqbar
-/+  default-agent, dbug, io=agentio,
+/+  default-agent, dbug, io=agentio, verb,
     *zig-sequencer, *zig-rollup,
     zink=zink-zink, sig=zig-sig,
     engine=zig-sys-engine
 ::  Choose which library smart contracts are executed against here
 ::
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
-::  /*  zink-cax-noun   %noun  /lib/zig/sys/hash-cache/noun
 |%
 +$  card  card:agent:gall
 +$  state-1
@@ -27,13 +26,30 @@
       block-height-api-key=(unit @t)
   ==
 +$  inflated-state-1  [state-1 =eng smart-lib-vase=vase]
+::
++$  state-2
+  $:  %2
+      last-batch-time=@da      ::  saved to compare against indexer acks
+      indexers=(map dock @da)  ::  indexers receiving batch updates
+      rollup=(unit ship)       ::  replace in future with ETH contract address
+      private-key=(unit @ux)   ::  our signing key
+      town=(unit town)         ::  chain-state
+      peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
+      pending=mempool          ::  unexecuted transactions
+      =memlist                 ::  executed transactions in working state
+      proposed-batch=(unit proposed-batch)   ::  stores working state
+      status=?(%available %off)
+      block-height-api-key=(unit @t)
+  ==
++$  inflated-state-2  [state-2 =eng smart-lib-vase=vase]
 ::  sigs on, hints off
 +$  eng  $_  ~(engine engine !>(0) *(map * @) jets:zink %.y %.n)
 --
 ::
-=|  inflated-state-1
+=|  inflated-state-2
 =*  state  -
 %-  agent:dbug
+%+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -42,43 +58,61 @@
 ++  on-init
   ^-  (quip card _this)
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  =-  `this(state [[%1 ~ ~ ~ ~ ~ ~ ~ %off ~] - smart-lib])
-  %~  engine  engine
-    ::  sigs on, hints off
-  [smart-lib *(map * @) jets:zink %.y %.n]
-::
+  =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
+  `this(state [*state-2 eng smart-lib])
 ++  on-save  !>(-.state)
-::
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  ::  on-load: pre-cue our compiled smart contract library
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  =/  eng
-    %~  engine  engine
-      ::  sigs on, hints off
-    [smart-lib *(map * @) jets:zink %.y %.n]
-  ?+  -.q.old-vase  `this(state [*state-1 eng smart-lib])
-    %1  `this(state [!<(state-1 old-vase) eng smart-lib])
+  =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
+  ?+    -.q.old-vase
+     `this(state [*state-2 eng smart-lib])
+      %2
+    `this(state [!<(state-2 old-vase) eng smart-lib])
+      %1
+    =/  old  !<(state-1 old-vase)
+    `this(state [`state-2`[%2 *@da *(map dock @da) +.old] eng smart-lib])
   ==
-::
-++  on-watch
-  |=  =path
-  ^-  (quip card _this)
-  ?.  ?=([%indexer %updates ~] path)
-    ~|("%sequencer: rejecting %watch on bad path" !!)
-  ::  handle indexer watches here -- send nothing
-  `this
 ::
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
   |^
-  ?.  ?=(%sequencer-town-action mark)
-    ~|("%sequencer: error: got erroneous %poke" !!)
-  =^  cards  state
-    (handle-poke !<(town-action vase))
-  [cards this]
+  ?+    mark  ~|("%sequencer: error: got erroneous %poke" !!)
+      %tracker-request
+    ::  can insert logic here in future around restricting
+    ::  access to indexers -- for now, open to all
+    `this(indexers (~(put by indexers) [src.bowl %indexer] now.bowl))
+  ::
+      %tracker-stop
+    `this(indexers (~(del by indexers) [src.bowl %indexer]))
+  ::
+      %sequencer-town-action
+    =^  cards  state
+      (handle-poke !<(town-action vase))
+    [cards this]
+  ::
+      %rollup-update
+    =/  upd  !<(rollup-update vase)
+    =^  cards  state
+      ?-    -.upd
+          %new-capitol
+        `state
+          %new-peer-root
+        `state(peer-roots (~(put by peer-roots) town.upd root.upd))
+      ::
+          %new-sequencer
+        ::  check if we have been kicked off our town
+        ::  this is in place for later..  TODO expand this functionality
+        ?~  town                             `state
+        ?.  =(town.upd town-id.hall.u.town)  `state
+        ?:  =(who.upd our.bowl)              `state
+        ~&  >>>  "%sequencer: we've been kicked out of town!"
+        `state
+      ==
+    [cards this]
+  ==
   ::
   ++  handle-poke
     |=  act=town-action
@@ -112,10 +146,10 @@
             status        %available
             proposed-batch  `[0 ~ chain.town 0x0 new-root]
           ==
-      :~  %+  ~(watch pass:io /sub-rollup)
+      :~  %+  ~(poke pass:io /watch-rollup)
             [rollup-host.act %rollup]
-          /peer-root-updates
-        ::
+          tracker-request+!>(%sequencer)
+      ::
           %+  ~(poke pass:io /batch-submit/(scot %ux new-root))
             [rollup-host.act %rollup]
           rollup-action+!>([%launch-town address.act sig town])
@@ -132,7 +166,7 @@
         %clear-state
       ?>  =(src our):bowl
       ~&  >>>  "sequencer: wiping state"
-      `[[%1 ~ ~ ~ ~ ~ ~ ~ %off ~] eng smart-lib-vase]
+      `[*state-2 eng smart-lib-vase]
     ::
     ::  handle bridged assets from rollup
     ::
@@ -381,51 +415,50 @@
   |=  [=wire =sign:agent:gall]
   ^-  (quip card _this)
   ?+    wire  (on-agent:def wire sign)
+      [%indexer-updates ~]
+    ::  catalog poke-acks from indexers tracking us
+    ?.  ?=(%poke-ack -.sign)  `this
+    ?^  p.sign
+      ::  indexer failed on poke, remove them from trackers
+      ::  TODO use app-source in bowl to remove %indexer hardcode!
+      `this(indexers (~(del by indexers) [src.bowl %indexer]))
+    ::  put ack-time in tracker map
+    `this(indexers (~(put by indexers) [src.bowl %indexer] now.bowl))
+  ::
       [%batch-submit @ ~]
-    ?:  ?=(%poke-ack -.sign)
-      ?~  p.sign
-        ~&  >>  "%sequencer: batch approved by rollup"
-        ?~  proposed-batch
-          ~|("error: received batch approval without proposed batch" !!)
-        =/  new-town=(unit ^town)
-          (transition-state town u.proposed-batch)
-        :_  this(town new-town, proposed-batch ~, memlist ~)
-        :_  ~
-        :^  %give  %fact
-          ~[/indexer/updates]
-        :-  %sequencer-indexer-update
-        !>  ^-  indexer-update
-        :^  %update  root.u.proposed-batch
-          processed-txs.u.proposed-batch
-        (need new-town)
+    ?.  ?=(%poke-ack -.sign)  `this
+    ?^  p.sign
       ::  TODO manage rejected moves here
       ~&  >>>  "%sequencer: our move was rejected by rollup!"
       ~&  u.p.sign
       `this(proposed-batch ~)
-    `this
-  ::
-      [%sub-rollup ~]
-    ?:  ?=(%kick -.sign)
-      :_  this  ::  attempt to re-sub
-      [%pass wire %agent [src.bowl %rollup] %watch (snip `path`wire)]~
-    ?.  ?=(%fact -.sign)  `this
-    =^  cards  state
-      =/  upd  !<(town-update q.cage.sign)
-      ?-    -.upd
-          %new-peer-root
-        ::  update our local map
-        `state(peer-roots (~(put by peer-roots) town.upd root.upd))
-      ::
-          %new-sequencer
-        ::  check if we have been kicked off our town
-        ::  this is in place for later..  TODO expand this functionality
-        ?~  town                          `state
-        ?.  =(town.upd town-id.hall.u.town)     `state
-        ?:  =(who.upd our.bowl)                 `state
-        ~&  >>>  "%sequencer: we've been kicked out of town!"
-        `state
-      ==
-    [cards this]
+    ~&  >>  "%sequencer: batch approved by rollup"
+    ?~  proposed-batch
+      ~|("error: received batch approval without proposed batch" !!)
+    =/  new-town=(unit ^town)
+      (transition-state town u.proposed-batch)
+    ::  poke all watching indexers with update and
+    ::  remove indexers who have not ack'd recently enough.
+    =.  indexers
+      %-  malt
+      %+  skim  ~(tap by indexers)
+      |=  [dock last-ack=@da]
+      (gth last-ack last-batch-time)
+    :_  %=  this
+          last-batch-time  now.bowl
+          town  new-town
+          memlist  ~
+          proposed-batch  ~
+        ==
+    %+  turn   ~(tap by indexers)
+    |=  [=dock @da]
+    %+  ~(poke pass:io /indexer-updates)
+      dock
+    :-  %sequencer-indexer-update
+    !>  ^-  indexer-update
+    :^  %update  root.u.proposed-batch
+      processed-txs.u.proposed-batch
+    (need new-town)
   ::
       [%make-batch @ ~]
     ?+    -.sign  (on-agent:def wire sign)
@@ -487,11 +520,6 @@
     ==
   ==
 ::
-++  on-arvo
-  |=  [=wire =sign-arvo:agent:gall]
-  ^-  (quip card _this)
-  (on-arvo:def wire sign-arvo)
-::
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
@@ -542,6 +570,8 @@
     ``noun+!>((get:big p.working-chain (slav %ux i.t.t.path)))
   ==
 ::
+++  on-arvo   on-arvo:def
+++  on-watch  on-watch:def
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
 --

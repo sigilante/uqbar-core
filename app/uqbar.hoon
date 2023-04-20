@@ -32,14 +32,14 @@
 =*  state  -
 ::
 %-  agent:dbug
-::  %+  verb  |
+%+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall
-  +*  this        .
-      def         ~(. (default-agent this %|) bowl)
-      io          ~(. agentio bowl)
-      uc          ~(. +> bowl)
+  +*  this  .
+      def   ~(. (default-agent this %|) bowl)
+      io    ~(. agentio bowl)
+      uc    ~(. +> bowl)
   ::
   ++  on-init
     ^-  (quip card _this)
@@ -217,7 +217,7 @@
       ::
           %fact
         =^  cards  state
-          (update-sequencers !<(capitol-update:s q.cage.sign))
+          (update-sequencers !<(rollup-update:s q.cage.sign))
         [cards this]
       ==
     ::
@@ -257,8 +257,9 @@
       ~[(~(watch pass:io wire) u.old-source)]
     ::
     ++  update-sequencers
-      |=  upd=capitol-update:s
+      |=  upd=rollup-update:s
       ^-  (quip card _state)
+      ?>  ?=(%new-capitol -.upd)
       :-  ~
       %=    state
           sequencers

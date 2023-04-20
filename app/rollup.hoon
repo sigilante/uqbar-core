@@ -4,7 +4,7 @@
 ::  Receives state transitions (moves) for towns, verifies them,
 ::  and allows sequencer ships to continue processing batches.
 ::
-/+  default-agent, dbug, verb, ethereum,
+/+  default-agent, dbug, verb, io=agentio, ethereum,
     *zig-sequencer, *zig-rollup, eng=zig-sys-engine
 |%
 +$  card  card:agent:gall
@@ -13,9 +13,17 @@
       =capitol
       status=?(%available %off)
   ==
+::
++$  state-2
+  $:  %2
+      last-update-time=@da     ::  saved to compare against tracker acks
+      trackers=(map dock @da)  ::  indexers and sequencers receiving updates
+      =capitol
+      status=?(%available %off)
+  ==
 --
 ::
-=|  state-1
+=|  state-2
 =*  state  -
 ::
 %-  agent:dbug
@@ -25,44 +33,38 @@
 +*  this  .
     def   ~(. (default-agent this %|) bowl)
 ::
-++  on-init  `this(state [%1 ~ %off])
+++  on-init  `this(state *state-2)
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
+      %2
+    `this(state !<(state-2 old-vase))
       %1
-    `this(state !<(state-1 old-vase))
-  ==
-::
-++  on-watch
-  |=  =path
-  ^-  (quip card _this)
-  ?.  =(%available status.state)
-    ~|("%rollup: error: got watch while not active" !!)
-  ::  open: anyone can watch rollup
-  ::  ?>  (allowed-participant [src our now]:bowl)
-  ::  give new subscribers recent root from every town
-  ::
-  ?+    path  !!
-      [%peer-root-updates ~]  `this
-      [%capitol-updates ~]
-    :_  this
-    =-  [%give %fact ~ -]~
-    [%sequencer-rollup-update !>(`capitol-update`[%new-capitol capitol])]
+    `this(state [%2 *@da *(map dock @da) +:!<(state-1 old-vase)])
   ==
 ::
 ++  on-poke
   |=  [=mark =vase]
   ^-  (quip card _this)
   |^
-  ?.  ?=(%rollup-action mark)
-    ~|("%rollup: error: got erroneous %poke" !!)
-  ::  whitelist: only designated sequencers can interact
-  ?>  (allowed-participant [src our now]:bowl)
-  =^  cards  state
-    (handle-poke !<(action vase))
-  [cards this]
+  ?+    mark  ~|("%rollup: error: got erroneous %poke" !!)
+      %tracker-request
+    ::  TODO use app-src here instead of putting it inside poke
+    `this(trackers (~(put by trackers) [src.bowl !<(@tas vase)] now.bowl))
+  ::
+      %tracker-stop
+    ::  TODO use app-src here instead of putting it inside poke
+    `this(trackers (~(del by trackers) [src.bowl !<(@tas vase)]))
+  ::
+      %rollup-action
+    ::  whitelist: only designated sequencers can interact
+    ?>  (allowed-participant [src our now]:bowl)
+    =^  cards  state
+      (handle-poke !<(action vase))
+    [cards this]
+  ==
   ::
   ++  handle-poke
     |=  act=action
@@ -85,14 +87,15 @@
         first-root  sig.act
       ?.  =(from.act recovered)
         ~|("%rollup: rejecting new town; sequencer signature not valid" !!)
+      ::  remove trackers that haven't acked since last update
+      =.  trackers
+        %-  malt
+        %+  skim  ~(tap by trackers)
+        |=  [dock last-ack=@da]
+        (gth last-ack last-update-time)
       =+  (~(put by capitol) town-id.hall.act hall.act(roots ~[first-root]))
       :_  state(capitol -)
-      :~  =-  [%give %fact ~[/peer-root-updates] %sequencer-rollup-update -]
-          !>(`town-update`[%new-peer-root town-id.hall.act first-root now.bowl])
-      ::
-          =-  [%give %fact ~[/capitol-updates] %sequencer-rollup-update -]
-          !>(`capitol-update`[%new-capitol -])
-      ==
+      (give-rollup-updates - town-id.hall.act first-root now.bowl)
     ::
         %bridge-assets
       ::  for simulation purposes
@@ -140,38 +143,63 @@
             latest-diff-hash  diff-hash.act
             roots  (snoc roots.u.hall new-root.act)
           ==
+      ::  remove trackers that haven't acked since last update
+      =.  trackers
+        %-  malt
+        %+  skim  ~(tap by trackers)
+        |=  [dock last-ack=@da]
+        (gth last-ack last-update-time)
       =+  (~(put by capitol) town-id.act -)
       :_  state(capitol -)
-      :~  =-  [%give %fact ~[/peer-root-updates] %sequencer-rollup-update -]
-          !>(`town-update`[%new-peer-root town-id.act new-root.act now.bowl])
-      ::
-          =-  [%give %fact ~[/capitol-updates] %sequencer-rollup-update -]
-          !>(`capitol-update`[%new-capitol -])
-      ==
+      (give-rollup-updates [- town-id.act new-root.act now.bowl])
     ==
+  ::
+  ++  give-rollup-updates
+    |=  [=^capitol town=@ux root=@ux now=@da]
+    ^-  (list card)
+    =/  trackers  ~(tap by trackers)
+    %+  weld
+      %+  turn  trackers
+      |=  [=dock @da]
+      %+  ~(poke pass:io /rollup-updates/[q.dock])
+        dock
+      :-  %rollup-update
+      !>(`rollup-update`[%new-peer-root town root now])
+    %+  turn  trackers
+    |=  [=dock @da]
+    %+  ~(poke pass:io /rollup-updates/[q.dock])
+      dock
+    :-  %rollup-update
+    !>(`rollup-update`[%new-capitol capitol])
   --
-::
-++  on-agent
-  |=  [=wire =sign:agent:gall]
-  ^-  (quip card _this)
-  (on-agent:def wire sign)
-::
-++  on-arvo
-  |=  [=wire =sign-arvo:agent:gall]
-  ^-  (quip card _this)
-  (on-arvo:def wire sign-arvo)
 ::
 ++  on-peek
   |=  =path
   ^-  (unit (unit cage))
-  ::  all scrys return a unit
-  ::
   ?.  =(%x -.path)  ~
   ?+    +.path  (on-peek:def path)
       [%status ~]
     ``noun+!>(status.state)
   ==
 ::
+++  on-agent
+  |=  [=wire =sign:agent:gall]
+  ^-  (quip card _this)
+  ?+    wire  (on-agent:def wire sign)
+      [%rollup-updates @ ~]
+    ::  catalog poke-acks from trackers
+    ::  TODO get app from bowl
+    =/  app  `@tas`i.t.wire
+    ?.  ?=(%poke-ack -.sign)  `this
+    ?^  p.sign
+      ::  tracker failed on poke, remove them from trackers
+      `this(trackers (~(del by trackers) [src.bowl app]))
+    ::  put ack-time in tracker map
+    `this(trackers (~(put by trackers) [src.bowl app] now.bowl))
+  ==
+::
+++  on-watch  on-watch:def
+++  on-arvo   on-arvo:def
 ++  on-leave  on-leave:def
 ++  on-fail   on-fail:def
 --
