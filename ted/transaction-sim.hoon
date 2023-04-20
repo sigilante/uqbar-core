@@ -45,6 +45,7 @@
   |=  [=path =test-txn]
   ~&  >  "running {<path>}"
   =/  =output
+    =<  -
     %~  intake  %~  eng  eng
       engine-data.test-txn
     [chain transaction]:test-txn
