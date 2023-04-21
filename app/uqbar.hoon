@@ -43,14 +43,12 @@
   ::
   ++  on-init
     ^-  (quip card _this)
-    :-  :_  ~
-        %-  ~(poke-self pass:io /self-wire)
-        :-  %uqbar-action
-        !>  ^-  action:u
-        [%set-sources [0x0 [our.bowl %indexer]]~]
-    %=  this
-      wallet-source  %wallet  ::  name of locally-installed wallet app
-    ==
+    :_  this(wallet-source %wallet)  ::  name of locally-installed wallet app
+    :_  ~
+    %-  ~(poke-self pass:io /self-wire)
+    :-  %uqbar-action
+    !>  ^-  action:u
+    [%set-sources [0x0 [our.bowl %indexer]]~]
   ::
   ++  on-save  !>(state)
   ++  on-load

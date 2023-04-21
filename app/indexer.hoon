@@ -135,6 +135,14 @@
 =*  state  -
 ::
 %-  agent:dbug
+::  Temporary hardcode for ~bacdun testnet
+::   to allow easier setup.
+::   TODO: Remove hardcode and add a GUI button/
+::         input menu to setup.
+=/  testnet-host=@p            ~nec
+=/  indexer-bootstrap-host=@p  ~nec
+=/  rollup-dock=dock           [testnet-host %rollup]
+=/  sequencer-dock=dock        [testnet-host %sequencer]
 %+  verb  &
 ^-  agent:gall
 =<
@@ -147,14 +155,6 @@
       ui-lib        ~(. indexer-lib bowl)
   ::
   ++  on-init
-    ::  Temporary hardcode for ~bacdun testnet
-    ::   to allow easier setup.
-    ::   TODO: Remove hardcode and add a GUI button/
-    ::         input menu to setup.
-    =/  testnet-host=@p            ~nec
-    =/  indexer-bootstrap-host=@p  ~nec
-    =/  rollup-dock=dock           [testnet-host %rollup]
-    =/  sequencer-dock=dock        [testnet-host %sequencer]
     =/  indexer-bootstrap-dock=dock
       [indexer-bootstrap-host %indexer]
     :_  this(catchup-indexer indexer-bootstrap-dock)
@@ -183,10 +183,16 @@
     ?+    -.q.state-vase  on-init
         %1
       =+  !<(bs=base-state-1:ui state-vase)
-      =-  `this(state -)
-      :-  bs
-      %-  inflate-state
-      ~(tap by batches-by-town.bs)
+      :_  this(state [bs (inflate-state ~(tap by batches-by-town.bs))])
+      :~  ::  reaffirm tracking new batches from sequencer
+        %+  ~(poke pass:io /track-sequencer)
+          sequencer-dock
+        tracker-request+!>(~)
+      ::  reaffirm tracking chain updates from rollup
+        %+  ~(poke pass:io /track-rollup)
+          rollup-dock
+        tracker-request+!>(%indexer)
+      ==
     ==
   ::
   ++  on-poke
@@ -407,7 +413,10 @@
       ::
           %new-peer-root
         =*  town-id  town.update
-        =/  catchup-card=(list card)
+        =/  cards=(list card)
+          :-   %+  fact:io
+                [%rollup-update !>(update)]
+              ~[/rollup-updates]
           =+  batch-num:(~(gut by capitol) town-id *hall:seq)
           ?.  (gth batch-num.update +(-))  ~
           ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
@@ -431,7 +440,7 @@
           %+  ~(gut by sequencer-update-queue)  town-id
           *(map @ux batch:ui)
         ?~  sequencer-update
-          :-  catchup-card
+          :-  cards
           %=  state
               town-update-queue
             %+  ~(put by town-update-queue)  town-id
@@ -441,20 +450,17 @@
             *(map batch-id=@ux timestamp=@da)
           ==
         :_  state
-        :+  %+  fact:io
-              [%rollup-update !>(update)]
-            ~[/rollup-updates]
-          %-  ~(poke-self pass:io /consume-batch-poke)
-          :-  %indexer-action
-          !>  ^-  action:ui
-          :*  %consume-batch
-              root.update
-              transactions.u.sequencer-update
-              town.u.sequencer-update
-              timestamp.update
-              %.y
-          ==
-        catchup-card
+        :_  cards
+        %-  ~(poke-self pass:io /consume-batch-poke)
+        :-  %indexer-action
+        !>  ^-  action:ui
+        :*  %consume-batch
+            root.update
+            transactions.u.sequencer-update
+            town.u.sequencer-update
+            timestamp.update
+            %.y
+        ==
       ==
     --
   ::
