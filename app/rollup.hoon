@@ -92,7 +92,7 @@
         %-  malt
         %+  skim  ~(tap by trackers)
         |=  [dock last-ack=@da]
-        (gth last-ack last-update-time)
+        (gte last-ack last-update-time)
       =+  %+  ~(put by capitol)
             town-id.hall.act
           %=  hall.act
@@ -100,7 +100,7 @@
             batch-num  1
             sequencer  [from.act src.bowl]
           ==
-      :_  state(capitol -)
+      :_  state(capitol -, last-update-time now.bowl)
       %+  give-rollup-updates
         [from.act src.bowl]
       [town-id.hall.act first-root 1 now.bowl]
@@ -152,7 +152,7 @@
         %-  malt
         %+  skim  ~(tap by trackers)
         |=  [dock last-ack=@da]
-        (gth last-ack last-update-time)
+        (gte last-ack last-update-time)
       =/  new-hall
         %=  u.hall
           batch-num  +(batch-num.u.hall)
@@ -160,7 +160,7 @@
           roots  (snoc roots.u.hall new-root.act)
         ==
       =+  (~(put by capitol) town-id.act new-hall)
-      :_  state(capitol -)
+      :_  state(capitol -, last-update-time now.bowl)
       %+  give-rollup-updates  sequencer.new-hall
       [town-id.act new-root.act batch-num.new-hall now.bowl]
     ==

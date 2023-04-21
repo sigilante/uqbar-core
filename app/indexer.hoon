@@ -241,9 +241,12 @@
     ::
         %catchup-request
       =+  !<(catchup-request:ui vase)
+      ~&  >>  "indexer: fulfilling catchup request from {<batch-num>}"
       =/  [=batches:ui =batch-order:ui]
         (~(gut by batches-by-town) town-id [~ ~])
-      =/  order=(list @ux)  (slag batch-num batch-order)
+      =/  order=(list @ux)
+        ?:  =(0 batch-num)  batch-order
+        (slag (dec batch-num) (flop batch-order))
       =/  mapping=batches:ui
         %-  ~(gas by *batches:ui)
         %+  murn  order
@@ -261,22 +264,24 @@
         %indexer-catchup
       :-  ~
       =+  !<(catchup-response:ui vase)
+      ~&  >>  "indexer: got catchup with {<batch-order>}"
       =/  old=(unit (pair batches:ui batch-order:ui))
         (~(get by batches-by-town) town-id)
       ?~  old
-        %=  this
+        %=    this
             batches-by-town
           %+  ~(put by batches-by-town)  town-id
           [batches batch-order]
         ==
-      =.  batches-by-town
+      %=  this
+        sequencer-update-queue  ~
+        town-update-queue       ~
+        +.state  (inflate-state ~(tap by batches-by-town))
+          batches-by-town
         %+  ~(put by batches-by-town)  town-id
         :-  (~(uni by p.u.old) batches)
-        (weld batch-order (slag batch-num q.u.old))
-      %=  this
-          sequencer-update-queue  ~
-          town-update-queue       ~
-          +.state  (inflate-state ~(tap by batches-by-town))
+        ?:  =(0 batch-num)  (flop batch-order)
+        (weld (flop batch-order) q.u.old)
       ==
     ==
     ::
@@ -391,7 +396,7 @@
     ::
     ++  consume-rollup-update
       |=  update=rollup-update:seq
-      |^  ^-  (quip card _state)
+      ^-  (quip card _state)
       ?-    -.update
           %new-sequencer
         ::  set sequencer based on rollup
@@ -402,16 +407,21 @@
       ::
           %new-peer-root
         =*  town-id  town.update
-        =/  last-seen-batch-num=@ud
-          batch-num:(~(gut by capitol.state) town-id *hall:seq)
-        =.  capitol.state
-          %+  ~(put by capitol.state)  town-id
-          =+  old=(~(gut by capitol.state) town-id *hall:seq)
+        =/  catchup-card=(list card)
+          =+  batch-num:(~(gut by capitol) town-id *hall:seq)
+          ?.  (gth batch-num.update +(-))  ~
+          ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
+          :_  ~
+          %+  ~(poke pass:io /indexer-catchup)
+            catchup-indexer
+          catchup-request+!>(`catchup-request:ui`[town-id -])
+        =.  capitol
+          %+  ~(put by capitol)  town-id
+          =+  old=(~(gut by capitol) town-id *hall:seq)
           %=  old
             town-id  town-id
             batch-num  batch-num.update
             sequencer  sequencer.update
-            roots  (snoc roots.old root.update)
           ==
         ?:  (has-batch-id-already town-id root.update)  `state
         =/  sequencer-update
@@ -421,7 +431,7 @@
           %+  ~(gut by sequencer-update-queue)  town-id
           *(map @ux batch:ui)
         ?~  sequencer-update
-          :-  ~
+          :-  catchup-card
           %=  state
               town-update-queue
             %+  ~(put by town-update-queue)  town-id
@@ -444,52 +454,8 @@
               timestamp.update
               %.y
           ==
-        ?.  (gth batch-num.update +(last-seen-batch-num))
-          ~
-        :_  ~
-        %+  ~(poke pass:io /indexer-catchup)
-          catchup-indexer
-        :-  %catchup-request
-        !>(`catchup-request:ui`[town-id last-seen-batch-num])
+        catchup-card
       ==
-      ::
-      ++  find-needed-batches  ::  TODO: only return id where diff begins?
-        |=  [capitol=(list id:smart) batch-order=(list id:smart)]
-        ^-  (list id:smart)
-        =.  batch-order  (flop batch-order)
-        ?:  =(capitol batch-order)  ~
-        =|  needed=(list id:smart)
-        |-
-        ?~  capitol  (flop needed)
-        ?~  batch-order
-          $(capitol t.capitol, needed [i.capitol needed])
-        ?:  =(i.capitol i.batch-order)
-          $(capitol t.capitol, batch-order t.batch-order)
-        %=  $
-            capitol      t.capitol
-            batch-order  t.batch-order
-            needed       [i.capitol needed]
-        ==
-      ::
-      ++  only-missing-newest
-        |=  new-capitol=capitol:seq
-        ^-  ?
-        =/  town-ids=(list id:smart)
-          ~(tap in ~(key by new-capitol))
-        |-
-        ?~  town-ids  %.y
-        =*  town-id  i.town-ids
-        =/  old-batch-ids=batch-order:ui
-          roots:(~(gut by capitol) town-id *hall:seq)
-        =/  new-batch-ids=batch-order:ui
-          roots:(~(gut by new-capitol) town-id *hall:seq)
-        ?~  old-batch-ids  $(town-ids t.town-ids)
-        ?~  new-batch-ids  %.n
-        =/  l-old=@ud  (lent old-batch-ids)
-        =/  l-new=@ud  (lent new-batch-ids)
-        ?.  |(=(l-old l-new) =(l-old (dec l-new)))  %.n
-        $(town-ids t.town-ids)
-      --
     --
   ::
   ++  on-watch
