@@ -10,7 +10,7 @@
   $:  town-id=@ux
       batch-num=@ud
       =sequencer
-      mode=availability-method
+      mode=availability-method  ::  *always* %full-publish for now
       latest-diff-hash=@ux
       roots=(list @ux)
       ::  deposits from the rollup contract are tracked, such that each
@@ -34,7 +34,7 @@
 +$  batch
   $:  town-id=id:smart
       num=@ud
-      mode=availability-method
+      mode=availability-method  ::  *always* %full-publish for now
       state-diffs=(list state)
       diff-hash=@ux
       new-root=@ux
