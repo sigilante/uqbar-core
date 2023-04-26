@@ -141,8 +141,9 @@
 ::         input menu to setup.
 =/  testnet-host=@p            ~nec
 =/  indexer-bootstrap-host=@p  ~nec
-=/  rollup-dock=dock           [testnet-host %rollup]
-=/  sequencer-dock=dock        [testnet-host %sequencer]
+=/  rollup-dock=dock             [testnet-host %rollup]
+=/  sequencer-dock=dock          [testnet-host %sequencer]
+=/  indexer-bootstrap-dock=dock  [indexer-bootstrap-host %indexer]
 ::  %+  verb  &
 ^-  agent:gall
 =<
@@ -155,8 +156,6 @@
       ui-lib        ~(. indexer-lib bowl)
   ::
   ++  on-init
-    =/  indexer-bootstrap-dock=dock
-      [indexer-bootstrap-host %indexer]
     :_  this(catchup-indexer indexer-bootstrap-dock)
     :-  %+  ~(poke-our pass:io /set-source-poke)  %uqbar
         :-  %uqbar-action
@@ -183,6 +182,7 @@
     ?+    -.q.state-vase  on-init
         %1
       =+  !<(bs=base-state-1:ui state-vase)
+      =.  catchup-indexer.bs  indexer-bootstrap-dock
       :_  this(state [bs (inflate-state ~(tap by batches-by-town.bs))])
       :~  ::  reaffirm tracking new batches from sequencer
         %+  ~(poke pass:io /track-sequencer)
