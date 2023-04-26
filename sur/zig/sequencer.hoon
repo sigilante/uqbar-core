@@ -80,13 +80,14 @@
   ==
 ::
 +$  rollup-update
-  $%  capitol-update
-      town-update
-  ==
-+$  capitol-update  [%new-capitol =capitol]
-+$  town-update
-  $%  [%new-peer-root town=id:smart root=@ux timestamp=@da]
-      [%new-sequencer town=id:smart who=ship]
+  $%  [%new-sequencer town=id:smart who=ship]
+      $:  %new-peer-root
+          =sequencer
+          town=id:smart
+          root=@ux
+          batch-num=@ud
+          timestamp=@da
+      ==
   ==
 ::
 ::  indexer must verify root is posted to rollup before verifying new state

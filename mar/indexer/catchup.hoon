@@ -1,14 +1,14 @@
 /-  ui=zig-indexer
 ::
-|_  =batches-and-order:ui
+|_  =catchup-response:ui
 ++  grab
   |%
-  ++  noun  batches-and-order:ui
+  ++  noun  catchup-response:ui
   --
 ::
 ++  grow
   |%
-  ++  noun  batches-and-order
+  ++  noun  catchup-response
   --
 ::
 ++  grad  %noun
