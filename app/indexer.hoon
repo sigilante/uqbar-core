@@ -143,7 +143,7 @@
 =/  indexer-bootstrap-host=@p  ~nec
 =/  rollup-dock=dock           [testnet-host %rollup]
 =/  sequencer-dock=dock        [testnet-host %sequencer]
-%+  verb  &
+::  %+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall
