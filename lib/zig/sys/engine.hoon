@@ -38,7 +38,7 @@
       ::  charge cumulative gas fee for entire transaction
       ::  only charge gas fee if errorcode allows for it
       ?:  |(=(%1 errorcode.op) =(%2 errorcode.op) =(%3 errorcode.op))
-        op
+        -.op
       =/  total-scry-fees=@ud
         (roll ~(val by +.op) add)
       =/  gas-item
