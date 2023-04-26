@@ -1,7 +1,7 @@
 |%
 +$  chain-state-scry
   $-  [gas=@ud ^]
-  [gas=@ud product=(unit *)]
+  [gas=@ud pays=(map @ux @ud) product=(unit *)]
 ::
 +$  child  *
 +$  parent  *

@@ -142,6 +142,48 @@
         [this.context town.context [%read-modified dummy.act]]
     ==
   ::
+      [%do-scry ~]
+    =+  (scry-contract this.context [%free-scry ~])
+    ?~  -  !!
+    ?.  =(u.- %hello-world)  !!
+    `(result ~ ~ ~ ~)
+  ::
+      [%do-paid-scry ~]
+    =+  (scry-contract this.context [%fee [%ud 1.007] %paid-scry ~])
+    ?~  -  !!
+    ?.  =(u.- %thanks-for-paying)  !!
+    `(result ~ ~ ~ ~)
+  ::
+      [%do-scry-bad-fee ~]
+    =+  (scry-contract this.context [%fee [%ud 7] %paid-scry ~])
+    ?~  -  `(result ~ ~ ~ ~)
+    !!
+  ::
+      [%do-paid-scry-2 dummy=id]
+    =+  %-  need
+        %+  scry-contract  this.context
+        [%fee [%ud 1.702] %pay-more [%ux dummy.act] ~]
+    `(result ~ ~ ~ [%read-event -]^~)
+  ::
+      [%do-crashing-scry]
+    =+  (scry-contract this.context [%free-crashing-scry ~])
+    ?~  -  `(result ~ ~ ~ ~)
+    !!
+  ::
+      [%do-paid-crashing-scry]
+    =+  (scry-contract this.context [%fee [%ud 1.007] %paid-crashing-scry ~])
+    ?~  -  `(result ~ ~ ~ ~)
+    !!
+  ::
+      [%do-malformed-scry-1]
+    =+  (scry-contract this.context [%fee %malformed-pith [%ud 100] ~])
+    ?~  -  `(result ~ ~ ~ ~)
+    !!
+  ::
+      [%do-malformed-scry-2]
+    =+  (scry-contract this.context [%fee ~])
+    `(result ~ ~ ~ ~)
+  ::
       [%call-crash ~]
     :_  (result ~ ~ ~ ~)
     [this.context town.context [%crash ~]]~
@@ -152,5 +194,30 @@
 ::
 ++  read
   |=  =pith
-  ~
+  ?+    pith  !!
+      [%free-scry ~]
+    %hello-world
+  ::
+      [%fee [%ud @ud] %paid-scry ~]
+    ?>  =(+.i.t.pith 1.007)
+    %thanks-for-paying
+  ::
+      [%fee [%ud @ud] %pay-more [%ux @ux] ~]
+    ?>  =(+.i.t.pith 1.702)
+    =+  i=(need (scry-state +.i.t.t.t.pith))
+    ?>  ?=(%& -.i)
+    noun.p.i
+  ::
+      [%free-crashing-scry ~]
+    !!
+  ::
+      [%fee [%ud @ud] %paid-crashing-scry ~]
+    !!
+  ::
+      [%fee %malformed-pith [%ud @ud] ~]
+    ~
+  ::
+      [%fee ~]
+    ~
+  ==
 --

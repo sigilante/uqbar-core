@@ -84,7 +84,7 @@ In the future, with remote scry, users will not need to run their own `%indexer`
 ## Starting a Fakeship Testnet
 
 To develop this repo or new contracts, it is convenient to start with a fakeship testnet.
-First, make sure the fakeship you're using is in the [whitelist](https://github.com/uqbar-dao/uqbar-core/blob/master/lib/rollup.hoon).
+First, make sure the fakeship you're using is in the [whitelist](https://github.com/uqbar-dao/uqbar-core/blob/3d0514e366435553abbe4fecde7e28e43f77a45d/lib/zig/rollup.hoon#L11-L17).
 
 Uqbar provides a generator to set up a fakeship testnet for local development.
 That generator, used as a poke to the `%sequencer` app as `:sequencer|init`, populates a new town with some [`item`](#item)s: [`pact`](#pact) (contract code) and [`data`](#data) (contract data).
@@ -92,7 +92,7 @@ Specifically, contracts for zigs tokens, NFTs, and publishing new contracts are 
 After [initial installation](#initial-installation), start the `%rollup`, initialize the `%sequencer`, set up the `%uqbar` read-write interface, and configure the `%wallet` to point to some [pre-set assets](#accounts-initialized-by-init-script), minted in the `:sequencer|init` poke:
 ```hoon
 :rollup|activate
-:indexer &indexer-action [%set-sequencer [our %sequencer]]
+:indexer &indexer-action [%set-sequencer 0x0 [our %sequencer]]
 :indexer &indexer-action [%set-rollup [our %rollup]]
 :sequencer|init our 0x0 0xc9f8.722e.78ae.2e83.0dd9.e8b9.db20.f36a.1bc4.c704.4758.6825.c463.1ab6.daee.e608
 :uqbar &wallet-poke [%import-seed 'uphold apology rubber cash parade wonder shuffle blast delay differ help priority bleak ugly fragile flip surge shield shed mistake matrix hold foam shove' 'squid' 'nickname']

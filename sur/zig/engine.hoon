@@ -11,6 +11,8 @@
 ::  sorted mempool with optional pre-computed output
 +$  memlist  (list [hash=@ux tx=transaction:smart output=(unit output)])
 +$  processed-txs  (list [tx-hash=@ux tx=transaction:smart =output])
+::  map of payments made to other contracts for scries
++$  scry-fees  (map id:smart @ud)
 ::
 +$  state-diff  state  ::  state transitions for one batch
 ::

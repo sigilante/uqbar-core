@@ -182,7 +182,7 @@
     [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
   =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -203,7 +203,7 @@
   =/  =calldata:smart       [%burn id.p:account-1:zigs 0x2]
   =/  =shell:smart          [caller-1 ~ 0x0 [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -219,7 +219,7 @@
   =/  =calldata:smart       [%burn id.p:burnable 0x2]
   =/  =shell:smart          [caller-1 ~ 0x0 [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -234,7 +234,7 @@
   =/  =calldata:smart       [%burn id.p:account-2:zigs 0x2]
   =/  =shell:smart  [caller-1 ~ 0x0 [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -252,7 +252,7 @@
   =/  =calldata:smart       [%change-nonexistent ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -268,7 +268,7 @@
   =/  =calldata:smart       [%change-type id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -284,7 +284,7 @@
   =/  =calldata:smart       [%change-type id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -300,7 +300,7 @@
   =/  =calldata:smart       [%change-salt id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -316,7 +316,7 @@
   =/  =calldata:smart       [%change-source id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -332,7 +332,7 @@
   =/  =calldata:smart       [%change-salt id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -348,7 +348,7 @@
   =/  =calldata:smart       [%change-salt zigs:caller-1]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -364,7 +364,7 @@
   =/  =calldata:smart       [%issue-non-matching-id ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -380,7 +380,7 @@
   =/  =calldata:smart       [%issue-bad-data-id ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -396,7 +396,7 @@
   =/  =calldata:smart       [%issue-bad-pact-id ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -412,7 +412,7 @@
   =/  =calldata:smart       [%issue-without-provenance ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -428,7 +428,7 @@
   =/  =calldata:smart       [%issue-already-existing id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -444,7 +444,7 @@
   =/  =calldata:smart       [%burn-nonexistent ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -460,7 +460,7 @@
   =/  =calldata:smart       [%burn-non-matching-id id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -476,7 +476,7 @@
   =/  =calldata:smart       [%burn-changed-overlap id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -492,7 +492,7 @@
   =/  =calldata:smart       [%burn-issued-overlap ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -508,7 +508,7 @@
   =/  =calldata:smart       [%burn-without-provenance zigs:caller-2]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -524,7 +524,7 @@
   =/  =calldata:smart       [%burn-change-source id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -546,7 +546,7 @@
   =/  =calldata:smart       [%simple-self-call ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -567,7 +567,7 @@
   =/  =calldata:smart       [%triple-self-call ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -593,7 +593,7 @@
   =/  =calldata:smart  [%modify-and-call id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -619,7 +619,7 @@
   =/  =calldata:smart  [%modify-and-read-separately id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -644,7 +644,7 @@
   =/  =calldata:smart  [%call-crash ~]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -662,7 +662,7 @@
   =/  caller  caller-1
   =/  =shell:smart  [caller(nonce 2) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -679,7 +679,7 @@
   =/  caller  caller-3
   =/  =shell:smart  [caller(nonce 5) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -697,7 +697,7 @@
   =/  =calldata:smart  [%just-modify id.p:dummy-data:engine-tester]
   =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 500.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -714,7 +714,7 @@
   =/  caller  caller-1
   =/  =shell:smart  [caller(zigs 0xabcd) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -731,7 +731,7 @@
   =/  caller  caller-1
   =/  =shell:smart  [caller(zigs id.p:account-2:zigs) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -749,7 +749,7 @@
   =/  =calldata:smart  [%some-call ~]
   =/  =shell:smart  [caller-1 ~ 0xdead.beef [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -765,7 +765,7 @@
   =/  =calldata:smart  [%some-call ~]
   =/  =shell:smart  [caller-1 ~ id.p:account-2:zigs [1 1.000.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -786,7 +786,7 @@
     [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
   =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000] town-id 0]
   =/  tx=transaction:smart  [fake-sig calldata shell]
-  =/  =output
+  =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
     [fake-chain tx]
@@ -798,9 +798,150 @@
     (expect-eq !>(~) !>(events.output))
   ==
 ::
+::  tests for contract scries
+::
+++  test-qz-basic-scry
+  =/  =calldata:smart  [%do-scry ~]
+  =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+  =/  tx=transaction:smart  [fake-sig calldata shell]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=1 eth-block-height=0]
+    [fake-chain tx]
+  ;:  weld
+    (expect-eq !>(%0) !>(errorcode.output))
+    (expect-eq !>(~) !>(modified.output))
+    (expect-eq !>(~) !>(burned.output))
+    (expect-eq !>(~) !>(events.output))
+  ==
+::
+++  test-qy-paid-scry
+  =/  =calldata:smart  [%do-paid-scry ~]
+  =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+  =/  tx=transaction:smart  [fake-sig calldata shell]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=1 eth-block-height=0]
+    [fake-chain tx]
+  ;:  weld
+    (expect-eq !>(%0) !>(errorcode.output))
+    (expect-eq !>(~) !>(modified.output))
+    (expect-eq !>(~) !>(burned.output))
+    (expect-eq !>(~) !>(events.output))
+  ==
+::
+++  test-qx-scry-bad-fee
+  =/  =calldata:smart  [%do-scry-bad-fee ~]
+  =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+  =/  tx=transaction:smart  [fake-sig calldata shell]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=1 eth-block-height=0]
+    [fake-chain tx]
+  ;:  weld
+    (expect-eq !>(%0) !>(errorcode.output))
+    (expect-eq !>(~) !>(modified.output))
+    (expect-eq !>(~) !>(burned.output))
+    (expect-eq !>(~) !>(events.output))
+  ==
+::
+++  test-qw-scry-with-event
+  =/  =calldata:smart  [%do-paid-scry-2 id.p:dummy-data:engine-tester]
+  =/  =shell:smart  [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+  =/  tx=transaction:smart  [fake-sig calldata shell]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=1 eth-block-height=0]
+    [fake-chain tx]
+  ;:  weld
+    (expect-eq !>(%0) !>(errorcode.output))
+    (expect-eq !>(~) !>(modified.output))
+    (expect-eq !>(~) !>(burned.output))
+    %+  expect-eq
+      !>([id.p:pact:engine-tester %read-event 'my-noun']^~)
+    !>(events.output)
+  ==
+::
+++  test-qu-scry-full
+  ::  make sure contract is paid
+  =/  =memlist
+    :~  :+  0x0
+          :+  fake-sig
+            [%do-paid-scry ~]
+          [caller-1 ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+        ~
+    ==
+  =/  st=state-transition
+    %+  %~  run  eng
+        [sequencer town-id batch=1 eth-block-height=0]
+      fake-chain
+    memlist
+  =/  paid=item:smart
+    :*  %&
+        (hash-data id.p:pact:zigs id.p:pact:engine-tester town-id `@`'zigs')
+        id.p:pact:zigs
+        id.p:pact:engine-tester
+        town-id
+        `@`'zigs'
+        %account
+        [1.007 0 `@ux`'zigs-metadata' 0]
+    ==
+  ;:  weld
+    (expect-eq !>(1) !>((lent processed.st)))
+    (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
+    (expect-eq !>(~) !>(burned.st))
+    ::  3 modified: paid sequencer, paid contract, payer account
+    (expect-eq !>(3) !>(~(wyt by modified.st)))
+    (expect-eq !>(`paid) !>((get:big modified.st id.p.paid)))
+  ==
+::
+++  test-qt-scry-many
+  ::  make sure contract is paid
+  =/  caller  caller-1
+  =/  =memlist
+    :~  :+  0x0
+          :+  fake-sig
+            [%do-paid-scry ~]
+          [caller ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+        ~
+        :+  0x0
+          :+  fake-sig
+            [%do-paid-scry ~]
+          [caller(nonce 2) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+        ~
+        :+  0x0
+          :+  fake-sig
+            [%do-paid-scry-2 id.p:dummy-data:engine-tester]
+          [caller(nonce 3) ~ id.p:pact:engine-tester [1 1.000.000] town-id 0]
+        ~
+    ==
+  =/  paid=item:smart
+    :*  %&
+        (hash-data id.p:pact:zigs id.p:pact:engine-tester town-id `@`'zigs')
+        id.p:pact:zigs
+        id.p:pact:engine-tester
+        town-id
+        `@`'zigs'
+        %account
+        [3.716 0 `@ux`'zigs-metadata' 0]
+    ==
+  =/  st=state-transition
+    %+  %~  run  eng
+        [sequencer town-id batch=1 eth-block-height=0]
+      fake-chain
+    memlist
+  ;:  weld
+    (expect-eq !>(3) !>((lent processed.st)))
+    (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
+    (expect-eq !>(~) !>(burned.st))
+    ::  3 modified: paid sequencer, paid contract, payer account
+    (expect-eq !>(3) !>(~(wyt by modified.st)))
+    (expect-eq !>(`paid) !>((get:big modified.st id.p.paid)))
+  ==
+::
 ::  tests for execution of malformed contract nock
 ::
-
+::  XX TODO
 ::
 ::  tests for full engine +run, with multiple transactions in mempool
 ::  assert that transactions are ordered properly by rate and nonce,

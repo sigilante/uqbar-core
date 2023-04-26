@@ -101,7 +101,7 @@
       [%metadata asset-metadata]
       [%account =caller:smart]  ::  tuple of [address nonce zigs-account]
       [%addresses saved=(set address:smart)]
-      [%signed-message =typed-message:smart =sig:smart]
+      [%signed-message =origin =typed-message:smart =sig:smart]
       $:  %unfinished-transaction
           =origin
           =transaction:smart
@@ -133,7 +133,7 @@
       [%derive-new-address hdpath=tape nick=@t]
       [%delete-address address=@ux]
       [%edit-nickname address=@ux nick=@t]
-      [%sign-typed-message from=address:smart domain=id:smart type=json msg=*]
+      [%sign-typed-message =origin from=address:smart domain=id:smart type=json msg=*]
       [%add-tracked-address address=@ux nick=@t]
       [%set-share-prefs =share-prefs]
       ::  testing and internal
