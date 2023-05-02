@@ -90,6 +90,11 @@
       ==
   ==
 ::
++$  sidecar-action
+  $%  [%batch-posted town-root=@ux]
+      [%batch-rejected town-root=@ux]
+  ==
+::
 ::  indexer must verify root is posted to rollup before verifying new state
 ::  pair of [transactions town] is batch from sur/indexer.hoon
 +$  indexer-update

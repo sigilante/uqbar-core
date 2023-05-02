@@ -5,7 +5,7 @@
 ::
 +$  state   (merk:merk id:smart item:smart)
 +$  nonces  (merk:merk address:smart @ud)
-+$  chain   (pair state nonces)
++$  chain   $+(chain (pair state nonces))
 ::
 +$  mempool  (map hash=@ux [from=@p tx=transaction:smart])
 ::  sorted mempool with optional pre-computed output
@@ -27,6 +27,7 @@
   ==
 ::
 +$  output
+  $+  output
   $:  gas=@ud
       =errorcode:smart
       modified=state

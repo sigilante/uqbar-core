@@ -13,17 +13,15 @@
   ==
 ::
 ++  transition-state
-  |=  $:  old=(unit town)
-          proposed=[num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
+  |=  $:  old=town
+          proposed=proposed-batch
       ==
-  ^-  (unit town)
-  ?~  old  old
-  :-  ~
-  %=  u.old
+  ^-  town
+  %=  old
     batch-num.hall         num.proposed
     chain                  chain.proposed
     latest-diff-hash.hall  diff-hash.proposed
-    roots.hall             (snoc roots.hall.u.old root.proposed)
+    roots.hall             (snoc roots.hall.old root.proposed)
   ==
 ::
 ++  get-our-caller
