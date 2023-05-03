@@ -125,6 +125,9 @@
         ~|("received batch approval without pending batch" !!)
       =/  new-town=^town
         (transition-state u.town u.pending-batch)
+      ::  inject received town-root into state of town
+      =.  chain.new-town
+        (inject-town-root chain.new-town town-root.act)
       `this(pending-batch ~, town `new-town)
       ::
           %batch-rejected
