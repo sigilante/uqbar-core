@@ -82,7 +82,7 @@
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
   ?+    -.q.old-vase
-     `this(state [*state-3 eng smart-lib])
+    `this(state [*state-3 eng smart-lib])
       %3
     `this(state [!<(state-3 old-vase) eng smart-lib])
       %2
@@ -154,11 +154,19 @@
             batch-num=0
             [address.act our.bowl]
             mode.act
-            0x0  ~  ~
+            0x0
+            ~[new-root]
+            ~
         ==
       =/  sig
         (ecdsa-raw-sign:secp256k1:secp:crypto `@uvI`new-root private-key.act)
-      :-  ~
+      :-  %+  turn   ~(tap by indexers)
+          |=  [=dock @da]
+          %+  ~(poke pass:io /indexer-updates)
+            dock
+          :-  %sequencer-indexer-update
+          !>  ^-  indexer-update
+          [%update new-root ~ town]
       %=  state
         private-key  `private-key.act
         town         `town
@@ -366,8 +374,8 @@
         ~|("%sequencer: got poke while not active" !!)
       ?~  town
         ~|("%sequencer: no state" !!)
-      ?~  rollup
-        ~|("%sequencer: no known rollup contract" !!)
+      ::  ?~  rollup
+      ::    ~|("%sequencer: no known rollup contract" !!)
       ?^  pending-batch
         ~|("%sequencer: cannot batch, last one still pending" !!)
       ?:  =(~ memlist)  `state
@@ -526,8 +534,12 @@
     %-  pairs
     :~  ['town' s+(scot %ux town-id.hall.u.town)]
         ['txs' s+(scot %ux txs-jam)]
+        ['txRoot' s+(scot %ux txs-hash)]
         ['stateRoot' s+(scot %ux root.u.pend)]
-    ==
+        :-  'prevBatch'
+        %-  pairs
+        :~  ['stateRoot' s+(scot %ux (rear roots.hall.u.town))]
+    ==  ==
   ::
   ::  state reads fail if sequencer not active
   ::

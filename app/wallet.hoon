@@ -70,7 +70,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-::  %+  verb  |
+::  %+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .

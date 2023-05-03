@@ -139,7 +139,7 @@
 =/  first-sequencer=@p         ~nec
 =/  indexer-bootstrap-host=@p  ~nec
 =/  sequencer-dock=dock        [first-sequencer %sequencer]
-::  %+  verb  &
+%+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall
@@ -375,17 +375,27 @@
         ::     [transactions.update [chain.update hall.update]]
         ::   ==
         :_  state
-        :_  ~
-        %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %indexer-action
-        !>  ^-  action:ui
-        :*  %consume-batch
-            batch-id
-            transactions.update
-            [chain.update hall.update]
-            now.bowl  ::  u.timestamp
-            %.y
-        ==
+        :+  %+  fact:io
+              =-  [%rollup-update !>(`rollup-update:seq`-)]
+              :*  %new-peer-root
+                  sequencer.hall.update
+                  town-id.hall.update
+                  root.update
+                  batch-num.hall.update
+                  now.bowl
+              ==
+            ~[/rollup-updates]
+          %-  ~(poke-self pass:io /consume-batch-poke)
+          :-  %indexer-action
+          !>  ^-  action:ui
+          :*  %consume-batch
+              batch-id
+              transactions.update
+              [chain.update hall.update]
+              now.bowl  ::  u.timestamp
+              %.y
+          ==
+        ~
       ==
     ::
     ::  TODO: unshelf this process when we connect to
