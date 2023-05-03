@@ -134,7 +134,6 @@
 ++  action
   $%  [%set-catchup-indexer =dock]
       [%set-sequencer town-id=id:smart =dock]
-      [%set-rollup =dock]
       [%bootstrap =dock]
       [%catchup =dock town-id=id:smart batch-num=@ud]
       [%consume-batch args=consume-batch-args]

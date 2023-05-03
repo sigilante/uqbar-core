@@ -5,8 +5,7 @@
 ::
 /-  uqbar=zig-uqbar
 /+  default-agent, dbug, io=agentio, verb,
-    *zig-sequencer, *zig-rollup,
-    zink=zink-zink, sig=zig-sig,
+    *zig-sequencer, zink=zink-zink, sig=zig-sig,
     engine=zig-sys-engine
 ::  Choose which library smart contracts are executed against here
 ::
@@ -28,7 +27,6 @@
 +$  inflated-state-1  [state-1 =eng smart-lib-vase=vase]
 ::
 +$  state-2
-  $+  app-state-2
   $:  %2
       last-batch-time=@da      ::  saved to compare against indexer acks
       indexers=(map dock @da)  ::  indexers receiving batch updates
@@ -45,7 +43,6 @@
 +$  inflated-state-2  [state-2 =eng smart-lib-vase=vase]
 ::
 +$  state-3
-  $+  app-state-3
   $:  %3
       last-batch-time=@da      ::  saved to compare against indexer acks
       indexers=(map dock @da)  ::  indexers receiving batch updates
@@ -116,7 +113,6 @@
     [cards this]
   ::
       %sidecar-action
-    ::  will replace rollup-update
     ?>  =(src our):bowl
     =/  act  !<(sidecar-action vase)
     ?-    -.act
@@ -515,8 +511,8 @@
     ::  grab the smart-lib-vase that's prebuilt here for usage elsewhere
     ``noun+!>(smart-lib-vase)
   ::
-      [%batches-to-post ~]
-    ::  keep a queue of batches to post. if none, return ~
+      [%pending-batch ~]
+    ::  if none, returns ~
     ?~  town  ``json+!>(~)
     ?~  pend=pending-batch  ``json+!>(~)
     =/  txs-without-outputs

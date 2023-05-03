@@ -112,9 +112,6 @@
 ::      %set-sequencer:
 ::        Subscribe to sequencer for new batches.
 ::
-::      %set-rollup:
-::        Subscribe to rollup for new batch-ids.
-::
 ::
 /-  eng=zig-engine,
     uqbar=zig-uqbar,
@@ -139,10 +136,9 @@
 ::   to allow easier setup.
 ::   TODO: Remove hardcode and add a GUI button/
 ::         input menu to setup.
-=/  testnet-host=@p            ~nec
+=/  first-sequencer=@p         ~nec
 =/  indexer-bootstrap-host=@p  ~nec
-=/  rollup-dock=dock           [testnet-host %rollup]
-=/  sequencer-dock=dock        [testnet-host %sequencer]
+=/  sequencer-dock=dock        [first-sequencer %sequencer]
 ::  %+  verb  &
 ^-  agent:gall
 =<
@@ -167,10 +163,8 @@
         %+  ~(poke pass:io /track-sequencer)
           sequencer-dock
         tracker-request+!>(~)
-    ::  start tracking chain updates from rollup
-        %+  ~(poke pass:io /track-rollup)
-          rollup-dock
-        tracker-request+!>(%indexer)
+    ::  start tracking chain updates from rollup contract
+        ::  TODO
     ::  sync chain history from a designated indexer
         %+  ~(poke pass:io /bootstrap)
           indexer-bootstrap-dock
@@ -183,15 +177,14 @@
     ?+    -.q.state-vase  on-init
         %1
       =+  !<(bs=base-state-1:ui state-vase)
-      :_  this(state [bs (inflate-state ~(tap by batches-by-town.bs))])
+      =+  (inflate-state ~(tap by batches-by-town.bs))
+      :_  this(state [bs -])
       :~  ::  reaffirm tracking new batches from sequencer
         %+  ~(poke pass:io /track-sequencer)
           sequencer-dock
         tracker-request+!>(~)
-      ::  reaffirm tracking chain updates from rollup
-        %+  ~(poke pass:io /track-rollup)
-          rollup-dock
-        tracker-request+!>(%indexer)
+      ::  reaffirm tracking chain updates from rollup contract
+        ::  TODO
       ==
     ==
   ::
@@ -212,11 +205,11 @@
         !<(indexer-update:seq vase)
       [cards this]
     ::
-        %rollup-update
-      =^  cards  state
-        %-  consume-rollup-update
-        !<(rollup-update:seq vase)
-      [cards this]
+      ::    %rollup-update
+      ::  =^  cards  state
+      ::    %-  consume-rollup-update
+      ::    !<(rollup-update:seq vase)
+      ::  [cards this]
     ::
         %bootstrap-request
       ::  respond to a bootstrap request with our state
@@ -247,7 +240,8 @@
     ::
         %catchup-request
       =+  !<(catchup-request:ui vase)
-      ~&  >>  "indexer: fulfilling catchup request from {<batch-num>}"
+      ~&  >>
+        "indexer: fulfilling catchup request from {<batch-num>}"
       =/  [=batches:ui =batch-order:ui]
         (~(gut by batches-by-town) town-id [~ ~])
       =/  order=(list @ux)
@@ -312,13 +306,6 @@
           [q.sequencer.u.hall %sequencer]
         tracker-stop+!>(~)
       ::
-          %set-rollup
-        ::  TODO remove this poke, should never ever be needed
-        :_  state  :_  ~
-        %+  ~(poke pass:io /track-rollup)
-          dock.action
-        tracker-request+!>(%indexer)
-      ::
           %bootstrap
         :_  state(catchup-indexer dock.action)
         :_  ~
@@ -370,22 +357,23 @@
         =*  batch-id  root.update
         ?:  (has-batch-id-already town-id batch-id)  `state
         ?.  =(batch-id (sham chain.update))          `state
-        =/  timestamp=(unit @da)
-          %.  batch-id
-          %~  get  by
-          %+  ~(gut by town-update-queue)  town-id
-          *(map @ux @da)
-        ?~  timestamp
-          :-  ~
-          %=  state
-              sequencer-update-queue
-            %+  ~(put by sequencer-update-queue)  town-id
-            %+  %~  put  by
-                %+  ~(gut by sequencer-update-queue)  town-id
-                *(map @ux batch:ui)
-              batch-id
-            [transactions.update [chain.update hall.update]]
-          ==
+        ::  TODO go back to queueing when we connect to contract
+        :: =/  timestamp=(unit @da)
+        ::   %.  batch-id
+        ::   %~  get  by
+        ::   %+  ~(gut by town-update-queue)  town-id
+        ::   *(map @ux @da)
+        :: ?~  timestamp
+        ::   :-  ~
+        ::   %=  state
+        ::       sequencer-update-queue
+        ::     %+  ~(put by sequencer-update-queue)  town-id
+        ::     %+  %~  put  by
+        ::         %+  ~(gut by sequencer-update-queue)  town-id
+        ::         *(map @ux batch:ui)
+        ::       batch-id
+        ::     [transactions.update [chain.update hall.update]]
+        ::   ==
         :_  state
         :_  ~
         %-  ~(poke-self pass:io /consume-batch-poke)
@@ -395,73 +383,76 @@
             batch-id
             transactions.update
             [chain.update hall.update]
-            u.timestamp
+            now.bowl  ::  u.timestamp
             %.y
         ==
       ==
     ::
-    ++  consume-rollup-update
-      |=  update=rollup-update:seq
-      ^-  (quip card _state)
-      ?-    -.update
-          %new-sequencer
-        ::  set sequencer based on rollup
-        :_  state  :_  ~
-        %-  ~(poke-self pass:io /update-sequencer)
-        :-  %indexer-action
-        !>([%set-sequencer [town [who %sequencer]]:update])
-      ::
-          %new-peer-root
-        =*  town-id  town.update
-        =/  cards=(list card)
-          :-   %+  fact:io
-                [%rollup-update !>(update)]
-              ~[/rollup-updates]
-          =+  batch-num:(~(gut by capitol) town-id *hall:seq)
-          ?.  (gth batch-num.update +(-))  ~
-          ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
-          :_  ~
-          %+  ~(poke pass:io /indexer-catchup)
-            catchup-indexer
-          catchup-request+!>(`catchup-request:ui`[town-id -])
-        =.  capitol
-          %+  ~(put by capitol)  town-id
-          =+  old=(~(gut by capitol) town-id *hall:seq)
-          %=  old
-            town-id  town-id
-            batch-num  batch-num.update
-            sequencer  sequencer.update
-          ==
-        ?:  (has-batch-id-already town-id root.update)  `state
-        =/  sequencer-update
-          ^-  (unit [transactions=processed-txs:eng =town:seq])
-          %.  root.update
-          %~  get  by
-          %+  ~(gut by sequencer-update-queue)  town-id
-          *(map @ux batch:ui)
-        ?~  sequencer-update
-          :-  cards
-          %=  state
-              town-update-queue
-            %+  ~(put by town-update-queue)  town-id
-            %.  [root timestamp]:update
-            %~  put  by
-            %+  ~(gut by town-update-queue)  town-id
-            *(map batch-id=@ux timestamp=@da)
-          ==
-        :_  state
-        :_  cards
-        %-  ~(poke-self pass:io /consume-batch-poke)
-        :-  %indexer-action
-        !>  ^-  action:ui
-        :*  %consume-batch
-            root.update
-            transactions.u.sequencer-update
-            town.u.sequencer-update
-            timestamp.update
-            %.y
-        ==
-      ==
+    ::  TODO: unshelf this process when we connect to
+    ::  rollup *contract* via eth-watcher something-or-other
+    ::
+    :: ++  consume-rollup-update
+    ::   |=  update=rollup-update:seq
+    ::   ^-  (quip card _state)
+    ::   ?-    -.update
+    ::       %new-sequencer
+    ::     ::  set sequencer based on rollup
+    ::     :_  state  :_  ~
+    ::     %-  ~(poke-self pass:io /update-sequencer)
+    ::     :-  %indexer-action
+    ::     !>([%set-sequencer [town [who %sequencer]]:update])
+    ::   ::
+    ::       %new-peer-root
+    ::     =*  town-id  town.update
+    ::     =/  cards=(list card)
+    ::       :-   %+  fact:io
+    ::             [%rollup-update !>(update)]
+    ::           ~[/rollup-updates]
+    ::       =+  batch-num:(~(gut by capitol) town-id *hall:seq)
+    ::       ?.  (gth batch-num.update +(-))  ~
+    ::       ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
+    ::       :_  ~
+    ::       %+  ~(poke pass:io /indexer-catchup)
+    ::         catchup-indexer
+    ::       catchup-request+!>(`catchup-request:ui`[town-id -])
+    ::     =.  capitol
+    ::       %+  ~(put by capitol)  town-id
+    ::       =+  old=(~(gut by capitol) town-id *hall:seq)
+    ::       %=  old
+    ::         town-id  town-id
+    ::         batch-num  batch-num.update
+    ::         sequencer  sequencer.update
+    ::       ==
+    ::     ?:  (has-batch-id-already town-id root.update)  `state
+    ::     =/  sequencer-update
+    ::       ^-  (unit [transactions=processed-txs:eng =town:seq])
+    ::       %.  root.update
+    ::       %~  get  by
+    ::       %+  ~(gut by sequencer-update-queue)  town-id
+    ::       *(map @ux batch:ui)
+    ::     ?~  sequencer-update
+    ::       :-  cards
+    ::       %=  state
+    ::           town-update-queue
+    ::         %+  ~(put by town-update-queue)  town-id
+    ::         %.  [root timestamp]:update
+    ::         %~  put  by
+    ::         %+  ~(gut by town-update-queue)  town-id
+    ::         *(map batch-id=@ux timestamp=@da)
+    ::       ==
+    ::     :_  state
+    ::     :_  cards
+    ::     %-  ~(poke-self pass:io /consume-batch-poke)
+    ::     :-  %indexer-action
+    ::     !>  ^-  action:ui
+    ::     :*  %consume-batch
+    ::         root.update
+    ::         transactions.u.sequencer-update
+    ::         town.u.sequencer-update
+    ::         timestamp.update
+    ::         %.y
+    ::     ==
+    ::   ==
     --
   ::
   ++  on-watch
