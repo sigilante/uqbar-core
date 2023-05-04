@@ -23,6 +23,7 @@
     chain                  chain.proposed
     latest-diff-hash.hall  diff-hash.proposed
     roots.hall             (snoc roots.hall.old root.proposed)
+    deposits.hall  (~(uni in deposits.hall.old) deposits.proposed)
   ==
 ::
 ++  get-our-caller

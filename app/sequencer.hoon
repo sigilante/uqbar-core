@@ -12,6 +12,8 @@
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
++$  old-proposed-batch
+  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
 +$  state-1
   $:  %1
       rollup=(unit ship)      ::  replace in future with ETH contract address
@@ -20,7 +22,7 @@
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=mempool         ::  unexecuted transactions
       =memlist                ::  executed transactions in working state
-      proposed-batch=(unit proposed-batch)   ::  stores working state
+      proposed-batch=(unit old-proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
@@ -36,7 +38,7 @@
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=mempool          ::  unexecuted transactions
       =memlist                 ::  executed transactions in working state
-      proposed-batch=(unit proposed-batch)   ::  stores working state
+      proposed-batch=(unit old-proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
@@ -87,7 +89,7 @@
     `this(state [!<(state-3 old-vase) eng smart-lib])
       %2
     =/  old  !<(state-2 old-vase)
-    =+  [pending.old memlist.old proposed-batch.old ~ |10:old]
+    =+  [pending.old memlist.old ~ ~ |10:old]
     `this(state [`state-3`[%3 +.old(rollup `0x0, |5 -)] eng smart-lib])
       %1
     =/  old  !<(state-1 old-vase)
@@ -150,7 +152,7 @@
       ?.  =(%off status)
         ~|("%sequencer: already active" !!)
       =/  =chain  ?~(starting-state.act [~ ~] u.starting-state.act)
-      =/  new-root  `@ux`(sham chain)
+      =/  new-root  ->-.p.chain
       =/  =^town
         :-  chain
         :*  town-id.act
@@ -174,7 +176,7 @@
         private-key  `private-key.act
         town         `town
         status        %available
-        working-batch  `[0 ~ chain.town 0x0 new-root]
+        working-batch  `[0 ~ chain.town 0x0 new-root ~]
       ==
     ::
         %set-block-height-api-key
@@ -207,8 +209,12 @@
       ?>  =(town-id.deposit town-id.hall.u.town)
       ?>  =(token.deposit 1)  ::  ETH
       ::  assert we haven't used this transaction hash as a deposit before
-      ?<  (~(has in deposits.hall.u.town) message-hash)
-      ?>  (gth deposit-index.deposit ~(wyt in deposits.hall.u.town))
+      =/  working-deposits
+        ?~  working-batch
+          deposits.hall.u.town
+        (~(uni in deposits.hall.u.town) deposits.u.working-batch)
+      ?<  (~(has in working-deposits) message-hash)
+      ?>  (gth deposit-index.deposit ~(wyt in working-deposits))
       ~&  >>  "%sequencer: received asset from rollup: {<deposit>}"
       ::  add deposit amount to the wrapped ETH balance
       ::  of the indicated uqbar address
@@ -269,11 +275,11 @@
       =/  tx-hash
         `@ux`(sham +.transaction)
       :-  ~
-      %=  state
-        working-batch  `[0 ~ working-chain 0x0 0x0]
-        memlist  (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
-          deposits.hall.u.town
-        (~(put in deposits.hall.u.town) message-hash)
+      %=    state
+          working-batch
+        `[0 ~ working-chain 0x0 0x0 (~(put in working-deposits) message-hash)]
+          memlist
+        (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
       ==
     ::
     ::  transactions
@@ -329,7 +335,9 @@
       :_  %=  state
             pending        ~
             memlist        (weld memlist `^memlist`processed)
-            working-batch  `[0 ~ chain.new 0x0 0x0]
+              working-batch
+            =-  `[0 ~ chain.new 0x0 0x0 -]
+            ?~(working-batch ~ deposits.u.working-batch)
           ==
       ^-  (list card)
       =<  p
@@ -405,7 +413,10 @@
             processed.new
             chain.new
             `@ux`(sham ~[modified.new])
-            `@ux`(sham chain.new)
+            root=->-.p.chain.new  ::  top level merkle root
+            ::  deposits
+            ?~  working-batch  ~
+            deposits.u.working-batch
         ==
       ::  poke all watching indexers with update and
       ::  remove indexers who have not ack'd recently enough.
@@ -530,19 +541,20 @@
       %+  turn  processed-txs.u.pend
       |=  [hash=@ux tx=transaction:smart *]
       [hash tx]
-    =/  txs-hash=@ux  `@`(sham txs-without-outputs)
+    =/  txs-hash=@ux  `@`(shag:merk txs-without-outputs)
     =/  txs-jam=@ux   (jam txs-without-outputs)
     =-  ``json+!>(-)
     =,  enjs:format
     %-  pairs
-    :~  ['town' s+(scot %ux town-id.hall.u.town)]
-        ['txs' s+(scot %ux txs-jam)]
-        ['txRoot' s+(scot %ux txs-hash)]
-        ['stateRoot' s+(scot %ux root.u.pend)]
-        :-  'prevBatch'
-        %-  pairs
-        :~  ['stateRoot' s+(scot %ux (rear roots.hall.u.town))]
-    ==  ==
+    :~  ['town' s+(crip (a-co:co `@`town-id.hall.u.town))]
+        ['txs' s+(crip (z-co:co txs-jam))]
+        ['txRoot' s+(crip (z-co:co txs-hash))]
+        ['stateRoot' s+(crip (z-co:co root.u.pend))]
+        ['hasDeposits' b+?=(^ deposits.u.pend)]
+        ['prevEndDeposit' s+(crip (a-co:co ~(wyt in deposits.hall.u.town)))]
+        ['newEndDeposit' s+(crip (a-co:co ~(wyt in deposits.u.pend)))]
+        ['prevStateRoot' s+(crip (z-co:co (rear roots.hall.u.town)))]
+    ==
   ::
   ::  state reads fail if sequencer not active
   ::

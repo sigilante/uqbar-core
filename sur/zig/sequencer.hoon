@@ -23,7 +23,13 @@
 ::  working state tracked here
 ::
 +$  proposed-batch
-  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
+  $:  num=@ud
+      =processed-txs
+      =chain
+      diff-hash=@ux
+      root=@ux
+      deposits=(set @ux)
+  ==
 ::
 ::  capitol: tracks sequencer and state roots / diffs for all towns
 ::
