@@ -139,7 +139,7 @@
 =/  first-sequencer=@p         ~nec
 =/  indexer-bootstrap-host=@p  ~nec
 =/  sequencer-dock=dock        [first-sequencer %sequencer]
-%+  verb  &
+::  %+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall

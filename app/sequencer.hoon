@@ -66,7 +66,7 @@
 =|  inflated-state-3
 =*  state  -
 %-  agent:dbug
-%+  verb  &
+::  %+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
