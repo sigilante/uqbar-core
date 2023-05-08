@@ -202,7 +202,7 @@
     ::
         %sequencer-indexer-update
       =^  cards  state
-        %-  consume-sequencer-update
+        %-  consume-sequencer-update:ic
         !<(indexer-update:seq vase)
       [cards this]
     ::
@@ -340,130 +340,6 @@
           ~(del by (~(gut by town-update-queue) town-id ~))
         ==
       ==
-    ::
-    ++  has-batch-id-already
-      |=  [town-id=id:smart batch-id=id:smart]
-      ^-  ?
-      =/  [=batches:ui *]
-        %+  %~  gut  by  batches-by-town
-        town-id  [*batches:ui *batches-by-town:ui]
-      (~(has by batches) batch-id)
-    ::
-    ++  consume-sequencer-update
-      |=  update=indexer-update:seq
-      ^-  (quip card _state)
-      ?-    -.update
-          %update
-        =*  town-id   town-id.hall.update
-        =*  batch-id  root.update
-        ?:  (has-batch-id-already town-id batch-id)  `state
-        ?.  =(batch-id ->-.p.chain.update)  `state  ::  top level merkle root
-        ::  TODO go back to queueing when we connect to contract
-        :: =/  timestamp=(unit @da)
-        ::   %.  batch-id
-        ::   %~  get  by
-        ::   %+  ~(gut by town-update-queue)  town-id
-        ::   *(map @ux @da)
-        :: ?~  timestamp
-        ::   :-  ~
-        ::   %=  state
-        ::       sequencer-update-queue
-        ::     %+  ~(put by sequencer-update-queue)  town-id
-        ::     %+  %~  put  by
-        ::         %+  ~(gut by sequencer-update-queue)  town-id
-        ::         *(map @ux batch:ui)
-        ::       batch-id
-        ::     [transactions.update [chain.update hall.update]]
-        ::   ==
-        :_  state
-        :+  %+  fact:io
-              =-  [%rollup-update !>(`rollup-update:seq`-)]
-              :*  %new-peer-root
-                  sequencer.hall.update
-                  town-id.hall.update
-                  root.update
-                  batch-num.hall.update
-                  now.bowl
-              ==
-            ~[/rollup-updates]
-          %-  ~(poke-self pass:io /consume-batch-poke)
-          :-  %indexer-action
-          !>  ^-  action:ui
-          :*  %consume-batch
-              batch-id
-              transactions.update
-              [chain.update hall.update]
-              now.bowl  ::  u.timestamp
-              %.y
-          ==
-        ~
-      ==
-    ::
-    ::  TODO: unshelf this process when we connect to
-    ::  rollup *contract* via eth-watcher something-or-other
-    ::
-    :: ++  consume-rollup-update
-    ::   |=  update=rollup-update:seq
-    ::   ^-  (quip card _state)
-    ::   ?-    -.update
-    ::       %new-sequencer
-    ::     ::  set sequencer based on rollup
-    ::     :_  state  :_  ~
-    ::     %-  ~(poke-self pass:io /update-sequencer)
-    ::     :-  %indexer-action
-    ::     !>([%set-sequencer [town [who %sequencer]]:update])
-    ::   ::
-    ::       %new-peer-root
-    ::     =*  town-id  town.update
-    ::     =/  cards=(list card)
-    ::       :-   %+  fact:io
-    ::             [%rollup-update !>(update)]
-    ::           ~[/rollup-updates]
-    ::       =+  batch-num:(~(gut by capitol) town-id *hall:seq)
-    ::       ?.  (gth batch-num.update +(-))  ~
-    ::       ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
-    ::       :_  ~
-    ::       %+  ~(poke pass:io /indexer-catchup)
-    ::         catchup-indexer
-    ::       catchup-request+!>(`catchup-request:ui`[town-id -])
-    ::     =.  capitol
-    ::       %+  ~(put by capitol)  town-id
-    ::       =+  old=(~(gut by capitol) town-id *hall:seq)
-    ::       %=  old
-    ::         town-id  town-id
-    ::         batch-num  batch-num.update
-    ::         sequencer  sequencer.update
-    ::       ==
-    ::     ?:  (has-batch-id-already town-id root.update)  `state
-    ::     =/  sequencer-update
-    ::       ^-  (unit [transactions=processed-txs:eng =town:seq])
-    ::       %.  root.update
-    ::       %~  get  by
-    ::       %+  ~(gut by sequencer-update-queue)  town-id
-    ::       *(map @ux batch:ui)
-    ::     ?~  sequencer-update
-    ::       :-  cards
-    ::       %=  state
-    ::           town-update-queue
-    ::         %+  ~(put by town-update-queue)  town-id
-    ::         %.  [root timestamp]:update
-    ::         %~  put  by
-    ::         %+  ~(gut by town-update-queue)  town-id
-    ::         *(map batch-id=@ux timestamp=@da)
-    ::       ==
-    ::     :_  state
-    ::     :_  cards
-    ::     %-  ~(poke-self pass:io /consume-batch-poke)
-    ::     :-  %indexer-action
-    ::     !>  ^-  action:ui
-    ::     :*  %consume-batch
-    ::         root.update
-    ::         transactions.u.sequencer-update
-    ::         town.u.sequencer-update
-    ::         timestamp.update
-    ::         %.y
-    ::     ==
-    ::   ==
     --
   ::
   ++  on-watch
@@ -589,14 +465,173 @@
       `[(slav %ux i.t.args) (slav %ux i.t.t.args)]
     --
   ::
+  ++  on-arvo
+    |=  [=wire =sign-arvo]
+    ^-  (quip card _this)
+    ::  receive REMOTE SCRIES here
+    ~|  "indexer: remote scry fail!"
+    ?.  ?=([%get-remote-batch ~] wire)  `this
+    ?.  ?=(%ames -.sign-arvo)           `this
+    ?.  ?=(%tune -.+.sign-arvo)         `this
+    ?>  ?=([%g %x @ %sequencer %$ %batch @ @ ~] path.+.sign-arvo)
+    =/  =hall:seq  (~(got by capitol) (slav %ux -:|6:path.+.sign-arvo))
+    ?>  =(src.bowl q.sequencer.hall)
+    ?~  roar.sign-arvo          `this
+    ?~  q.dat.u.roar.sign-arvo  `this
+    ?>  ?=(%sequencer-indexer-update p.u.q.dat.u.roar.sign-arvo)
+    =/  upd=indexer-update:seq
+      !<  indexer-update:seq
+      [-:!>(*indexer-update:seq) q.u.q.dat.u.roar.sign-arvo]
+    ?>  ?=(%update -.upd)
+    ?>  =(town-id.hall.town.upd p.sequencer.hall)
+    ::  we made it, ingest the batch!
+    =^  cards  state
+      (consume-sequencer-update:ic upd)
+    [cards this]
+  ::
   ++  on-agent  on-agent:def
-  ++  on-arvo   on-arvo:def
   ++  on-fail   on-fail:def
   --
 ::
 |_  =bowl:gall
 +*  io      ~(. agentio bowl)
     ui-lib  ~(. indexer-lib bowl)
+::
+++  consume-sequencer-update
+  |=  update=indexer-update:seq
+  ^-  (quip card _state)
+  ?-    -.update
+      %notify
+    ::  sequencer has notified us of a new batch, perform
+    ::  a scry for it!
+    =/  =hall:seq  (~(got by capitol) town.update)
+    ?>  =(src.bowl q.sequencer.hall)
+    :_  state  :_  ~
+    :*  %pass  /get-remote-batch
+        %arvo  %a  %keen  src.bowl
+        /g/x/0/sequencer//batch/(scot %ux town.update)/(scot %ux root.update)
+    ==
+  ::
+      %update
+    =*  town-id   town-id.hall.update
+    =*  batch-id  root.update
+    ?:  (has-batch-id-already town-id batch-id)  `state
+    ?.  =(batch-id ->-.p.chain.update)  `state  ::  top level merkle root
+    ::  TODO go back to queueing when we connect to contract
+    :: =/  timestamp=(unit @da)
+    ::   %.  batch-id
+    ::   %~  get  by
+    ::   %+  ~(gut by town-update-queue)  town-id
+    ::   *(map @ux @da)
+    :: ?~  timestamp
+    ::   :-  ~
+    ::   %=  state
+    ::       sequencer-update-queue
+    ::     %+  ~(put by sequencer-update-queue)  town-id
+    ::     %+  %~  put  by
+    ::         %+  ~(gut by sequencer-update-queue)  town-id
+    ::         *(map @ux batch:ui)
+    ::       batch-id
+    ::     [transactions.update [chain.update hall.update]]
+    ::   ==
+    :_  state
+    :+  %+  fact:io
+          =-  [%rollup-update !>(`rollup-update:seq`-)]
+          :*  %new-peer-root
+              sequencer.hall.update
+              town-id.hall.update
+              root.update
+              batch-num.hall.update
+              now.bowl
+          ==
+        ~[/rollup-updates]
+      %-  ~(poke-self pass:io /consume-batch-poke)
+      :-  %indexer-action
+      !>  ^-  action:ui
+      :*  %consume-batch
+          batch-id
+          transactions.update
+          [chain.update hall.update]
+          now.bowl  ::  u.timestamp
+          %.y
+      ==
+    ~
+  ==
+::
+++  has-batch-id-already
+  |=  [town-id=id:smart batch-id=id:smart]
+  ^-  ?
+  =/  [=batches:ui *]
+    %+  %~  gut  by  batches-by-town
+    town-id  [*batches:ui *batches-by-town:ui]
+  (~(has by batches) batch-id)
+::
+::  TODO: unshelf this process when we connect to
+::  rollup *contract* via eth-watcher something-or-other
+::
+:: ++  consume-rollup-update
+::   |=  update=rollup-update:seq
+::   ^-  (quip card _state)
+::   ?-    -.update
+::       %new-sequencer
+::     ::  set sequencer based on rollup
+::     :_  state  :_  ~
+::     %-  ~(poke-self pass:io /update-sequencer)
+::     :-  %indexer-action
+::     !>([%set-sequencer [town [who %sequencer]]:update])
+::   ::
+::       %new-peer-root
+::     =*  town-id  town.update
+::     =/  cards=(list card)
+::       :-   %+  fact:io
+::             [%rollup-update !>(update)]
+::           ~[/rollup-updates]
+::       =+  batch-num:(~(gut by capitol) town-id *hall:seq)
+::       ?.  (gth batch-num.update +(-))  ~
+::       ~&  >>  "indexer out-of-date, asking {<catchup-indexer>} for catchup"
+::       :_  ~
+::       %+  ~(poke pass:io /indexer-catchup)
+::         catchup-indexer
+::       catchup-request+!>(`catchup-request:ui`[town-id -])
+::     =.  capitol
+::       %+  ~(put by capitol)  town-id
+::       =+  old=(~(gut by capitol) town-id *hall:seq)
+::       %=  old
+::         town-id  town-id
+::         batch-num  batch-num.update
+::         sequencer  sequencer.update
+::       ==
+::     ?:  (has-batch-id-already town-id root.update)  `state
+::     =/  sequencer-update
+::       ^-  (unit [transactions=processed-txs:eng =town:seq])
+::       %.  root.update
+::       %~  get  by
+::       %+  ~(gut by sequencer-update-queue)  town-id
+::       *(map @ux batch:ui)
+::     ?~  sequencer-update
+::       :-  cards
+::       %=  state
+::           town-update-queue
+::         %+  ~(put by town-update-queue)  town-id
+::         %.  [root timestamp]:update
+::         %~  put  by
+::         %+  ~(gut by town-update-queue)  town-id
+::         *(map batch-id=@ux timestamp=@da)
+::       ==
+::     :_  state
+::     :_  cards
+::     %-  ~(poke-self pass:io /consume-batch-poke)
+::     :-  %indexer-action
+::     !>  ^-  action:ui
+::     :*  %consume-batch
+::         root.update
+::         transactions.u.sequencer-update
+::         town.u.sequencer-update
+::         timestamp.update
+::         %.y
+::     ==
+::   ==
+::
 ++  get-batch
   |=  [town-id=id:smart batch-id=id:smart]
   ^-  (unit [batch-id=id:smart timestamp=@da =batch:ui])

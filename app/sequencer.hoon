@@ -12,37 +12,6 @@
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  old-proposed-batch
-  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
-+$  state-1
-  $:  %1
-      rollup=(unit ship)      ::  replace in future with ETH contract address
-      private-key=(unit @ux)  ::  our signing key
-      town=(unit town)        ::  chain-state
-      peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
-      pending=mempool         ::  unexecuted transactions
-      =memlist                ::  executed transactions in working state
-      proposed-batch=(unit old-proposed-batch)   ::  stores working state
-      status=?(%available %off)
-      block-height-api-key=(unit @t)
-  ==
-+$  inflated-state-1  [state-1 =eng smart-lib-vase=vase]
-::
-+$  state-2
-  $:  %2
-      last-batch-time=@da      ::  saved to compare against indexer acks
-      indexers=(map dock @da)  ::  indexers receiving batch updates
-      rollup=(unit ship)       ::  replace in future with ETH contract address
-      private-key=(unit @ux)   ::  our signing key
-      town=(unit town)         ::  chain-state
-      peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
-      pending=mempool          ::  unexecuted transactions
-      =memlist                 ::  executed transactions in working state
-      proposed-batch=(unit old-proposed-batch)   ::  stores working state
-      status=?(%available %off)
-      block-height-api-key=(unit @t)
-  ==
-+$  inflated-state-2  [state-2 =eng smart-lib-vase=vase]
 ::
 +$  state-3
   $:  %3
@@ -66,7 +35,7 @@
 =|  inflated-state-3
 =*  state  -
 %-  agent:dbug
-::  %+  verb  &
+%+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -431,15 +400,24 @@
             working-batch    `batch
             pending-batch    `batch
           ==
+      ::  remote scry: only poke indexers with the hash of new batch.
+      ::  they will scry for the actual batch contents. NOTE:
+      ::  replace with sticky-scry / subscription once available.
+      ::  pin the actual batch to a path of its hash.
+      :-  :*  %pass  /pin-batch
+              %grow  /batch/(scot %ux town-id.hall.u.town)/(scot %ux root.batch)
+              :-  %sequencer-indexer-update
+              ^-  indexer-update
+              :^  %update  root.batch
+                processed-txs.batch
+              (transition-state u.town batch)
+          ==
       %+  turn   ~(tap by indexers)
       |=  [=dock @da]
       %+  ~(poke pass:io /indexer-updates)
         dock
       :-  %sequencer-indexer-update
-      !>  ^-  indexer-update
-      :^  %update  root.batch
-        processed-txs.batch
-      (transition-state u.town batch)
+      !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
     ==
   --
 ::
