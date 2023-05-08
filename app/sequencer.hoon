@@ -5,14 +5,15 @@
 ::
 /-  uqbar=zig-uqbar
 /+  default-agent, dbug, io=agentio, verb,
-    *zig-sequencer, *zig-rollup,
-    zink=zink-zink, sig=zig-sig,
+    *zig-sequencer, zink=zink-zink, sig=zig-sig,
     engine=zig-sys-engine
 ::  Choose which library smart contracts are executed against here
 ::
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
++$  old-proposed-batch
+  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
 +$  state-1
   $:  %1
       rollup=(unit ship)      ::  replace in future with ETH contract address
@@ -21,7 +22,7 @@
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=mempool         ::  unexecuted transactions
       =memlist                ::  executed transactions in working state
-      proposed-batch=(unit proposed-batch)   ::  stores working state
+      proposed-batch=(unit old-proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
@@ -37,16 +38,32 @@
       peer-roots=(map town=@ux root=@ux)  ::  track updates from rollup
       pending=mempool          ::  unexecuted transactions
       =memlist                 ::  executed transactions in working state
-      proposed-batch=(unit proposed-batch)   ::  stores working state
+      proposed-batch=(unit old-proposed-batch)   ::  stores working state
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
 +$  inflated-state-2  [state-2 =eng smart-lib-vase=vase]
+::
++$  state-3
+  $:  %3
+      last-batch-time=@da      ::  saved to compare against indexer acks
+      indexers=(map dock @da)  ::  indexers receiving batch updates
+      rollup=(unit @ux)        ::  rollup contract address
+      private-key=(unit @ux)   ::  our signing key
+      town=(unit town)         ::  chain-state
+      pending=mempool          ::  unexecuted transactions
+      =memlist                 ::  executed transactions in working state
+      working-batch=(unit proposed-batch)  ::  stores working state
+      pending-batch=(unit proposed-batch)
+      status=?(%available %off)
+      block-height-api-key=(unit @t)
+  ==
++$  inflated-state-3  [state-3 =eng smart-lib-vase=vase]
 ::  sigs on, hints off
 +$  eng  $_  ~(engine engine !>(0) *(map * @) jets:zink %.y %.n)
 --
 ::
-=|  inflated-state-2
+=|  inflated-state-3
 =*  state  -
 %-  agent:dbug
 ::  %+  verb  &
@@ -59,7 +76,7 @@
   ^-  (quip card _this)
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
-  `this(state [*state-2 eng smart-lib])
+  `this(state [*state-3 eng smart-lib])
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
@@ -67,12 +84,16 @@
   =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
   ?+    -.q.old-vase
-     `this(state [*state-2 eng smart-lib])
+    `this(state [*state-3 eng smart-lib])
+      %3
+    `this(state [!<(state-3 old-vase) eng smart-lib])
       %2
-    `this(state [!<(state-2 old-vase) eng smart-lib])
+    =/  old  !<(state-2 old-vase)
+    =+  [pending.old memlist.old ~ ~ |10:old]
+    `this(state [`state-3`[%3 +.old(rollup `0x0, |5 -)] eng smart-lib])
       %1
     =/  old  !<(state-1 old-vase)
-    `this(state [`state-2`[%2 *@da *(map dock @da) +.old] eng smart-lib])
+    (on-load !>(`state-2`[%2 *@da *(map dock @da) +.old]))
   ==
 ::
 ++  on-poke
@@ -93,23 +114,30 @@
       (handle-poke !<(town-action vase))
     [cards this]
   ::
-      %rollup-update
-    =/  upd  !<(rollup-update vase)
-    =^  cards  state
-      ?-    -.upd
-          %new-peer-root
-        `state(peer-roots (~(put by peer-roots) town.upd root.upd))
+      %sidecar-action
+    ?>  =(src our):bowl
+    =/  act  !<(sidecar-action vase)
+    ?-    -.act
+        %batch-posted
+      ::  converts pending-batch into current town state
+      ::  and clears pending-batch
+      ?~  town  !!
+      ~&  >>  "%sequencer: batch approved by rollup"
+      ?~  pending-batch
+        ~|("received batch approval without pending batch" !!)
+      =/  new-town=^town
+        (transition-state u.town u.pending-batch)
+      ::  inject received town-root into state of town
+      =.  chain.new-town
+        (inject-town-root chain.new-town town-root.act)
+      `this(pending-batch ~, town `new-town)
       ::
-          %new-sequencer
-        ::  check if we have been kicked off our town
-        ::  this is in place for later..  TODO expand this functionality
-        ?~  town                             `state
-        ?.  =(town.upd town-id.hall.u.town)  `state
-        ?:  =(who.upd our.bowl)              `state
-        ~&  >>>  "%sequencer: we've been kicked out of town!"
-        `state
+          %batch-rejected
+        ::  handle pending-batch being invalid
+        ::  (working-batch also becomes invalid!)
+        ~&  >>>  "%sequencer: pending batch REJECTED"
+        `this(pending-batch ~, working-batch ~)
       ==
-    [cards this]
   ==
   ::
   ++  handle-poke
@@ -123,34 +151,32 @@
       ?>  =(src our):bowl
       ?.  =(%off status)
         ~|("%sequencer: already active" !!)
-      ::  poke rollup ship with params of new town
-      ::  (will be rejected if id is taken)
       =/  =chain  ?~(starting-state.act [~ ~] u.starting-state.act)
-      =/  new-root  `@ux`(sham chain)
+      =/  new-root  ->-.p.chain
       =/  =^town
         :-  chain
         :*  town-id.act
             batch-num=0
             [address.act our.bowl]
             mode.act
-            0x0  ~  ~
+            0x0
+            ~[new-root]
+            ~
         ==
       =/  sig
         (ecdsa-raw-sign:secp256k1:secp:crypto `@uvI`new-root private-key.act)
-      :_  %=  state
-            rollup       `rollup-host.act
-            private-key  `private-key.act
-            town         `town
-            status        %available
-            proposed-batch  `[0 ~ chain.town 0x0 new-root]
-          ==
-      :~  %+  ~(poke pass:io /watch-rollup)
-            [rollup-host.act %rollup]
-          tracker-request+!>(%sequencer)
-      ::
-          %+  ~(poke pass:io /batch-submit/(scot %ux new-root))
-            [rollup-host.act %rollup]
-          rollup-action+!>([%launch-town address.act sig town])
+      :-  %+  turn   ~(tap by indexers)
+          |=  [=dock @da]
+          %+  ~(poke pass:io /indexer-updates)
+            dock
+          :-  %sequencer-indexer-update
+          !>  ^-  indexer-update
+          [%update new-root ~ town]
+      %=  state
+        private-key  `private-key.act
+        town         `town
+        status        %available
+        working-batch  `[0 ~ chain.town 0x0 new-root ~]
       ==
     ::
         %set-block-height-api-key
@@ -164,7 +190,7 @@
         %clear-state
       ?>  =(src our):bowl
       ~&  >>>  "sequencer: wiping state"
-      `[*state-2 eng smart-lib-vase]
+      `[*state-3 eng smart-lib-vase]
     ::
     ::  handle bridged assets from rollup
     ::
@@ -183,15 +209,19 @@
       ?>  =(town-id.deposit town-id.hall.u.town)
       ?>  =(token.deposit 1)  ::  ETH
       ::  assert we haven't used this transaction hash as a deposit before
-      ?<  (~(has in deposits.hall.u.town) message-hash)
-      ?>  (gth deposit-index.deposit ~(wyt in deposits.hall.u.town))
+      =/  working-deposits
+        ?~  working-batch
+          deposits.hall.u.town
+        (~(uni in deposits.hall.u.town) deposits.u.working-batch)
+      ?<  (~(has in working-deposits) message-hash)
+      ?>  (gth deposit-index.deposit ~(wyt in working-deposits))
       ~&  >>  "%sequencer: received asset from rollup: {<deposit>}"
       ::  add deposit amount to the wrapped ETH balance
       ::  of the indicated uqbar address
       =/  working-chain=chain
-        ?~  proposed-batch
+        ?~  working-batch
           chain.u.town
-        chain.u.proposed-batch
+        chain.u.working-batch
       =/  acc-id=id:smart
         %:  hash-data:eng
             ueth-contract-id:smart
@@ -245,11 +275,11 @@
       =/  tx-hash
         `@ux`(sham +.transaction)
       :-  ~
-      %=  state
-        proposed-batch  `[0 ~ working-chain 0x0 0x0]
-        memlist  (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
-          deposits.hall.u.town
-        (~(put in deposits.hall.u.town) message-hash)
+      %=    state
+          working-batch
+        `[0 ~ working-chain 0x0 0x0 (~(put in working-deposits) message-hash)]
+          memlist
+        (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
       ==
     ::
     ::  transactions
@@ -293,9 +323,9 @@
                 town-id.hall.u.town
               batch-num.hall.u.town
             eth-block-height.act
-          ?~  proposed-batch
+          ?~  working-batch
             chain.u.town
-          chain.u.proposed-batch
+          chain.u.working-batch
         (sort-mempool:eng pending)
       =/  processed
         %+  turn  processed.new
@@ -303,9 +333,11 @@
         [a b `c]
       =/  memlist-lent  (lent memlist)
       :_  %=  state
-            pending         ~
-            memlist         (weld memlist `^memlist`processed)
-            proposed-batch  `[0 ~ chain.new 0x0 0x0]
+            pending        ~
+            memlist        (weld memlist `^memlist`processed)
+              working-batch
+            =-  `[0 ~ chain.new 0x0 0x0 -]
+            ?~(working-batch ~ deposits.u.working-batch)
           ==
       ^-  (list card)
       =<  p
@@ -349,17 +381,17 @@
     ::
         %perform-batch
       ?>  =(src.bowl our.bowl)
-      ::  ~&  %perform-batch
-      ::  ~>  %bout
       ?.  =(%available status)
-        ~|("%sequencer: error: got poke while not active" !!)
+        ~|("%sequencer: got poke while not active" !!)
       ?~  town
-        ~|("%sequencer: error: no state" !!)
-      ?~  rollup
-        ~|("%sequencer: error: no known rollup host" !!)
-      ?:  =(~ memlist)
-        ::  ~&  >  "%sequencer: ignoring batch trigger, no transactions"
-        `state
+        ~|("%sequencer: no state" !!)
+      ::  ?~  rollup
+      ::    ~|("%sequencer: no known rollup contract" !!)
+      ?^  pending-batch
+        ~|("%sequencer: cannot batch, last one still pending" !!)
+      ?:  =(~ memlist)  `state
+      ~&  %perform-batch
+      ~>  %bout
       ?>  ?=(%full-publish -.mode.hall.u.town)
       ::  publish full diff data
       ::
@@ -376,37 +408,39 @@
             eth-block-height.act
           chain.u.town
         memlist
-      =/  new-root       `@ux`(sham chain.new)
-      =/  diff-hash      `@ux`(sham ~[modified.new])
-      =/  new-batch-num  +(batch-num.hall.u.town)
-      ::  poke rollup
-      ::
-      :_  %=    state
-              memlist  ~
-              proposed-batch
-            `[new-batch-num processed.new chain.new diff-hash new-root]
+      =/  batch=proposed-batch
+        :*  +(batch-num.hall.u.town)
+            processed.new
+            chain.new
+            `@ux`(sham ~[modified.new])
+            root=->-.p.chain.new  ::  top level merkle root
+            ::  deposits
+            ?~  working-batch  ~
+            deposits.u.working-batch
+        ==
+      ::  poke all watching indexers with update and
+      ::  remove indexers who have not ack'd recently enough.
+      =.  indexers
+        %-  malt
+        %+  skim  ~(tap by indexers)
+        |=  [dock last-ack=@da]
+        (gte last-ack last-batch-time)
+      :_  %=  state
+            memlist          ~
+            last-batch-time  now.bowl
+            working-batch    `batch
+            pending-batch    `batch
           ==
-      :_  ~
-      %+  ~(poke pass:io /batch-submit/(scot %ux new-root))
-        [u.rollup %rollup]
-      :-  %rollup-action
-      !>  :-  %receive-batch
-          :-  addr
-          ^-  batch
-          :*  town-id.hall.u.town
-              new-batch-num
-              mode.hall.u.town
-              ~[modified.new]
-              diff-hash
-              new-root
-              chain.new
-              peer-roots
-              ?~  private-key
-                ~|("%sequencer: error: no signing key found" !!)
-              %+  ecdsa-raw-sign:secp256k1:secp:crypto
-                `@uvI`new-root
-              u.private-key
-    ==    ==
+      %+  turn   ~(tap by indexers)
+      |=  [=dock @da]
+      %+  ~(poke pass:io /indexer-updates)
+        dock
+      :-  %sequencer-indexer-update
+      !>  ^-  indexer-update
+      :^  %update  root.batch
+        processed-txs.batch
+      (transition-state u.town batch)
+    ==
   --
 ::
 ++  on-agent
@@ -422,41 +456,6 @@
       `this(indexers (~(del by indexers) [src.bowl %indexer]))
     ::  put ack-time in tracker map
     `this(indexers (~(put by indexers) [src.bowl %indexer] now.bowl))
-  ::
-      [%batch-submit @ ~]
-    ?.  ?=(%poke-ack -.sign)  `this
-    ?^  p.sign
-      ::  TODO manage rejected moves here
-      ~&  >>>  "%sequencer: our move was rejected by rollup!"
-      ~&  u.p.sign
-      `this(proposed-batch ~)
-    ~&  >>  "%sequencer: batch approved by rollup"
-    ?~  proposed-batch
-      ~|("error: received batch approval without proposed batch" !!)
-    =/  new-town=(unit ^town)
-      (transition-state town u.proposed-batch)
-    ::  poke all watching indexers with update and
-    ::  remove indexers who have not ack'd recently enough.
-    =.  indexers
-      %-  malt
-      %+  skim  ~(tap by indexers)
-      |=  [dock last-ack=@da]
-      (gte last-ack last-batch-time)
-    :_  %=  this
-          last-batch-time  now.bowl
-          town  new-town
-          memlist  ~
-          proposed-batch  ~
-        ==
-    %+  turn   ~(tap by indexers)
-    |=  [=dock @da]
-    %+  ~(poke pass:io /indexer-updates)
-      dock
-    :-  %sequencer-indexer-update
-    !>  ^-  indexer-update
-    :^  %update  root.u.proposed-batch
-      processed-txs.u.proposed-batch
-    (need new-town)
   ::
       [%make-batch @ ~]
     ?+    -.sign  (on-agent:def wire sign)
@@ -534,6 +533,29 @@
     ::  grab the smart-lib-vase that's prebuilt here for usage elsewhere
     ``noun+!>(smart-lib-vase)
   ::
+      [%pending-batch ~]
+    ::  if none, returns ~
+    ?~  town  ``json+!>(~)
+    ?~  pend=pending-batch  ``json+!>(~)
+    =/  txs-without-outputs
+      %+  turn  processed-txs.u.pend
+      |=  [hash=@ux tx=transaction:smart *]
+      [hash tx]
+    =/  txs-hash=@ux  `@`(shag:merk txs-without-outputs)
+    =/  txs-jam=@ux   (jam txs-without-outputs)
+    =-  ``json+!>(-)
+    =,  enjs:format
+    %-  pairs
+    :~  ['town' s+(crip (a-co:co `@`town-id.hall.u.town))]
+        ['txs' s+(crip (z-co:co txs-jam))]
+        ['txRoot' s+(crip (z-co:co txs-hash))]
+        ['stateRoot' s+(crip (z-co:co root.u.pend))]
+        ['hasDeposits' b+?=(^ deposits.u.pend)]
+        ['prevEndDeposit' s+(crip (a-co:co ~(wyt in deposits.hall.u.town)))]
+        ['newEndDeposit' s+(crip (a-co:co ~(wyt in deposits.u.pend)))]
+        ['prevStateRoot' s+(crip (z-co:co (rear roots.hall.u.town)))]
+    ==
+  ::
   ::  state reads fail if sequencer not active
   ::
       [%has @ ~]
@@ -546,9 +568,9 @@
     ::  return working state merkle tree
     ?~  town  [~ ~]
     =/  working-chain=chain
-      ?~  proposed-batch
+      ?~  working-batch
         chain.u.town
-      chain.u.proposed-batch
+      chain.u.working-batch
     ``noun+!>(p.working-chain)
   ::
       [%all-data ~]
@@ -562,9 +584,9 @@
       [%item @ ~]
     ?~  town  [~ ~]
      =/  working-chain=chain
-      ?~  proposed-batch
+      ?~  working-batch
         chain.u.town
-      chain.u.proposed-batch
+      chain.u.working-batch
     ``noun+!>((get:big p.working-chain (slav %ux i.t.t.path)))
   ==
 ::

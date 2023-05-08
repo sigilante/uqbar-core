@@ -10,7 +10,7 @@
   $:  town-id=@ux
       batch-num=@ud
       =sequencer
-      mode=availability-method
+      mode=availability-method  ::  *always* %full-publish for now
       latest-diff-hash=@ux
       roots=(list @ux)
       ::  deposits from the rollup contract are tracked, such that each
@@ -23,7 +23,13 @@
 ::  working state tracked here
 ::
 +$  proposed-batch
-  [num=@ud =processed-txs =chain diff-hash=@ux root=@ux]
+  $:  num=@ud
+      =processed-txs
+      =chain
+      diff-hash=@ux
+      root=@ux
+      deposits=(set @ux)
+  ==
 ::
 ::  capitol: tracks sequencer and state roots / diffs for all towns
 ::
@@ -34,7 +40,7 @@
 +$  batch
   $:  town-id=id:smart
       num=@ud
-      mode=availability-method
+      mode=availability-method  ::  *always* %full-publish for now
       state-diffs=(list state)
       diff-hash=@ux
       new-root=@ux
@@ -88,6 +94,11 @@
           batch-num=@ud
           timestamp=@da
       ==
+  ==
+::
++$  sidecar-action
+  $%  [%batch-posted town-root=@ux]
+      [%batch-rejected town-root=@ux]
   ==
 ::
 ::  indexer must verify root is posted to rollup before verifying new state
