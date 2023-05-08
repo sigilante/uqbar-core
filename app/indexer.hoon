@@ -151,6 +151,8 @@
       ui-lib        ~(. indexer-lib bowl)
   ::
   ++  on-init
+    =/  indexer-bootstrap-dock
+      [indexer-bootstrap-host %indexer]
     :_  this(catchup-indexer indexer-bootstrap-dock)
     :-  %+  ~(poke-our pass:io /set-source-poke)  %uqbar
         :-  %uqbar-action
