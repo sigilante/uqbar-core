@@ -483,7 +483,7 @@
       !<  indexer-update:seq
       [-:!>(*indexer-update:seq) q.u.q.dat.u.roar.sign-arvo]
     ?>  ?=(%update -.upd)
-    ?>  =(town-id.hall.town.upd p.sequencer.hall)
+    ?>  =(town-id.hall.upd town-id.hall)
     ::  we made it, ingest the batch!
     =^  cards  state
       (consume-sequencer-update:ic upd)

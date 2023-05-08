@@ -35,7 +35,7 @@
 =|  inflated-state-3
 =*  state  -
 %-  agent:dbug
-%+  verb  &
+::  %+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -417,7 +417,12 @@
       %+  ~(poke pass:io /indexer-updates)
         dock
       :-  %sequencer-indexer-update
-      !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
+      ?.  =(p.dock our.bowl)
+        !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
+      !>  ^-  indexer-update
+      :^  %update  root.batch
+        processed-txs.batch
+      (transition-state u.town batch)
     ==
   --
 ::
