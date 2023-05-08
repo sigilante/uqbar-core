@@ -151,8 +151,6 @@
       ui-lib        ~(. indexer-lib bowl)
   ::
   ++  on-init
-    =/  indexer-bootstrap-dock=dock
-      [indexer-bootstrap-host %indexer]
     :_  this(catchup-indexer indexer-bootstrap-dock)
     :-  %+  ~(poke-our pass:io /set-source-poke)  %uqbar
         :-  %uqbar-action
@@ -177,6 +175,7 @@
     ?+    -.q.state-vase  on-init
         %1
       =+  !<(bs=base-state-1:ui state-vase)
+      =.  catchup-indexer.bs  [indexer-bootstrap-host %indexer]
       =+  (inflate-state ~(tap by batches-by-town.bs))
       :_  this(state [bs -])
       :~  ::  reaffirm tracking new batches from sequencer
