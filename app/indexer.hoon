@@ -356,7 +356,7 @@
         =*  town-id   town-id.hall.update
         =*  batch-id  root.update
         ?:  (has-batch-id-already town-id batch-id)  `state
-        ?.  =(batch-id (sham chain.update))          `state
+        ?.  =(batch-id ->-.p.chain.update)  `state  ::  top level merkle root
         ::  TODO go back to queueing when we connect to contract
         :: =/  timestamp=(unit @da)
         ::   %.  batch-id
