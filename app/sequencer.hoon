@@ -173,83 +173,27 @@
         ~|("%sequencer: error: got asset while not active" !!)
       =/  deposit-bytes=@ux
         `@ux`(scan `tape`(slag 2 deposit-bytes.act) hex)
-      =/  =deposit      (parse-deposit-bytes `byts`[192 deposit-bytes])
-      =/  message-hash  (keccak-256:keccak:crypto [192 deposit-bytes])
-      ?>  =(town-id.deposit town-id.hall.u.town)
-      ?>  =(token.deposit 1)  ::  ETH
       ::  assert we haven't used this transaction hash as a deposit before
       =/  working-deposits
-        ?~  working-batch
-          deposits.hall.u.town
-        (~(uni in deposits.hall.u.town) deposits.u.working-batch)
-      ?<  (~(has in working-deposits) message-hash)
-      ?>  (gth deposit-index.deposit ~(wyt in working-deposits))
+        %-  ~(uni in deposits.hall.u.town)
+        ?~  working-batch  ~
+        deposits.u.working-batch
+      ::  assert this deposit has never been used historically
+      ?<  (~(has in deposits.hall.u.town) deposit-bytes)
+      ::  assert this deposit is not already in the working-batch
+      ?<  %.  deposit-bytes
+          ~(has in ?~(working-batch ~ deposits.u.working-batch))
       ~&  >>  "%sequencer: received asset from rollup: {<deposit>}"
-      ::  add deposit amount to the wrapped ETH balance
-      ::  of the indicated uqbar address
-      =/  working-chain=chain
-        ?~  working-batch
-          chain.u.town
-        chain.u.working-batch
-      =/  acc-id=id:smart
-        %:  hash-data:eng
-            ueth-contract-id:smart
-            destination-address.deposit
-            town-id.hall.u.town
-            `@`'ueth'
-        ==
-      ::  modify eth account
-      =/  account
-        :-  acc-id
-        ?~  item=(get:big p.working-chain acc-id)
-          :*  %&  acc-id
-              ueth-contract-id:smart
-              destination-address.deposit
-              town-id.hall.u.town
-              `@`'ueth'  %account
-              [amount.deposit ~ `@ux`'ueth-metadata' ~]
-          ==
-        ?>  ?=(%& -.u.item)
-        =+  ;;(token-account noun.p.u.item)
-        u.item(noun.p -(balance (add balance.- amount.deposit)))
-      ::  update supply in ueth metadata item
-      =/  metadata
-        :-  `@ux`'ueth-metadata'
-        =+  md=(got:big p.working-chain `@ux`'ueth-metadata')
-        ?>  ?=(%& -.md)
-        =+  ;;(token-metadata noun.p.md)
-        md(noun.p -(supply (add supply.- amount.deposit)))
-      =/  modified=state:eng
-        (gas:big *state:eng ~[account metadata])
-      =.  p.working-chain
-        (uni:big p.working-chain modified)
-      ::  create fake transaction for memlist
-      =/  our-caller
-        %:  get-our-caller
-            p.sequencer.hall.u.town
-            town-id.hall.u.town
-            [our now]:bowl
-        ==
-      =/  =transaction:smart
-        :+  *sig:smart
-          :-  %deposit
-          [destination-address amount]:deposit
-        :*  our-caller
-            eth-hash=~
-            contract=ueth-contract-id:smart
-            gas=[0 0]
-            town=town-id.hall.u.town
-            status=%0
-        ==
-      =/  tx-hash
-        `@ux`(sham +.transaction)
-      :-  ~
-      %=    state
+      =.  working-batch
+        ?^  working-batch
+          =.  deposits.u.working-batch
+            (~(put in deposits.u.working-batch) deposit-bytes)
           working-batch
-        `[0 ~ working-chain 0x0 0x0 (~(put in working-deposits) message-hash)]
-          memlist
-        (snoc memlist [tx-hash transaction `[0 %0 modified ~ ~]])
-      ==
+        =|  pob=proposed-batch
+        =.     chain.pob  chain.u.town
+        =.  deposits.pob  (~(put in deposits.pob) deposit-bytes)
+        `pob
+      `state
     ::
     ::  transactions
     ::
@@ -287,15 +231,17 @@
       =/  our-caller
         (get-our-caller addr town-id.hall.u.town [our now]:bowl)
       =/  new=state-transition
-        %+  %~  run  eng
-            :^    our-caller
-                town-id.hall.u.town
-              batch-num.hall.u.town
-            eth-block-height.act
-          ?~  working-batch
-            chain.u.town
-          chain.u.working-batch
-        (sort-mempool:eng pending)
+        %^    %~  run  eng
+              :^    our-caller
+                  town-id.hall.u.town
+                batch-num.hall.u.town
+              eth-block-height.act
+            ?~  working-batch
+              chain.u.town
+            chain.u.working-batch
+          (sort-mempool:eng pending)
+        ?~  working-batch  ~
+        ~(tap in deposits.u.working-batch)
       =/  processed
         %+  turn  processed.new
         |=  [a=@ux b=transaction:smart c=output]
@@ -330,7 +276,7 @@
     ::  batching
     ::
         %trigger-batch
-      ?>  =(src.bowl our.bowl)
+      ?>  =(src our):bowl
       ::  fetch latest ETH block height and perform batch
       ::  TODO inline thread
       =/  tid  `@ta`(cat 3 'make-batch_' (scot %uv (sham eny.bowl)))
@@ -370,13 +316,15 @@
       =/  our-caller
         (get-our-caller addr town-id.hall.u.town [our now]:bowl)
       =/  new=state-transition
-        %+  %~  run  eng
-            :^    our-caller
-                town-id.hall.u.town
-              batch-num.hall.u.town
-            eth-block-height.act
-          chain.u.town
-        memlist
+        %^    %~  run  eng
+              :^    our-caller
+                  town-id.hall.u.town
+                batch-num.hall.u.town
+              eth-block-height.act
+            chain.u.town
+          memlist
+        ?~  working-batch  ~
+        ~(tap in deposits.u.working-batch)
       =/  batch=proposed-batch
         :*  +(batch-num.hall.u.town)
             processed.new

@@ -4,6 +4,7 @@
 /+  *test, smart=zig-sys-smart, *zig-sys-engine, merk
 /*  smart-lib-noun          %noun  /lib/zig/sys/smart-lib/noun
 /*  zigs-contract           %jam   /con/compiled/zigs/jam
+/*  fung-contract           %jam   /con/compiled/fungible/jam
 /*  engine-tester-contract  %jam   /con/compiled/engine-tester/jam
 =>
 |%
@@ -22,18 +23,16 @@
 ::  fake data
 ::
 ::  separate addresses necessary to avoid circular definitions in zigs
-++  sequencer-address  0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0
-++  sequencer  ^-  caller:smart
-  [sequencer-address 1 id.p:sequencer-account:zigs]
-++  address-1  0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-++  caller-1  ^-  caller:smart
-  [address-1 1 id.p:account-1:zigs]
-++  address-2  0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
-++  caller-2  ^-  caller:smart
-  [address-2 1 id.p:account-2:zigs]
-++  address-3  0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
-++  caller-3  ^-  caller:smart
-  [address-3 6 id.p:account-3:zigs]
+++  sequencer-address   0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0
+++  address-1          0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
+++  address-2           0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+++  address-3          0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
+++  uethereum          0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+++  caller-1   `caller:smart`[address-1 1 id.p:account-1:zigs]
+++  caller-2   `caller:smart`[address-2 1 id.p:account-2:zigs]
+++  caller-3   `caller:smart`[address-3 6 id.p:account-3:zigs]
+++  sequencer  `caller:smart`[sequencer-address 1 id.p:sequencer-account:zigs]
+
 ::
 ++  zigs
   |%
@@ -104,6 +103,64 @@
     ==
   --
 ::
+++  ueth :: can stand in for any ERC20 bridged from L1, there is no special case for ETH
+  |%
+  ++  pact
+    ^-  item:smart
+    :*  %|
+        `@ux`'bridge-pact'  ::  id
+        `@ux`'bridge-pact'  ::  source
+        `@ux`'bridge-pact'  ::  holder
+        town-id
+        [- +]:(cue fung-contract)
+        ~
+    ==
+  ++  eth-account
+    |=  [holder=id:smart amt=@ud]
+    ^-  item:smart
+    :*  %&
+        (hash-data:smart `@ux`'bridge-pact' holder town-id uethereum)
+        `@ux`'bridge-pact'
+        holder
+        town-id
+        uethereum  %account
+        [amt ~ `@ux`'bridge-pact' ~]
+    ==
+  ++  account-1
+    ^-  item:smart
+    :*  %&
+        (hash-data:smart `@ux`'bridge-pact' address-1 town-id uethereum)
+        `@ux`'bridge-pact'
+        address-1
+        town-id
+        uethereum
+        %account
+        [300.000.000 ~ `@ux`'bridge-metadata' ~]
+    ==
+  :: ++  account-2
+  ::   ^-  item:smart
+  ::   :*  %&
+  ::       (hash-data:smart `@ux`'bridge-pact' address-2 town-id uethereum)
+  ::       `@ux`'bridge-pact'
+  ::       address-2
+  ::       town-id
+  ::       uethereum
+  ::       %account
+  ::       [200.000 ~ `@ux`'bridge-metadata' ~]
+  ::   ==
+  :: ++  account-3
+  ::   ^-  item:smart
+  ::   :*  %&
+  ::       (hash-data:smart `@ux`'bridge-pact' address-3 town-id uethereum)
+  ::       `@ux`'bridge-pact'
+  ::       address-3
+  ::       town-id
+  ::       uethereum
+  ::       %account
+  ::       [100.000 ~ `@ux`'bridge-metadata' ~]
+  ::   ==
+  --
+::
 ++  engine-tester
   |%
   ++  pact
@@ -153,6 +210,9 @@
       [id.p:burnable burnable]
       [id.p:pact pact]:engine-tester
       [id.p:dummy-data dummy-data]:engine-tester
+  ::
+      [id.p:pact pact]:ueth
+      [id.p:account-1 account-1]:ueth
   ==
 ++  fake-nonces
   ^-  nonces
@@ -163,10 +223,10 @@
   ^-  chain
   [fake-state fake-nonces]
 ::
-++  make-modified
-  |=  [=address:smart spend=@ud]
-  =+  (zig-account:zigs address (sub 300.000.000 spend))
-  (gas:big *(merk:merk id:smart item:smart) ~[id.p.-^-])
+:: ++  make-modified
+::   |=  [=address:smart spend=@ud]
+::   =+  (zig-account:zigs address (sub 300.000.000 spend))
+::   (gas:big *(merk:merk id:smart item:smart) ~[id.p.-^-])
 --
 |%
 ::
@@ -872,10 +932,11 @@
         ~
     ==
   =/  st=state-transition
-    %+  %~  run  eng
-        [sequencer town-id batch=1 eth-block-height=0]
-      fake-chain
-    memlist
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      memlist
+    ~
   =/  paid=item:smart
     :*  %&
         (hash-data id.p:pact:zigs id.p:pact:engine-tester town-id `@`'zigs')
@@ -926,10 +987,11 @@
         [3.716 0 `@ux`'zigs-metadata' 0]
     ==
   =/  st=state-transition
-    %+  %~  run  eng
-        [sequencer town-id batch=1 eth-block-height=0]
-      fake-chain
-    memlist
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      memlist
+    ~
   ;:  weld
     (expect-eq !>(3) !>((lent processed.st)))
     (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
@@ -961,10 +1023,11 @@
         ~
     ==
   =/  st=state-transition
-    %+  %~  run  eng
-        [sequencer town-id batch=1 eth-block-height=0]
-      fake-chain
-    memlist
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      memlist
+    ~
   ;:  weld
     (expect-eq !>(2) !>((lent processed.st)))
     (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
@@ -988,10 +1051,11 @@
         ~
     ==
   =/  st=state-transition
-    %+  %~  run  eng
+    %^   %~  run  eng
         [sequencer town-id batch=1 eth-block-height=0]
-      fake-chain
-    memlist
+        fake-chain
+      memlist
+    ~
   ;:  weld
     (expect-eq !>(2) !>((lent processed.st)))
     (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
@@ -1025,10 +1089,11 @@
         ~
     ==
   =/  st=state-transition
-    %+  %~  run  eng
-        [sequencer town-id batch=1 eth-block-height=0]
-      fake-chain
-    memlist
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      memlist
+    ~
   ;:  weld
     (expect-eq !>(4) !>((lent processed.st)))
     (expect-eq !>(%0) !>(status.tx:(snag 0 processed.st)))
@@ -1037,5 +1102,114 @@
     (expect-eq !>(%0) !>(status.tx:(snag 3 processed.st)))
     (expect-eq !>(~) !>(burned.st))
     (expect-eq !>(3) !>(~(wyt by modified.st)))
+  ==
+::
+++  test-deposit
+  =/  deposit=@ux
+    :: 0x0000.0000.0000.0000.0000.0000.0000.0000.  ::  town-id
+    ::   0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+    0xeeee.eeee.                                ::  token-contract (1)
+      eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
+      0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+      0000.0000.0000.0000.0000.0000.d387.95ec.  ::  destination-address      
+      b77f.b88e.c577.6c20.d470.d13c.8d53.2169.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
+      0000.0000.0000.0000.0000.0000.3b9a.ca00.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
+      0000.0000.0000.0000.0000.0000.0000.02fb.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
+      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[deposit]
+  =/  new-acc=item:smart  (got:big modified.st id.p:account-1:ueth)
+  ?>  ?=(%& -.new-acc)
+  (expect-eq !>(1.300.000.000) !>(-.noun.p.new-acc))
+::
+++  test-deposit-create-account
+  =/  deposit=@ux
+    :: 0x0000.0000.0000.0000.0000.0000.0000.0000.  ::  town-id
+    ::   0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+    0xeeee.eeee.                                ::  token-contract (1)
+      eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
+      0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+      0000.0000.0000.0000.0000.0000.075f.da09.  ::  destination-address
+      d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902.  ::    (account-2)
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
+      0000.0000.0000.0000.0000.0000.3b9a.ca00.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
+      0000.0000.0000.0000.0000.0000.0000.02fb.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
+      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[deposit]
+  =/  new-acc=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'bridge-pact' address-2 town-id uethereum)
+  ?>  ?=(%& -.new-acc)
+  (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc))
+::
+++  test-deposit-create-token-and-account
+  =/  l1-token-address
+    0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
+  =/  deposit=@ux
+    :: 0x0000.0000.0000.0000.0000.0000.0000.0000.  ::  town-id
+    ::   0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+    0xffff.ffff.                                ::  token-contract (1)
+      ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
+      0000.0000.0000.0000.0000.0000.0000.0000.
+    ::
+      0000.0000.0000.0000.0000.0000.075f.da09.  ::  destination-address
+      d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902.  ::    (account-2)
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
+      0000.0000.0000.0000.0000.0000.3b9a.ca00.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
+      0000.0000.0000.0000.0000.0000.0000.02fb.
+    ::
+      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
+      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[deposit]
+  =/  new-acc=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'bridge-pact' address-2 town-id l1-token-address)
+  =/  new-meta=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'bridge-pact' `@ux`'bridge-pact' town-id l1-token-address)
+  ?>  ?=(%& -.new-meta)
+  ?>  ?=(%& -.new-acc)
+  ;:  weld
+    (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc))
+    (expect-eq !>(1.000.000.000) !>(-:|3:noun.p.new-meta))
   ==
 --
