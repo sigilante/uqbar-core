@@ -406,6 +406,7 @@
       ::  pin the actual batch to a path of its hash.
       :-  :*  %pass  /pin-batch
               %grow  /batch/(scot %ux town-id.hall.u.town)/(scot %ux root.batch)
+              ^-  page
               :-  %sequencer-indexer-update
               ^-  indexer-update
               :^  %update  root.batch
