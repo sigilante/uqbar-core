@@ -10,7 +10,7 @@
   ::  +run: produce a state transition for a given town and mempool
   ::
   ++  run
-    |=  [=chain pending=memlist deposits=(list @ux)]
+    |=  [=chain pending=memlist deposits=(list deposit)]
     ^-  state-transition
     =|  st=state-transition
     =|  gas-reward=@ud
@@ -18,81 +18,11 @@
     |-
     ?~  pending
       ::  finished with execution:
-      ::  handle deposits TODO this is ugly
-      =.  st
-        |-
-        ?~  deposits  st
-        ::  process the deposit bytes
-        =/  =deposit :: TODO this format will probably change
-          =+  (rev 3 [224 i.deposits])
-          :*  (rev 3 32 (end [3 32] -))      ::  town-id
-              (rev 3 32 (cut 3 [32 32] -))   ::  token-contract
-              (rev 3 32 (cut 3 [64 32] -))   ::  token-id (only for NFTs)
-              (rev 3 32 (cut 3 [96 32] -))   ::  destination-address
-              (rev 3 32 (cut 3 [128 32] -))  ::  amount
-              (rev 3 32 (cut 3 [160 32] -))  ::  block-number
-              (rev 3 32 (cut 3 [192 32] -))  ::  previous deposit root
-          ==
-        ?>  =(town-id.deposit town-id)
-        =/  metadata-id=id:smart
-          %:  hash-data:eng
-            `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
-            `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
-            town-id
-            token-contract.deposit
-          ==
-        =/  acc-id=id:smart
-          %:  hash-data:eng
-            `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
-            destination-address.deposit
-            town-id
-            token-contract.deposit
-          ==
-        =;  modified=state
-          =.  p.chain.st   (uni:big p.chain modified)
-          =.  modified.st  (uni:big p.chain modified)
-          $(deposits t.deposits)
-        %+  gas:big  *state:eng
-        :~  :-  acc-id
-            ?^  item=(get:big p.chain acc-id)
-              ?>  ?=(%& -.u.item)
-              =+  ;;(token-account noun.p.u.item)
-              u.item(noun.p -(balance (add balance.- amount.deposit)))
-            :*  %&  acc-id
-                metadata-id
-                destination-address.deposit
-                town-id
-                token-contract.deposit
-                %account
-                [amount.deposit ~ metadata-id ~]
-            ==
-        ::
-            :-  metadata-id
-            ?^  item=(get:big p.chain metadata-id)
-              ?>  ?=(%& -.u.item)
-              =+  ;;(token-metadata noun.p.u.item)
-              u.item(noun.p -(supply (add supply.- amount.deposit)))
-            :*  %& 
-                metadata-id
-                0x0 :: TODO what is source
-                0x0
-                town-id
-                token-contract.deposit
-                %token-metadata
-                :: TODO the token metadata is very fucked, double check this before merging
-                :*  %name     :: TODO
-                    %symbol   :: TODO
-                    %decimals :: TODO
-                    amount.deposit
-                    ~
-                    %.y :: doesn't matter anymore
-                    ~
-                    *address:smart
-                    token-contract.deposit
-        ==  ==  ==
-      ::  put processed in correct order
+      ::  (1) handle deposits
+      =.  st  (process-deposits st chain deposits)
+      ::  (2) put processed txns in correct order
       =.  processed.st  (flop processed.st)
-      ::  pay accumulated gas to sequencer
+      ::  (3) pay accumulated gas to ourself
       ?~  paid=(~(pay tax p.chain.st) address.sequencer gas-reward)
         st
       %=  st
@@ -525,6 +455,73 @@
       =.  noun.p.u.acc  account
       `[id.p.u.acc u.acc]
     --
+  ::
+  ::  +process-deposits: take in L1 deposit transactions and
+  ::  inject state to produce bridged tokens (TODO support for more)
+  ::
+  ++  process-deposits
+    |=  [st=state-transition =chain deposits=(list deposit)]
+    ^-  state-transition
+    ?~  deposits  st
+    ::  process the deposit bytes
+    =*  deposit  i.deposits
+    ?>  =(town-id.deposit town-id)
+    =/  metadata-id=id:smart
+      %:  hash-data:eng
+        `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
+        `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
+        town-id
+        token-contract.deposit
+      ==
+    =/  acc-id=id:smart
+      %:  hash-data:eng
+        `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
+        destination-address.deposit
+        town-id
+        token-contract.deposit
+      ==
+    =;  modified=state
+      =.  p.chain.st   (uni:big p.chain modified)
+      =.  modified.st  (uni:big p.chain modified)
+      $(deposits t.deposits)
+    %+  gas:big  *state:eng
+    :~  :-  acc-id
+        ?^  item=(get:big p.chain acc-id)
+          ?>  ?=(%& -.u.item)
+          =+  ;;(token-account noun.p.u.item)
+          u.item(noun.p -(balance (add balance.- amount.deposit)))
+        :*  %&  acc-id
+            metadata-id
+            destination-address.deposit
+            town-id
+            token-contract.deposit
+            %account
+            [amount.deposit ~ metadata-id ~]
+        ==
+    ::
+        :-  metadata-id
+        ?^  item=(get:big p.chain metadata-id)
+          ?>  ?=(%& -.u.item)
+          =+  ;;(token-metadata noun.p.u.item)
+          u.item(noun.p -(supply (add supply.- amount.deposit)))
+        :*  %&
+            metadata-id
+            0x0 :: TODO what is source
+            0x0
+            town-id
+            token-contract.deposit
+            %token-metadata
+            :: TODO make this real
+            :*  %name     :: TODO
+                %symbol   :: TODO
+                %decimals :: TODO
+                amount.deposit
+                ~
+                %.y :: doesn't matter anymore
+                ~
+                *address:smart
+                token-contract.deposit
+    ==  ==  ==
   --
 ::
 ::  +sort-mempool: order transactions by gas rate, and transactions

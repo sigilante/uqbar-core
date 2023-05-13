@@ -128,7 +128,7 @@
 +$  card  card:agent:gall
 --
 ::
-=|  inflated-state-1:ui
+=|  inflated-state-2:ui
 =*  state  -
 ::
 %-  agent:dbug
@@ -175,17 +175,40 @@
     |=  state-vase=vase
     ^-  (quip card _this)
     ?+    -.q.state-vase  on-init
-        %1
-      =+  !<(bs=base-state-1:ui state-vase)
+        %2
+      =+  !<(bs=base-state-2:ui state-vase)
       =.  catchup-indexer.bs  [indexer-bootstrap-host %indexer]
       =+  (inflate-state ~(tap by batches-by-town.bs))
       :_  this(state [bs -])
       :~  ::  reaffirm tracking new batches from sequencer
-        %+  ~(poke pass:io /track-sequencer)
-          sequencer-dock
-        tracker-request+!>(~)
-      ::  reaffirm tracking chain updates from rollup contract
+          %+  ~(poke pass:io /track-sequencer)
+            sequencer-dock
+          tracker-request+!>(~)
+        ::  reaffirm tracking chain updates from rollup contract
         ::  TODO
+      ==
+    ::
+        %1
+      =+  !<(bs=base-state-1:ui state-vase)
+      =/  new-capitol
+        %-  ~(run by capitol.bs)
+        |=  =old-hall:seq
+        ^-  hall:seq
+        [- -.+ +>- -.+>+ +>+>- -.+>+>+]:old-hall
+      =-  (on-load !>(`base-state-2:ui`[%2 -]))
+      %=  +.bs
+        capitol   new-capitol
+        sequencer-update-queue  ~
+          batches-by-town
+        %-  ~(run by batches-by-town.bs)
+        |=  bao=batches-and-order-1:ui
+        :_  batch-order.bao
+        %-  ~(run by batches-1.bao)
+        |=  [timestamp=@da =batch-1:ui]
+        :-  timestamp
+        :-  transactions.batch-1
+        :-  chain.+.batch-1
+        [- -.+ +>- -.+>+ +>+>- -.+>+>+]:old-hall.+.batch-1
       ==
     ==
   ::
@@ -217,7 +240,7 @@
       :_  this  :_  ~
       %+  ~(poke pass:io /give-bootstrap)
         [src.bowl %indexer]
-      indexer-bootstrap+!>(`base-state-1:ui`-.state)
+      indexer-bootstrap+!>(`base-state-2:ui`-.state)
     ::
         %indexer-bootstrap
       ::  Reset state to initial conditions: this happens
