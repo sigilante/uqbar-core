@@ -1,5 +1,20 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
+::
+=>  |%
+    +$  nft-metadata  :: TODO move somewhere better
+      $:  name=@t
+          symbol=@t
+          properties=(pset:smart @tas)
+          supply=@ud
+          cap=(unit @ud)  ::  (~ if no cap)
+          mintable=?      ::  automatically set to %.n if supply == cap
+          minters=(pset:smart address:smart)
+          deployer=id:smart
+          salt=@
+      ==
+    --
+
 |_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
@@ -34,16 +49,78 @@
               (rev 3 32 (cut 3 [192 32] -))  ::  previous deposit root
           ==
         ?>  =(town-id.deposit town-id)
+        ?:  =(0 token-id.deposit)
+          :: fungible deposit
+          ::
+          =/  metadata-id=id:smart
+            %:  hash-data:eng
+              `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
+              `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
+              town-id
+              token-contract.deposit
+            ==
+          =/  acc-id=id:smart
+            %:  hash-data:eng
+              `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
+              destination-address.deposit
+              town-id
+              token-contract.deposit
+            ==
+          =;  modified=state
+            =.  p.chain.st   (uni:big p.chain modified)
+            =.  modified.st  (uni:big p.chain modified)
+            $(deposits t.deposits)
+          %+  gas:big  *state:eng
+          :~  :-  acc-id
+              ?^  item=(get:big p.chain acc-id)
+                ?>  ?=(%& -.u.item)
+                =+  ;;(token-account noun.p.u.item)
+                u.item(noun.p -(balance (add balance.- amount.deposit)))
+              :*  %&  acc-id
+                  metadata-id
+                  destination-address.deposit
+                  town-id
+                  token-contract.deposit
+                  %account
+                  [amount.deposit ~ metadata-id ~]
+              ==
+          ::
+              :-  metadata-id
+              ?^  item=(get:big p.chain metadata-id)
+                ?>  ?=(%& -.u.item)
+                =+  ;;(token-metadata noun.p.u.item)
+                u.item(noun.p -(supply (add supply.- amount.deposit)))
+              :*  %& 
+                  metadata-id
+                  `@ux`'bridge-pact' :: TODO what is source
+                  `@ux`'bridge-pact' :: TODO what is the holder
+                  town-id
+                  token-contract.deposit
+                  %token-metadata
+                  :: TODO the token metadata is very fucked, double check this before merging
+                  :*  %name     :: TODO
+                      %symbol   :: TODO
+                      %decimals :: TODO
+                      amount.deposit
+                      ~
+                      %.y :: doesn't matter anymore
+                      ~
+                      *address:smart
+                      token-contract.deposit
+          ==  ==  ==
+        ?>  =(0 amount.deposit)
+        :: non-fungible deposit
+        ::
         =/  metadata-id=id:smart
           %:  hash-data:eng
-            `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
-            `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
+            `@ux`'nft-bridge-pact' :: TODO what is the source of the bridge contract metadata?
+            `@ux`'nft-bridge-pact' :: TODO who is holder of the metadata? No one right?
             town-id
             token-contract.deposit
           ==
-        =/  acc-id=id:smart
+        =/  nft-id=id:smart
           %:  hash-data:eng
-            `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
+            `@ux`'nft-bridge-pact'  :: TODO what is the source of the bridge contract account?
             destination-address.deposit
             town-id
             token-contract.deposit
@@ -53,37 +130,34 @@
           =.  modified.st  (uni:big p.chain modified)
           $(deposits t.deposits)
         %+  gas:big  *state:eng
-        :~  :-  acc-id
-            ?^  item=(get:big p.chain acc-id)
-              ?>  ?=(%& -.u.item)
-              =+  ;;(token-account noun.p.u.item)
-              u.item(noun.p -(balance (add balance.- amount.deposit)))
-            :*  %&  acc-id
+        :~  :-  nft-id  :: you can guarantee that this nft-id doesn't exist
+            ?<  (has:big p.chain nft-id)
+            :*  %&  nft-id
                 metadata-id
                 destination-address.deposit
                 town-id
                 token-contract.deposit
-                %account
-                [amount.deposit ~ metadata-id ~]
+                %nft
+                [token-id.deposit '' metadata-id ~ ~ %.y] :: TODO, URI, properties, transferrable
             ==
         ::
             :-  metadata-id
             ?^  item=(get:big p.chain metadata-id)
               ?>  ?=(%& -.u.item)
-              =+  ;;(token-metadata noun.p.u.item)
-              u.item(noun.p -(supply (add supply.- amount.deposit)))
+              =+  ;;(nft-metadata noun.p.u.item)
+              u.item(noun.p -(supply +(supply.-)))
             :*  %& 
                 metadata-id
-                0x0 :: TODO what is source
-                0x0
+                `@ux`'bridge-pact' :: TODO what is source
+                `@ux`'bridge-pact' :: TODO what is the holder
                 town-id
                 token-contract.deposit
                 %token-metadata
                 :: TODO the token metadata is very fucked, double check this before merging
-                :*  %name     :: TODO
-                    %symbol   :: TODO
-                    %decimals :: TODO
-                    amount.deposit
+                :*  'name'     :: TODO
+                    'symbol'   :: TODO
+                    ~          :: TODO properties
+                    1
                     ~
                     %.y :: doesn't matter anymore
                     ~
