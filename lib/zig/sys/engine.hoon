@@ -53,6 +53,9 @@
           :: fungible deposit
           ::
           =/  metadata-id=id:smart
+            ?:  .=  token-contract.deposit
+                0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+              ueth-contract-id:smart
             %:  hash-data:eng
               `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
               `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
