@@ -3,6 +3,18 @@
 ::  Agent for managing a single UQ| town. Publishes diffs to rollup.hoon
 ::  Accepts transactions and batches them periodically as moves to town.
 ::
+::  sequencer.hoon is designed to run with a sidecar:
+::  https://github.com/uqbar-dao/poa-rollup
+::
+::  the flow works as such:
+::  :sequencer &sidecar-action [%trigger-batch deposits=~]
+::  (sequencer produces batch, posts at /pending-batch scry path)
+::  :sequencer &sidecar-action [%batch-posted town-root=0x0 block-at=0]
+::
+::  to use this agent locally, for testing, one can use the -zig!batch
+::  thread included in this repo, which will automatically fetch a recent
+::  ETH block height, but spoof the town-root.
+::
 /-  uqbar=zig-uqbar
 /+  default-agent, dbug, io=agentio, verb,
     *zig-sequencer, zink=zink-zink, sig=zig-sig,
@@ -102,9 +114,9 @@
       ::  converts pending-batch into current town state
       ::  and clears pending-batch
       ?~  town  !!
-      ~&  >>  "%sequencer: batch approved by rollup"
       ?~  pending-batch
         ~|("received batch approval without pending batch" !!)
+      ~&  >>  "%sequencer: batch approved by rollup"
       =/  new-town=^town
         (transition-state u.town u.pending-batch)
       ::  inject received town-root into state of town

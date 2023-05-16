@@ -153,7 +153,16 @@
   ++  on-init
     =/  indexer-bootstrap-dock
       [indexer-bootstrap-host %indexer]
-    :_  this(catchup-indexer indexer-bootstrap-dock)
+    :_  %=  this
+          catchup-indexer  indexer-bootstrap-dock
+            capitol
+          ::  TODO replace with data from rollup contract
+          ::  note: this data is gotten via bootstrap on live-net,
+          ::  so isn't actually used in practice.
+          %-  ~(gas by *capitol:seq)  :_  ~
+          =-  [0x0 [0x0 0 [- ~nec] [%full-publish ~] 0x0 ~]]
+          0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70
+        ==
     :-  %+  ~(poke-our pass:io /set-source-poke)  %uqbar
         :-  %uqbar-action
         !>  ^-  action:uqbar
@@ -317,6 +326,8 @@
         `state(catchup-indexer dock.action)
       ::
           %set-sequencer
+        ::  TODO remove this, get sequencer info from rollup
+        ::  contract always.
         :_  state
         :-  %+  ~(poke pass:io /track-sequencer)
               dock.action
