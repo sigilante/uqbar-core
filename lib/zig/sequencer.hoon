@@ -1,6 +1,21 @@
 /-  *zig-sequencer, w=zig-wallet
 /+  merk
 |%
+++  deposit-from-tape
+  |=  =tape
+  ^-  deposit
+  ::  TODO this format will probably change
+  =+  %+  rev  3
+      [224 (scan `^tape`(slag 2 tape) hex)]
+  :*  (rev 3 32 (end [3 32] -))      ::  town-id
+      (rev 3 32 (cut 3 [32 32] -))   ::  token-contract
+      (rev 3 32 (cut 3 [64 32] -))   ::  token-id (only for NFTs)
+      (rev 3 32 (cut 3 [96 32] -))   ::  destination-address
+      (rev 3 32 (cut 3 [128 32] -))  ::  amount
+      (rev 3 32 (cut 3 [160 32] -))  ::  block-number
+      (rev 3 32 (cut 3 [192 32] -))  ::  previous deposit root
+  ==
+::
 ++  transition-state
   |=  $:  old=town
           proposed=proposed-batch
@@ -11,7 +26,6 @@
     chain                  chain.proposed
     latest-diff-hash.hall  diff-hash.proposed
     roots.hall             (snoc roots.hall.old root.proposed)
-    deposits.hall  (~(uni in deposits.hall.old) deposits.proposed)
   ==
 ::
 ++  get-our-caller
@@ -32,13 +46,11 @@
   ^+  chain
   ?~  item=(get:big p.chain `@ux`'town-roots')
     chain
-  ~&  >  u.item
   ?.  ?=(%& -.u.item)  chain
   =.  noun.p.u.item
     ?.  ?=([current=@ux past=@ux] noun.p.u.item)
       ::  this is the very first posting
       [new-root (shag:merk new-root)]
     [new-root (shag:merk current.noun.p.u.item^past.noun.p.u.item)]
-  ~&  >>  noun.p.u.item
   (put:big p.chain `@ux`'town-roots' u.item)^q.chain
 --
