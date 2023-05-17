@@ -1,21 +1,7 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-/*  nft  %jam  /con/compiled/nft/jam
+/=  nft  /con/lib/nft
 ::
-=>  |%
-    +$  nft-metadata  :: TODO move somewhere better
-      $:  name=@t
-          symbol=@t
-          properties=(pset:smart @tas)
-          supply=@ud
-          cap=(unit @ud)  ::  (~ if no cap)
-          mintable=?      ::  automatically set to %.n if supply == cap
-          minters=(pset:smart address:smart)
-          deployer=id:smart
-          salt=@
-      ==
-    --
-
 |_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
@@ -581,7 +567,7 @@
         :-  metadata-id
         ?^  item=(get:big p.chain metadata-id)
           ?>  ?=(%& -.u.item)
-          =+  ;;(nft-metadata noun.p.u.item)
+          =+  ;;(metadata:sur:nft noun.p.u.item)
           u.item(noun.p -(supply +(supply.-)))
         :*  %& 
             metadata-id
