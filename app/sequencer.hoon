@@ -42,7 +42,7 @@
   ==
 +$  inflated-state-4  [state-4 =eng smart-lib-vase=vase]
 ::  sigs on, hints off
-+$  eng  $_  ~(engine engine !>(0) *(map * @) jets:zink %.y %.n)
++$  eng  $_  ~(engine engine !>(0) jets:zink %.y)
 --
 ::
 =|  inflated-state-4
@@ -56,15 +56,17 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
+  =/  smart-lib=vase
+    ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
+  =/  eng  ~(engine engine smart-lib jets:zink %.y)
   `this(state [*state-4 eng smart-lib])
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
-  =/  smart-lib=vase  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  =/  eng  ~(engine engine smart-lib *(map * @) jets:zink %.y %.n)
+  =/  smart-lib=vase
+    ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
+  =/  eng  ~(engine engine smart-lib jets:zink %.y)
   ?+    -.q.old-vase
     `this(state [*state-4 eng smart-lib])
       %4

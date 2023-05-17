@@ -22,8 +22,8 @@
 |-  ^-  form:m
 =/  eng
   %~  engine  engine
-  :^  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-  *(map * @)  jets:zink  [%.n %.n]  ::  sigs off, hints off
+  :+  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
+  jets:zink  %.n  ::  sigs off
 ::
 =*  gather-tests  $
 ?^  fiz
