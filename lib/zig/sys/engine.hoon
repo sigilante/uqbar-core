@@ -88,6 +88,11 @@
     ::
     ++  intake
       ^-  [output scry-fees]
+      ::  if the signature field is empty, and the head
+      ::  of the calldata is %validate, allow contract
+      ::  to partially-execute, for account abstraction
+      ?:  &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
+        !!  ::  TODO
       ?.  ?:(sigs-on (verify-sig tx) %.y)
         ~&  >>>  "engine: signature mismatch"
         (exhaust bud.gas.tx %1 ~ ~)
