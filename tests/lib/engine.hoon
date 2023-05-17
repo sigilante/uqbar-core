@@ -1179,25 +1179,15 @@
 ::  nft-tests
 ::
 ++  test-deposit-nft
-  =/  deposit=@ux
-    :: NOTE town-id=0x0, leading zeroes stripped
-                                  0xbbbb.bbbb.  ::  token-contract (1)
-      bbbb.bbbb.bbbb.bbbb.bbbb.bbbb.bbbb.bbbb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
-      0000.0000.0000.0000.0000.0000.0000.0001.
-    ::
-      0000.0000.0000.0000.0000.0000.d387.95ec.  ::  destination-address      
-      b77f.b88e.c577.6c20.d470.d13c.8d53.2169.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount
-      0000.0000.0000.0000.0000.0000.0000.0000.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
-      0000.0000.0000.0000.0000.0000.0000.02fb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
-      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=l1-address:nft
+        token-id=1
+        destination-address=address-1
+        amount=0
+        block-number=763
+        previous-deposit-root=0x0
+    ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]
@@ -1218,25 +1208,15 @@
 ++  test-deposit-nft-create-metadata
   =/  l1-address
     0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
-  =/  deposit=@ux
-    :: NOTE town-id=0x0, leading zeroes stripped
-                                  0xcccc.cccc.  ::  token-contract (1)
-      cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
-      0000.0000.0000.0000.0000.0000.0000.0002.
-    ::
-      0000.0000.0000.0000.0000.0000.d387.95ec.  ::  destination-address      
-      b77f.b88e.c577.6c20.d470.d13c.8d53.2169.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount
-      0000.0000.0000.0000.0000.0000.0000.0000.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
-      0000.0000.0000.0000.0000.0000.0000.02fb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
-      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=l1-address
+          token-id=2
+        destination-address=address-1
+        amount=0
+        block-number=763
+        previous-deposit-root=0x0
+    ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]
