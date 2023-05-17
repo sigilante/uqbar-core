@@ -1104,26 +1104,15 @@
 ::  TODO deposit multiple test 
 ::
 ++  test-deposit
-  =/  deposit=@ux
-    :: NOTE town-id=0x0, leading zeroes stripped
-    ::
-                                  0xeeee.eeee.  ::  token-contract (1)
-      eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
-      0000.0000.0000.0000.0000.0000.0000.0000.
-    ::
-      0000.0000.0000.0000.0000.0000.d387.95ec.  ::  destination-address      
-      b77f.b88e.c577.6c20.d470.d13c.8d53.2169.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
-      0000.0000.0000.0000.0000.0000.3b9a.ca00.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
-      0000.0000.0000.0000.0000.0000.0000.02fb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
-      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-id=0
+        destination-address=0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]
@@ -1135,26 +1124,15 @@
   (expect-eq !>(1.300.000.000) !>(-.noun.p.new-acc))
 ::
 ++  test-deposit-create-account
-  =/  deposit=@ux
-    :: NOTE town-id=0x0, leading zeroes stripped
-    ::
-                                  0xeeee.eeee.  ::  token-contract (1)
-      eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
-      0000.0000.0000.0000.0000.0000.0000.0000.
-    ::
-      0000.0000.0000.0000.0000.0000.075f.da09.  ::  destination-address
-      d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902.  ::    (account-2)
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
-      0000.0000.0000.0000.0000.0000.3b9a.ca00.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
-      0000.0000.0000.0000.0000.0000.0000.02fb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
-      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-id=0
+        destination-address=0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]
@@ -1170,25 +1148,15 @@
 ++  test-deposit-create-token-and-account
   =/  l1-token-address
     0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
-  =/  deposit=@ux
-    :: NOTE town-id=0x0, leading zeroes stripped
-                                  0xffff.ffff.  ::  token-contract (1)
-      ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  token-id
-      0000.0000.0000.0000.0000.0000.0000.0000.
-    ::
-      0000.0000.0000.0000.0000.0000.075f.da09.  ::  destination-address
-      d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902.  ::    (account-2)
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  amount: 1.000.000.000
-      0000.0000.0000.0000.0000.0000.3b9a.ca00.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  eth block number
-      0000.0000.0000.0000.0000.0000.0000.02fb.
-    ::
-      0000.0000.0000.0000.0000.0000.0000.0000.  ::  previous root
-      0000.0000.0000.0000.0000.0000.0000.0000
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=l1-token-address
+        token-id=0
+        destination-address=0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]

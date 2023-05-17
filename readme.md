@@ -88,7 +88,6 @@ That generator, used as a poke to the `%sequencer` app as `:sequencer|init`, pop
 Specifically, contracts for zigs tokens, NFTs, and publishing new contracts are pre-deployed.
 After [initial installation](#initial-installation), initialize the `%sequencer`, set up the `%uqbar` read-write interface, and configure the `%wallet` to point to some [pre-set assets](#accounts-initialized-by-init-script), minted in the `:sequencer|init` poke:
 ```hoon
-:indexer &indexer-action [%set-sequencer 0x0 [our %sequencer]]
 :sequencer|init our 0x0 0xc9f8.722e.78ae.2e83.0dd9.e8b9.db20.f36a.1bc4.c704.4758.6825.c463.1ab6.daee.e608
 :uqbar &wallet-poke [%import-seed 'uphold apology rubber cash parade wonder shuffle blast delay differ help priority bleak ugly fragile flip surge shield shed mistake matrix hold foam shove' 'squid' 'nickname']
 ```
@@ -234,29 +233,14 @@ squid
 
 ## Joining an Existing Testnet
 
-To add a new ship to a fakeship testnet or to a live testnet, follow these instructions.
-The following two examples assume `~nec` is the host:
-
-
-### Indexing on an existing testnet
+To add a new ship to a fakeship testnet or to a live testnet, first install the %zig desk
+either manually from this repo or by running `|install ~nec %zig`, replacing `~nec` with
+a ship known to publish the software. By default, the sequencer is set as `~nec`.
+Make sure to either edit `app/indexer.hoon` to connect to your specified sequencer ship, or run these commands, replacing `~nec` with the known sequencer:
 ```hoon
 :indexer &indexer-action [%set-sequencer [~nec %sequencer]]
 :indexer &indexer-action [%bootstrap [~nec %indexer]]
 ```
-In this example, not all the hosts need be the same ship.
-Every user who wishes to interact with the chain must currently run their own `%indexer`, so there will likely be many options to `%bootstrap` from.
-
-
-### Sequencing on an existing testnet
-
-To start sequencing a new town:
-```hoon
-:sequencer|init ~nec <YOUR_town_ID> <YOUR_PRIVATE_KEY>
-```
-
-`%sequencer` does not create batches automatically unless configured to do so.
-Instructions for how to manually or automatically create batches are [here](#submitting-a-batch).
-
 
 ## Why Route Reads and Writes Through `%uqbar`
 

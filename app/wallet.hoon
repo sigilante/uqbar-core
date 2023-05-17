@@ -333,7 +333,7 @@
       ::  add pending signed-messages tab to frontend
       =/  keypair  (~(got by keys.state) from.act)
       =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
-      =/  hash  (sham typed-message)
+      =/  hash  `@uvI`(shag:smart typed-message)
       =/  signature
         ?~  priv.keypair
           ::  put it into some temporary thing for cold storage. Make it pending
