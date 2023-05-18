@@ -547,7 +547,8 @@
         `@ux`'nft-bridge-pact'
         destination-address.deposit
         town-id
-        token-contract.deposit
+        :: TODO is there a cleaner way to combine token+contract?
+        (cat 3 [token-id token-contract]:deposit)
       ==
     =;  modified=state
       =.  p.chain.st   (uni:big p.chain.st modified)
