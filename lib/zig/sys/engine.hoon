@@ -21,7 +21,7 @@
     ?~  pending
       ::  finished with execution:
       ::  (1) handle deposits
-      =.  st  (process-deposits st chain deposits)
+      =.  st  (process-deposits st deposits)
       ::  (2) put processed txns in correct order
       =.  processed.st  (flop processed.st)
       ::  (3) pay accumulated gas to ourself
@@ -462,7 +462,7 @@
   ::  inject state to produce bridged tokens (TODO support for more)
   ::
   ++  process-deposits
-    |=  [st=state-transition =chain deposits=(list deposit)]
+    |=  [st=state-transition deposits=(list deposit)]
     ^-  state-transition
     ::  handle deposits TODO this is ugly
     |-
@@ -491,12 +491,12 @@
           token-contract.deposit
         ==
       =;  modified=state
-        =.  p.chain.st   (uni:big p.chain modified)
-        =.  modified.st  (uni:big p.chain modified)
+        =.  p.chain.st   (uni:big p.chain.st modified)
+        =.  modified.st  (uni:big p.chain.st modified)
         $(deposits t.deposits)
       %+  gas:big  *state:eng
       :~  :-  acc-id
-          ?^  item=(get:big p.chain acc-id)
+          ?^  item=(get:big p.chain.st acc-id)
             ?>  ?=(%& -.u.item)
             =+  ;;(token-account noun.p.u.item)
             u.item(noun.p -(balance (add balance.- amount.deposit)))
@@ -510,7 +510,7 @@
           ==
       ::
           :-  metadata-id
-          ?^  item=(get:big p.chain metadata-id)
+          ?^  item=(get:big p.chain.st metadata-id)
             ?>  ?=(%& -.u.item)
             =+  ;;(token-metadata noun.p.u.item)
             u.item(noun.p -(supply (add supply.- amount.deposit)))
@@ -550,12 +550,12 @@
         token-contract.deposit
       ==
     =;  modified=state
-      =.  p.chain.st   (uni:big p.chain modified)
-      =.  modified.st  (uni:big p.chain modified)
+      =.  p.chain.st   (uni:big p.chain.st modified)
+      =.  modified.st  (uni:big p.chain.st modified)
       $(deposits t.deposits)
     %+  gas:big  *state:eng
     :~  :-  nft-id  :: you can guarantee that this nft-id doesn't exist
-        ?<  (has:big p.chain nft-id)
+        ?<  (has:big p.chain.st nft-id)
         :*  %&  nft-id
             metadata-id
             destination-address.deposit
@@ -566,7 +566,7 @@
         ==
     ::
         :-  metadata-id
-        ?^  item=(get:big p.chain metadata-id)
+        ?^  item=(get:big p.chain.st metadata-id)
           ?>  ?=(%& -.u.item)
           =+  ;;(metadata:sur:nft noun.p.u.item)
           u.item(noun.p -(supply +(supply.-)))
