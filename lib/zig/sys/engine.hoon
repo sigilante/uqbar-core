@@ -478,14 +478,14 @@
             0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
           ueth-contract-id:smart
         %:  hash-data:eng
-          `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
-          `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
+          `@ux`'bridge-pact'
+          `@ux`'bridge-pact'
           town-id
           token-contract.deposit
         ==
       =/  acc-id=id:smart
         %:  hash-data:eng
-          `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
+          `@ux`'bridge-pact'
           destination-address.deposit
           town-id
           token-contract.deposit
