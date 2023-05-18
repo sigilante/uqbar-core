@@ -1103,32 +1103,50 @@
 ::
 ::  TODO deposit multiple test 
 ::
-++  test-deposit
-  =/  =deposit
+++  test-deposit-fungible
+  =/  d1=deposit
     :*  town-id=0x0
         token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
         token-id=0
-        destination-address=0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
+        destination-address=address-1
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+    ==
+  =/  d2=deposit
+    :*  town-id=0x0
+        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-id=0
+        destination-address=address-1
+        amount=1.000.000.000
+        block-number=764
+        previous-deposit-root=0x1
     ==
   =/  st=state-transition
     %^    %~  run  eng
           [sequencer town-id batch=1 eth-block-height=0]
         fake-chain
       ~ :: memlist
-    ~[deposit]
+    ~[d1 d2]
   =/  new-acc=item:smart  (got:big modified.st id.p:account-1:ueth)
   ?>  ?=(%& -.new-acc)
-  (expect-eq !>(1.300.000.000) !>(-.noun.p.new-acc))
+  (expect-eq !>(2.300.000.000) !>(-.noun.p.new-acc))
 ::
-++  test-deposit-create-account
-  =/  =deposit
+++  test-deposit-fungible-create-account
+  =/  d1=deposit
     :*  town-id=0x0
         token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
         token-id=0
-        destination-address=0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+        destination-address=address-2
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  d2=deposit
+    :*  town-id=0x0
+        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-id=0
+        destination-address=address-3
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
@@ -1138,21 +1156,46 @@
           [sequencer town-id batch=1 eth-block-height=0]
         fake-chain
       ~ :: memlist
-    ~[deposit]
-  =/  new-acc=item:smart
+    ~[d1 d2]
+  =/  new-acc-1=item:smart
     %+  got:big  modified.st
     (hash-data:smart `@ux`'bridge-pact' address-2 town-id uethereum)
-  ?>  ?=(%& -.new-acc)
-  (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc))
+  =/  new-acc-2=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'bridge-pact' address-3 town-id uethereum)
+  ?>  ?=(%& -.new-acc-1)
+  ?>  ?=(%& -.new-acc-2)
+  ;:  weld
+    (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc-1))
+    (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc-2))
+  ==
 ::
-++  test-deposit-create-token-and-account
+++  test-deposit-fungible-create-token-and-account
   =/  l1-token-address
     0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
-  =/  =deposit
+  =/  d1=deposit
     :*  town-id=0x0
         token-contract=l1-token-address
         token-id=0
-        destination-address=0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+        destination-address=address-2
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  d2=deposit
+    :*  town-id=0x0
+        token-contract=l1-token-address
+        token-id=0
+        destination-address=address-2
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  d3=deposit
+    :*  town-id=0x0
+        token-contract=l1-token-address
+        token-id=0
+        destination-address=address-3
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
@@ -1162,24 +1205,29 @@
           [sequencer town-id batch=1 eth-block-height=0]
         fake-chain
       ~ :: memlist
-    ~[deposit]
-  =/  new-acc=item:smart
+    ~[d1 d2 d3]
+  =/  new-acc-1=item:smart
     %+  got:big  modified.st
     (hash-data:smart `@ux`'bridge-pact' address-2 town-id l1-token-address)
+  =/  new-acc-2=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'bridge-pact' address-3 town-id l1-token-address)
   =/  new-meta=item:smart
     %+  got:big  modified.st
     (hash-data:smart `@ux`'bridge-pact' `@ux`'bridge-pact' town-id l1-token-address)
   ?>  ?=(%& -.new-meta)
-  ?>  ?=(%& -.new-acc)
+  ?>  ?=(%& -.new-acc-1)
+  ?>  ?=(%& -.new-acc-2)
   ;:  weld
-    (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc))
-    (expect-eq !>(1.000.000.000) !>(-:|3:noun.p.new-meta))
+    (expect-eq !>(2.000.000.000) !>(-.noun.p.new-acc-1))
+    (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc-2))
+    (expect-eq !>(3.000.000.000) !>(-:|3:noun.p.new-meta))
   ==
 ::
 ::  nft-tests
 ::
 ++  test-deposit-nft
-  =/  =deposit
+  =/  d1=deposit
     :*  town-id=0x0
         token-contract=l1-address:nft
         token-id=1
@@ -1188,30 +1236,10 @@
         block-number=763
         previous-deposit-root=0x0
     ==
-  =/  st=state-transition
-    %^    %~  run  eng
-          [sequencer town-id batch=1 eth-block-height=0]
-        fake-chain
-      ~ :: memlist
-    ~[deposit]
-  =/  new-nft=item:smart
-    %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id l1-address:nft)
-  =/  new-meta=item:smart  (got:big modified.st id.p:metadata:nft)
-  ?>  ?=(%& -.new-meta)
-  ?>  ?=(%& -.new-nft)
-  ;:  weld
-    (expect-eq !>(1) !>(-.noun.p.new-nft))
-    (expect-eq !>(5) !>(-:|3:noun.p.new-meta))
-  ==
-::
-++  test-deposit-nft-create-metadata
-  =/  l1-address
-    0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
-  =/  =deposit
+  =/  d2=deposit
     :*  town-id=0x0
-        token-contract=l1-address
-          token-id=2
+        token-contract=l1-address:nft
+        token-id=2
         destination-address=address-1
         amount=0
         block-number=763
@@ -1222,17 +1250,65 @@
           [sequencer town-id batch=1 eth-block-height=0]
         fake-chain
       ~ :: memlist
-    ~[deposit]
-  =/  new-nft=item:smart
+    ~[d1 d2]
+  =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id l1-address)
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 1 l1-address:nft))
+  =/  new-nft-2=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 2 l1-address:nft))
+  =/  new-meta=item:smart  (got:big modified.st id.p:metadata:nft)
+  ?>  ?=(%& -.new-meta)
+  ?>  ?=(%& -.new-nft-1)
+  ?>  ?=(%& -.new-nft-2)
+  ;:  weld
+    (expect-eq !>(1) !>(-.noun.p.new-nft-1))
+    (expect-eq !>(2) !>(-.noun.p.new-nft-2))
+    (expect-eq !>(6) !>(-:|3:noun.p.new-meta))
+  ==
+::
+++  test-deposit-nft-create-metadata
+  =/  l1-address
+    0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
+  =/  d1=deposit
+    :*  town-id=0x0
+        token-contract=l1-address
+        token-id=2
+        destination-address=address-1
+        amount=0
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  d2=deposit
+    :*  town-id=0x0
+        token-contract=l1-address
+        token-id=3
+        destination-address=address-1
+        amount=0
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[d1 d2]
+  =/  new-nft-1=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 2 l1-address))
+  =/  new-nft-2=item:smart
+    %+  got:big  modified.st
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 3 l1-address))
   =/  new-meta=item:smart  
     %+  got:big  modified.st
     (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
   ?>  ?=(%& -.new-meta)
-  ?>  ?=(%& -.new-nft)
+  ?>  ?=(%& -.new-nft-1)
+  ?>  ?=(%& -.new-nft-2)
   ;:  weld
-    (expect-eq !>(2) !>(-.noun.p.new-nft))
-    (expect-eq !>(1) !>(-:|3:noun.p.new-meta))
+    (expect-eq !>(2) !>(-.noun.p.new-nft-1))
+    (expect-eq !>(3) !>(-.noun.p.new-nft-2))
+    (expect-eq !>(2) !>(-:|3:noun.p.new-meta))
   ==
 --
