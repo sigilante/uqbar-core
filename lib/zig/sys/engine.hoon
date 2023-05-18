@@ -91,18 +91,31 @@
       ::  if the signature field is empty, and the head
       ::  of the calldata is %validate, allow contract
       ::  to partially-execute, for account abstraction
-      ?:  &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
-        !!  ::  TODO
-      ?.  ?:(sigs-on (verify-sig tx) %.y)
-        ~&  >>>  "engine: signature mismatch"
-        (exhaust bud.gas.tx %1 ~ ~)
-      ?.  .=  nonce.caller.tx
-          +((gut:pig q.chain address.caller.tx 0))
-        ~&  >>>  "engine: nonce mismatch"
-        (exhaust bud.gas.tx %2 ~ ~)
-      ?.  (~(audit tax p.chain) tx)
-        ~&  >>>  "engine: tx failed gas audit"
-        (exhaust bud.gas.tx %3 ~ ~)
+      =/  abstract=?
+        &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
+      =/  invalid=(unit [output scry-fees])
+        ?:  abstract
+          ?~  pac=(get:big p.chain contract.tx)
+            ~&  >>>  "engine: call to missing pact"
+            (exhaust bud.gas.tx %4 ~ ~)
+          ?.  ?=(%| -.u.pac)
+            ~&  >>>  "engine: call to data, not pact"
+          (exhaust bud.gas.tx %5 ~ ~)
+          =/  [mov=(unit move) fees=scry-fees gas-remaining=@ud =errorcode:smart]
+            (combust code.p.u.pac context calldata.tx bud.gas.tx)
+          ?~  mov  (exhaust gas-remaining errorcode ~ fees)
+        ?.  ?:(sigs-on (verify-sig tx) %.y)
+          ~&  >>>  "engine: signature mismatch"
+          (exhaust bud.gas.tx %1 ~ ~)
+        ?.  .=  nonce.caller.tx
+            +((gut:pig q.chain address.caller.tx 0))
+          ~&  >>>  "engine: nonce mismatch"
+          (exhaust bud.gas.tx %2 ~ ~)
+        ?.  (~(audit tax p.chain) tx)
+          ~&  >>>  "engine: tx failed gas audit"
+          (exhaust bud.gas.tx %3 ~ ~)
+        ~
+      ?^  invalid  u.invalid
       ::
       =/  gas-payer  address.caller.tx
       |-
@@ -269,6 +282,10 @@
       ::  ~&  >  "calldata: {<calldata>}"
       ::  ~&  >>  u.m
       [u.m pays.q.book gas.q.book %0]
+      ::
+      ::  +abstract-combust: perform only %validate transactions
+      ::  to abstract-account contracts.
+      ::
       ::
       ::  +load: take contract code and combine with smart-lib
       ::
