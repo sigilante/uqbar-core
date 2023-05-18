@@ -472,6 +472,7 @@
     ?:  =(0 token-id.deposit)
       :: fungible deposit
       ::
+      ?>  (gte amount.deposit 0)
       =/  metadata-id=id:smart
         ?:  .=  token-contract.deposit
             0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
@@ -515,8 +516,8 @@
             u.item(noun.p -(supply (add supply.- amount.deposit)))
           :*  %& 
               metadata-id
-              `@ux`'bridge-pact' :: TODO what is source
-              `@ux`'bridge-pact' :: TODO what is the holder
+              `@ux`'bridge-pact'
+              `@ux`'bridge-pact'
               town-id
               token-contract.deposit
               %token-metadata
@@ -536,14 +537,14 @@
     ::
     =/  metadata-id=id:smart
       %:  hash-data:eng
-        `@ux`'nft-bridge-pact' :: TODO what is the source of the bridge contract metadata?
-        `@ux`'nft-bridge-pact' :: TODO who is holder of the metadata? No one right?
+        `@ux`'nft-bridge-pact'
+        `@ux`'nft-bridge-pact'
         town-id
         token-contract.deposit
       ==
     =/  nft-id=id:smart
       %:  hash-data:eng
-        `@ux`'nft-bridge-pact'  :: TODO what is the source of the bridge contract account?
+        `@ux`'nft-bridge-pact'
         destination-address.deposit
         town-id
         token-contract.deposit
@@ -571,8 +572,8 @@
           u.item(noun.p -(supply +(supply.-)))
         :*  %& 
             metadata-id
-            `@ux`'bridge-pact' :: TODO what is source
-            `@ux`'bridge-pact' :: TODO what is the holder
+            `@ux`'nft-bridge-pact'
+            `@ux`'nft-bridge-pact'
             town-id
             token-contract.deposit
             %token-metadata
