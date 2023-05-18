@@ -139,9 +139,6 @@
       ::    ~|("%sequencer: no known rollup contract" !!)
       ?^  pending-batch
         ~|("%sequencer: cannot batch, last one still pending" !!)
-      ?:  =(~ memlist)
-        ~&  >  "%sequencer: ignoring trigger, no pending transactions"
-        `this
       ~&  %perform-batch
       ~>  %bout
       ?>  ?=(%full-publish -.mode.hall.u.town)
