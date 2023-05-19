@@ -18,7 +18,7 @@
         ::  should issue *exactly one* continuation call,
         ::  which will be executed with gas paid by this
         ::  contract.
-        [%validate call]  ::  can put anything after %validate
+        [%validate =call]  ::  can put anything after %validate
     ==
   --
 ::

@@ -37,6 +37,13 @@
     =/  =output
       ?^  output.i.pending
         u.output.i.pending
+      ::  if transaction is unsigned, convert caller to designated
+      ::  contract account
+      =?    caller.tx
+          &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
+        =-  [contract.tx 0 -]
+        (hash-data zigs-contract-id:smart contract.tx town-id `@`'zigs')
+      ::
       =/  op=[output scry-fees]
         ~(intake eng chain.st tx)
       ::  charge cumulative gas fee for entire transaction
@@ -127,7 +134,12 @@
           %|^(exhaust 0 %1 ~ ~)
         ?.  ?=([[call:smart ~] [~ ~ ~ ~]] u.mov)
           %|^(exhaust 0 %1 ~ ~)
-        %&^tx(contract contract.i.-.u.mov)
+        :-  %&
+        %=  tx
+          contract  contract.i.-.u.mov
+          town      town.i.-.u.mov
+          calldata  calldata.i.-.u.mov
+        ==
       ?^  v=(valid-eoa ?:(?=(^ abstract) %.y %.n))
         u.v
       ::
@@ -135,7 +147,12 @@
       |-
       ?^  abstract
         ?:  ?=(%| -.u.abstract)  p.u.abstract
-        $(gas-payer contract.tx, tx p.u.abstract, abstract ~)
+        ::  gas-audit contract that's taken on an unsigned txn
+        =.  tx  p.u.abstract
+        ?.  (~(audit tax p.chain) tx)
+          ~&  >>>  "engine: abstract contract failed gas audit"
+          $(abstract `%|^(exhaust bud.gas.tx %3 ~ ~))
+        $(gas-payer contract.tx, abstract ~)
       ::  special burn transaction: remove an item from a town and
       ::  reinstantiate it on a different town.
       ::
@@ -367,7 +384,23 @@
     ++  abstract-combust
       |=  [code=[bat=* pay=*] =context:smart =calldata:smart]
       ^-  (unit move)
-      !!
+      =/  dor=vase  (load code)
+      =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
+      =/  =book:zink
+        %:  zebra:zink
+            fixed-abstraction-budget
+            jets  *chain-state-scry:zink  gun
+        ==
+      ?:  ?=(%| -.p.book)
+        ::  error in contract execution
+        ~
+      ?~  p.p.book
+        ::  ran out of fixed abstraction budget
+        ~
+      ?~  m=((soft (unit move)) p.p.book)
+        ~
+      ~&  >  u.m
+      u.m
     ::
     ::  +load: take contract code and combine with smart-lib
     ::
