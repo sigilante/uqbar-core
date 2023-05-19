@@ -11,7 +11,8 @@
     |%
     ++  process
       %-  of
-      :~  [%batch-posted (ot ~[[%town-root (se %ux)]])]
+      :~  [%trigger-batch (ot ~[[%deposits (ar sa)]])]
+          [%batch-posted (ot ~[[%town-root (se %ux)] [%block-at (su dem)]])]
           [%batch-rejected (ot ~[[%town-root (se %ux)]])]
       ==
     --

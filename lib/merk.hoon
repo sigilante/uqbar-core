@@ -1,4 +1,3 @@
-/+  *zink-pedersen
 |%
 +$  hash  @ux
 ++  merk

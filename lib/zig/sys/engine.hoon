@@ -1,6 +1,6 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-|_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
+|_  [library=vase jets=jetmap:zink sigs-on=?]
 ::
 ++  fixed-abstraction-budget  5.000
 ::
@@ -283,8 +283,12 @@
       |^
       =/  dor=vase  (load code)
       =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
+      ::  useful debug prints
+      ::  ~&  "context: {<context>}"
+      ::  ~&  >  "calldata: {<calldata>}"
+      ::  ~&  >>  u.m
       =/  =book:zink
-        (zebra:zink bud zink-cax jets search gun hints-on)
+        (zebra:zink bud jets search gun)
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
         [~ pays.q.book gas.q.book %6]
@@ -294,10 +298,6 @@
       ?~  m=((soft (unit move)) p.p.book)
         ::  error in contract execution
         [~ pays.q.book gas.q.book %6]
-      ::  useful debug prints
-      ::  ~&  "context: {<context>}"
-      ::  ~&  >  "calldata: {<calldata>}"
-      ::  ~&  >>  u.m
       [u.m pays.q.book gas.q.book %0]
       ::
       ::  +search: scry available inside contract runner
@@ -344,7 +344,7 @@
           =/  dor=vase  (load code.p.u.item)
           =/  gun
             (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
-          =/  =book:zink  (zebra:zink rem zink-cax jets search gun hints-on)
+          =/  =book:zink  (zebra:zink rem jets search gun)
           ?:  ?=(%| -.p.book)
             ::  crash inside contract execution
             gas.q.book^~^~
