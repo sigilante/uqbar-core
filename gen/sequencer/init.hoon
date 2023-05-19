@@ -187,11 +187,31 @@
       interface=`pith:smart`[%ux `@ux`(sham fungible-mar)]^~
   ==
 ::
+::  town-root item: this item, injected into the chain
+::  state by the sequencer program, enforces that its
+::  batches have access to state roots from *all other
+::  towns*, which enables cross-town messaging.
+::
+=/  town-root-item
+  ^-  item:smart
+  :*  %&
+      id=`id:smart``@`'town-roots'
+      source=0x0
+      holder=0x0
+      town-id
+      salt=0
+      label=%town-roots
+      data=~  ::  will become a cell of
+              ::  head: townRoot
+              ::  tail: hash of all previous townRoots
+  ==
+::
 =/  fake-state
   ^-  state
   %+  gas:(bi:merk id:smart item:smart)
     *(merk:merk id:smart item:smart)
-  :~  [id.zigs-pact [%| zigs-pact]]
+  :~  [id.p.town-root-item town-root-item]
+      [id.zigs-pact [%| zigs-pact]]
       [id.publish-pact [%| publish-pact]]
       [id.nft-pact [%| nft-pact]]
       [id.fungible-pact [%| fungible-pact]]

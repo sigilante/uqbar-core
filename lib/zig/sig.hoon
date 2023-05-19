@@ -1,6 +1,6 @@
-/-  *zig-sequencer
-/+  ethereum
+/+  ethereum, smart=zig-sys-smart
 |%
++$  ship-sig   [p=@ux q=ship r=life]
 ::
 ::  uqbar address signature validation
 ::

@@ -1,54 +1,28 @@
 /-  *zig-zink
-/+  *zink-pedersen, *zink-json, smart=zig-sys-smart
+/+  smart=zig-sys-smart
 =>  |%
     +$  good      (unit *)
     +$  fail      (list [@ta *])
     +$  body      (each good fail)
-    +$  cache     (map * phash)
-    +$  appendix  [cax=cache jets=jetmap hit=hints gas=@]
+    +$  pays      (map id:smart @ud)  ::  payments for fee-gated scry paths
+    +$  appendix  [jets=jetmap =pays gas=@]
     +$  book      (pair body appendix)
     --
 |%
 ++  zebra                                                 ::  bounded zk +mule
-  |=  [gas=@ud cax=cache =jetmap scry=chain-state-scry [s=* f=*] hints-on=?]
+  |=  [gas=@ud =jetmap scry=chain-state-scry [s=* f=*]]
   ^-  book
   ~>  %bout
-  %.  [s f scry hints-on]
+  %.  [s f scry]
   %*  .  zink
-    app  [cax jetmap ~ gas]
+    app  [jetmap ~ gas]
   ==
-::
-::  ++  hash
-::    |=  [n=* cax=(map * phash)]
-::    ^-  phash
-::    ?@  n
-::      ?:  (lte n 12)
-::        =/  ch  (~(get by cax) n)
-::        ?^  ch  u.ch
-::        (hash:pedersen n 0)
-::      (hash:pedersen n 0)
-::    ?^  ch=(~(get by cax) n)
-::      u.ch
-::    =/  hh  $(n -.n)
-::    =/  ht  $(n +.n)
-::    (hash:pedersen hh ht)
-::
-::  ++  create-hints
-::    |=  [n=^ h=hints cax=cache]
-::    ^-  json
-::    =/  hs  (hash -.n cax)
-::    =/  hf  (hash +.n cax)
-::    %-  pairs:enjs:format
-::    :~  hints+(hints:enjs h)
-::        subject+s+(num:enjs hs)
-::        formula+s+(num:enjs hf)
-::    ==
 ::
 ++  zink
   =|  appendix
   =*  app  -
   =|  trace=fail
-  |=  [s=* f=* scry=chain-state-scry hints-on=?]
+  |=  [s=* f=* scry=chain-state-scry]
   ^-  book
   |^
   |-
@@ -64,36 +38,19 @@
       $(f +.f)
     ?:  ?=(%| -.tal)  [%|^trace app]
     ?~  p.tal  [%&^~ app]
-    =^  hhed=(unit phash)  app  (hash -.f)
-    ?~  hhed  [%&^~ app]
-    =^  htal=(unit phash)  app  (hash +.f)
-    ?~  htal  [%&^~ app]
-    :-  [%& ~ u.p.hed^u.p.tal]
-    app(hit [%cons u.hhed u.htal]^hit)
+    [[%& ~ u.p.hed^u.p.tal] app]
   ::
       [%0 axis=@]
     =^  part  gas
       (frag axis.f s gas)
     ?~  part  [%&^~ app]
     ?~  u.part  [%|^trace app]
-    =^  hpart=(unit phash)         app  (hash u.u.part)
-    ?~  hpart  [%&^~ app]
-    =^  hsibs=(unit (list phash))  app  (merk-sibs s axis.f)
-    ?~  hsibs  [%&^~ app]
-    :-  [%& ~ u.u.part]
-    app(hit [%0 axis.f u.hpart u.hsibs]^hit)
+    [[%& ~ u.u.part] app]
   ::
       [%1 const=*]
-    =^  hres=(unit phash)  app  (hash const.f)
-    ?~  hres  [%&^~ app]
-    :-  [%& ~ const.f]
-    app(hit [%1 u.hres]^hit)
+    [[%& ~ const.f] app]
   ::
       [%2 sub=* for=*]
-    =^  hsub=(unit phash)  app  (hash sub.f)
-    ?~  hsub  [%&^~ app]
-    =^  hfor=(unit phash)  app  (hash for.f)
-    ?~  hfor  [%&^~ app]
     =^  subject=body  app
       $(f sub.f)
     ?:  ?=(%| -.subject)  [%|^trace app]
@@ -103,9 +60,8 @@
     ?:  ?=(%| -.formula)  [%|^trace app]
     ?~  p.formula  [%&^~ app]
     %_  $
-      s    u.p.subject
-      f    u.p.formula
-      hit  [%2 u.hsub u.hfor]^hit
+      s  u.p.subject
+      f  u.p.formula
     ==
   ::
       [%3 arg=*]
@@ -113,34 +69,19 @@
       $(f arg.f)
     ?:  ?=(%| -.argument)  [%|^trace app]
     ?~  p.argument  [%&^~ app]
-    =^  harg=(unit phash)  app  (hash arg.f)
-    ?~  harg  [%&^~ app]
     ?@  u.p.argument
-      :-  [%& ~ %.n]
-      app(hit [%3 u.harg %atom u.p.argument]^hit)
-    =^  hhash=(unit phash)  app  (hash -.u.p.argument)
-    ?~  hhash  [%&^~ app]
-    =^  thash=(unit phash)  app  (hash +.u.p.argument)
-    ?~  thash  [%&^~ app]
-    :-  [%& ~ %.y]
-    app(hit [%3 u.harg %cell u.hhash u.thash]^hit)
+      [[%& ~ %.n] app]
+    [[%& ~ %.y] app]
   ::
       [%4 arg=*]
     =^  argument=body  app
       $(f arg.f)
     ?:  ?=(%| -.argument)  [%|^trace app]
-    =^  harg=(unit phash)  app  (hash arg.f)
-    ?~  harg  [%&^~ app]
     ?~  p.argument  [%&^~ app]
     ?^  u.p.argument  [%|^trace app]
-    :-  [%& ~ .+(u.p.argument)]
-    app(hit [%4 u.harg u.p.argument]^hit)
+    [[%& ~ .+(u.p.argument)] app]
   ::
       [%5 a=* b=*]
-    =^  ha=(unit phash)  app  (hash a.f)
-    ?~  ha  [%&^~ app]
-    =^  hb=(unit phash)  app  (hash b.f)
-    ?~  hb  [%&^~ app]
     =^  a=body  app
       $(f a.f)
     ?:  ?=(%| -.a)  [%|^trace app]
@@ -149,31 +90,19 @@
       $(f b.f)
     ?:  ?=(%| -.b)  [%|^trace app]
     ?~  p.b  [%&^~ app]
-    :-  [%& ~ =(u.p.a u.p.b)]
-    app(hit [%5 u.ha u.hb]^hit)
+    [[%& ~ =(u.p.a u.p.b)] app]
   ::
       [%6 test=* yes=* no=*]
-    =^  htest=(unit phash)  app  (hash test.f)
-    ?~  htest  [%&^~ app]
-    =^  hyes=(unit phash)   app  (hash yes.f)
-    ?~  hyes  [%&^~ app]
-    =^  hno=(unit phash)    app  (hash no.f)
-    ?~  hno  [%&^~ app]
     =^  result=body  app
       $(f test.f)
     ?:  ?=(%| -.result)  [%|^trace app]
     ?~  p.result  [%&^~ app]
-    =.  hit  [%6 u.htest u.hyes u.hno]^hit
     ?+  u.p.result  [%|^trace app]
       %&  $(f yes.f)
       %|  $(f no.f)
     ==
   ::
       [%7 subj=* next=*]
-    =^  hsubj=(unit phash)  app  (hash subj.f)
-    ?~  hsubj  [%&^~ app]
-    =^  hnext=(unit phash)  app  (hash next.f)
-    ?~  hnext  [%&^~ app]
     =^  subject=body  app
       $(f subj.f)
     ?:  ?=(%| -.subject)  [%|^trace app]
@@ -181,14 +110,9 @@
     %_  $
       s    u.p.subject
       f    next.f
-      hit  [%7 u.hsubj u.hnext]^hit
     ==
   ::
       [%8 head=* next=*]
-    =^  hhead=(unit phash)  app  (hash head.f)
-    ?~  hhead  [%&^~ app]
-    =^  hnext=(unit phash)  app  (hash next.f)
-    ?~  hnext  [%&^~ app]
     =^  head=body  app
       $(f head.f)
     ?:  ?=(%| -.head)  [%|^trace app]
@@ -196,12 +120,9 @@
     %_  $
       s    [u.p.head s]
       f    next.f
-      hit  [%8 u.hhead u.hnext]^hit
     ==
   ::
       [%9 axis=@ core=*]
-    =^  hcore=(unit phash)  app  (hash core.f)
-    ?~  hcore  [%&^~ app]
     =^  core=body  app
       $(f core.f)
     ?:  ?=(%| -.core)  [%|^trace app]
@@ -210,21 +131,12 @@
       (frag axis.f u.p.core gas)
     ?~  arm  [%&^~ app]
     ?~  u.arm  [%|^trace app]
-    =^  harm=(unit phash)  app  (hash u.u.arm)
-    ?~  harm  [%&^~ app]
-    =^  hsibs=(unit (list phash))  app  (merk-sibs u.p.core axis.f)
-    ?~  hsibs  [%&^~ app]
     %_  $
-      s    u.p.core
-      f    u.u.arm
-      hit  [%9 axis.f u.hcore u.harm u.hsibs]^hit
+      s  u.p.core
+      f  u.u.arm
     ==
   ::
       [%10 [axis=@ value=*] target=*]
-    =^  hval=(unit phash)  app  (hash value.f)
-    ?~  hval  [%&^~ app]
-    =^  htar=(unit phash)  app  (hash target.f)
-    ?~  htar  [%&^~ app]
     ?:  =(0 axis.f)  [%|^trace app]
     =^  target=body  app
       $(f target.f)
@@ -242,12 +154,7 @@
       (frag axis.f u.p.target gas)
     ?~  oldleaf  [%&^~ app]
     ?~  u.oldleaf  [%|^trace app]
-    =^  holdleaf=(unit phash)  app  (hash u.u.oldleaf)
-    ?~  holdleaf  [%&^~ app]
-    =^  hsibs=(unit (list phash))  app  (merk-sibs u.p.target axis.f)
-    ?~  hsibs  [%&^~ app]
-    :-  [%& ~ u.u.mutant]
-    app(hit [%10 axis.f u.hval u.htar u.holdleaf u.hsibs]^hit)
+    [[%& ~ u.u.mutant] app]
   ::
        [%11 tag=@ next=*]
     ::  ~&  >  `@tas`tag.f
@@ -292,9 +199,6 @@
     [11 [tag.f 1 u.p.clue] 1 u.p.next]
   ::
       [%12 ref=* path=*]
-    ::  TODO hash ref, path and grain id parsed as last item in path
-    ::       hash product and path through granary merkle tree
-    ::       (similar process in nock 0)
     =^  ref=body  app
       $(f ref.f)
     ?:  ?=(%| -.ref)     [%|^trace app]
@@ -304,6 +208,9 @@
     ?:  ?=(%| -.path)    [%|^trace app]
     ?~  p.path           [%&^~ app]
     =/  result  (scry gas p.ref p.path)
+    =.  pays.app
+      %-  (~(uno by pays.app) pays.result)
+      |=([k=@ux f1=@ud f2=@ud] (add f1 f2))
     ?~  product.result
       [%&^~^~ app(gas gas.result)]
     [%&^[~ product.result] app(gas gas.result)]
@@ -513,10 +420,6 @@
         %scot
       ?.  ?=([@ta @] sam)  %|^trace
       %&^(some (scot sam))
-    ::
-        %pedersen-hash
-      ?.  ?=([@ @] sam)  %|^trace
-      %&^(some (hash:pedersen sam))
     ::                                                                       ::
     ::  crypto                                                               ::
     ::                                                                       ::
@@ -582,51 +485,6 @@
     ?-  pick
       %2  [``[u.u.mutant +.target] gas]
       %3  [``[-.target u.u.mutant] gas]
-    ==
-  ::
-  ++  hash
-    |=  n=*
-    ^-  [(unit phash) appendix]
-    ::  test mode disables hashing, so it won't generate valid hints.
-    ::  however, computation is *much* faster since hashing is the
-    ::  most expensive aspect of the process.
-    ?.  hints-on  [`0x1 app]
-    =/  mh  (~(get by cax) n)
-    ?^  mh
-      ?:  =(gas 0)  [~ app]
-      [mh app(gas (dec gas))]
-    ?@  n
-      ?:  =(gas 0)  [~ app]
-      =/  h  (hash:pedersen n 0)
-      :-  `h
-      app(cax (~(put by cax) n h), gas (dec gas))
-    =^  hh=(unit phash)  app  $(n -.n)
-    ?~  hh  [~ app]
-    =^  ht=(unit phash)  app  $(n +.n)
-    ?~  ht  [~ app]
-    =/  h  (hash:pedersen u.hh u.ht)
-    ?:  =(gas 0)  [~ app]
-    :-  `h
-    app(cax (~(put by cax) n h), gas (dec gas))
-  ::
-  ++  merk-sibs
-    |=  [s=* axis=@]
-    =|  path=(list phash)
-    |-  ^-  [(unit (list phash)) appendix]
-    ?:  =(1 axis)
-      [`path app]
-    ?~  axis  !!
-    ?@  s  !!
-    =/  pick  (cap axis)
-    =^  sibling=(unit phash)  app
-      %-  hash
-      ?-(pick %2 +.s, %3 -.s)
-    ?~  sibling  [~ app]
-    =/  child  ?-(pick %2 -.s, %3 +.s)
-    %=  $
-      s     child
-      axis  (mas axis)
-      path  [u.sibling path]
     ==
   --
 --

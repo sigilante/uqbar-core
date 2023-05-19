@@ -70,7 +70,7 @@
 =*  state  -
 ::
 %-  agent:dbug
-::  %+  verb  |
+::  %+  verb  &
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
@@ -330,16 +330,27 @@
     ::
         %sign-typed-message
       ::  TODO display something to the user using the contract interface
+      ::  add pending signed-messages tab to frontend
       =/  keypair  (~(got by keys.state) from.act)
       =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
-      =/  hash  (sham typed-message)
+      =/  hash  `@uvI`(shag:smart typed-message)
       =/  signature
         ?~  priv.keypair
           ::  put it into some temporary thing for cold storage. Make it pending
           !!
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
         hash  u.priv.keypair
-      :-  ~
+      :-   ?~  origin.act  ~
+      :_  ~
+      :*   %pass   q.u.origin.act
+           %agent  [our.bowl p.u.origin.act]
+           %poke  %wallet-update
+           !>  ^-  wallet-update
+           :*  %signed-message
+               origin.act
+               typed-message
+               signature
+      ==   ==
       %=    state
           signed-message-store
         %+  ~(put by signed-message-store.state)
@@ -676,7 +687,7 @@
     !>  ^-  wallet-update
     ?~  message=(~(get by signed-message-store) (slav %ux i.t.t.path))
       ~
-    [%signed-message u.message]
+    [%signed-message ~ u.message]
   ::
       [%metadata @ ~]
     ::  return specific metadata from our store

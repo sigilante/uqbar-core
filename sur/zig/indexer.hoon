@@ -62,8 +62,8 @@
 +$  sequencer-update-queue
   (map town-id=@ux (map batch-id=@ux batch))
 ::
-+$  base-state-1
-  $:  %1
++$  base-state-2
+  $:  %2
       =batches-by-town
       =capitol:seq
       =sequencer-update-queue
@@ -82,7 +82,7 @@
       =newest-batch-by-town
   ==
 ::
-+$  inflated-state-1  [base-state-1 indices]
++$  inflated-state-2  [base-state-2 indices]
 ::
 +$  batch-update-value
   [timestamp=@da location=town-location =batch]
@@ -133,10 +133,35 @@
   ==
 ++  action
   $%  [%set-catchup-indexer =dock]
-      [%set-sequencer =dock]
-      [%set-rollup =dock]
+      [%set-sequencer town-id=id:smart =dock]
       [%bootstrap =dock]
-      [%catchup =dock town-id=id:smart batch-id=id:smart]
+      [%catchup =dock town-id=id:smart batch-num=@ud]
       [%consume-batch args=consume-batch-args]
+  ==
++$  catchup-request
+  [town-id=id:smart batch-num=@ud]
++$  catchup-response
+  [=batches =batch-order catchup-request]
+::
+::  historical states (TODO delete)
+::
++$  batches-by-town-1
+  (map town-id=id:smart batches-and-order-1)
++$  batches-and-order-1
+  [=batches-1 =batch-order]
++$  batches-1
+  (map id:smart [timestamp=@da =batch-1])
++$  batch-1
+  [transactions=processed-txs:eng old-town:seq]
++$  sequencer-update-queue-1
+  (map town-id=@ux (map batch-id=@ux batch-1))
+::
++$  base-state-1
+  $:  %1
+      batches-by-town=batches-by-town-1
+      capitol=old-capitol:seq
+      sequencer-update-queue=sequencer-update-queue-1
+      =town-update-queue
+      catchup-indexer=dock
   ==
 --

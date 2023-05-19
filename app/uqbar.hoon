@@ -32,25 +32,23 @@
 =*  state  -
 ::
 %-  agent:dbug
-::  %+  verb  |
+::  %+  verb  &
 ^-  agent:gall
 =<
   |_  =bowl:gall
-  +*  this        .
-      def         ~(. (default-agent this %|) bowl)
-      io          ~(. agentio bowl)
-      uc          ~(. +> bowl)
+  +*  this  .
+      def   ~(. (default-agent this %|) bowl)
+      io    ~(. agentio bowl)
+      uc    ~(. +> bowl)
   ::
   ++  on-init
     ^-  (quip card _this)
-    :-  :_  ~
-        %-  ~(poke-self pass:io /self-wire)
-        :-  %uqbar-action
-        !>  ^-  action:u
-        [%set-sources [0x0 [our.bowl %indexer]]~]
-    %=  this
-      wallet-source  %wallet  ::  name of locally-installed wallet app
-    ==
+    :_  this(wallet-source %wallet)  ::  name of locally-installed wallet app
+    :_  ~
+    %-  ~(poke-self pass:io /self-wire)
+    :-  %uqbar-action
+    !>  ^-  action:u
+    [%set-sources [0x0 [our.bowl %indexer]]~]
   ::
   ++  on-save  !>(state)
   ++  on-load
@@ -116,7 +114,7 @@
       ?+    m  ~|("%uqbar: rejecting erroneous poke {<m>}" !!)
           %uqbar-action  (handle-action !<(action:u v))
           %uqbar-write   (handle-write !<(write:u v))
-          %wallet-poke   handle-wallet-poke
+          %wallet-poke          handle-wallet-poke
           %uqbar-share-address  handle-wallet-poke
       ==
     [cards this]
@@ -143,14 +141,10 @@
         ==
       ::
           %set-sources
-        =/  p=path  /capitol-updates
-        :-  %+  turn  towns.act
-            |=  [town=id:smart indexer=dock]
-            (~(watch pass:io p) indexer p)
-        %=  state
-            indexers
-          (~(gas by *(map id:smart dock)) towns.act)
-        ==
+        :_  state(indexers (~(gas by *(map id:smart dock)) towns.act))
+        %+  turn  towns.act
+        |=  [town=id:smart indexer=dock]
+        (~(watch pass:io /rollup-updates) indexer /rollup-updates)
       ::
           %open-faucet
         ::  poke known sequencer for this town, will fail if they don't
@@ -209,16 +203,16 @@
     |^
     ^-  (quip card _this)
     ?+    -.wire  (on-agent:def wire sign)
-        %capitol-updates
+        %rollup-updates
       ::  set sequencers based on rollup state, given by indexer
       ?+    -.sign  (on-agent:def wire sign)
           %kick
         [rejoin this]
       ::
           %fact
-        =^  cards  state
-          (update-sequencers !<(capitol-update:s q.cage.sign))
-        [cards this]
+        =+  !<(upd=rollup-update:s q.cage.sign)
+        ?>  ?=(%new-peer-root -.upd)
+        `this(sequencers (~(put by sequencers.state) [town sequencer]:upd))
       ==
     ::
         %indexer
@@ -255,16 +249,6 @@
         (get-wex-dock-by-wire:uc wire)
       ?~  old-source  ~
       ~[(~(watch pass:io wire) u.old-source)]
-    ::
-    ++  update-sequencers
-      |=  upd=capitol-update:s
-      ^-  (quip card _state)
-      :-  ~
-      %=    state
-          sequencers
-        %-  ~(run by capitol.upd)
-        |=(=hall:s sequencer.hall)
-      ==
     --
   ::
   ++  on-peek

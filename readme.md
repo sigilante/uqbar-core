@@ -20,17 +20,15 @@ It contains code for the Gall apps required to simulate the ZK rollup to Ethereu
 
 ![Project Structure](/assets/220901-project-structure.png)
 
-The `%rollup` app simulates the ZK rollup to Ethereum L1.
-The `%sequencer` app runs a town, receiving transactions from users and batching them up to send to the `%rollup`.
+The `%sequencer` app runs a town, receiving transactions from users and batching them up to send to the rollup contract.
 The user suite of apps include:
 * `%wallet`: manages key pairs, tracks assets, handles writes to chain
 * `%indexer`: indexes batches, provides a scry interface for chain state, sends subscription updates
 * [`%uqbar`](#why-route-reads-and-writes-through-uqbar): wraps `%wallet` and `%indexer` to provide a unified read/write interface
 
-The user suite of apps interact with the `%rollup` and `%sequencer` apps, and provide interfaces for use by Urbit apps that need to read or write to the chain.
+The user suite of apps interact with the `%sequencer` and `%indexer` apps, and provide interfaces for use by Urbit apps that need to read or write to the chain.
 
-A single `%rollup` app will be run on a single ship.
-One `%sequencer` app will run each town.
+One `%sequencer` app will run each town, until sequencer rotation is enabled.
 Any ship that interacts with the chain will run the `%wallet`, `%indexer`, and `%uqbar` apps.
 
 In the future, multiple `%sequencer`s may take turns sequencing a single town.
@@ -84,20 +82,15 @@ In the future, with remote scry, users will not need to run their own `%indexer`
 ## Starting a Fakeship Testnet
 
 To develop this repo or new contracts, it is convenient to start with a fakeship testnet.
-First, make sure the fakeship you're using is in the [whitelist](https://github.com/uqbar-dao/uqbar-core/blob/master/lib/rollup.hoon).
 
 Uqbar provides a generator to set up a fakeship testnet for local development.
 That generator, used as a poke to the `%sequencer` app as `:sequencer|init`, populates a new town with some [`item`](#item)s: [`pact`](#pact) (contract code) and [`data`](#data) (contract data).
 Specifically, contracts for zigs tokens, NFTs, and publishing new contracts are pre-deployed.
-After [initial installation](#initial-installation), start the `%rollup`, initialize the `%sequencer`, set up the `%uqbar` read-write interface, and configure the `%wallet` to point to some [pre-set assets](#accounts-initialized-by-init-script), minted in the `:sequencer|init` poke:
+After [initial installation](#initial-installation), initialize the `%sequencer`, set up the `%uqbar` read-write interface, and configure the `%wallet` to point to some [pre-set assets](#accounts-initialized-by-init-script), minted in the `:sequencer|init` poke:
 ```hoon
-:rollup|activate
-:indexer &indexer-action [%set-sequencer [our %sequencer]]
-:indexer &indexer-action [%set-rollup [our %rollup]]
 :sequencer|init our 0x0 0xc9f8.722e.78ae.2e83.0dd9.e8b9.db20.f36a.1bc4.c704.4758.6825.c463.1ab6.daee.e608
 :uqbar &wallet-poke [%import-seed 'uphold apology rubber cash parade wonder shuffle blast delay differ help priority bleak ugly fragile flip surge shield shed mistake matrix hold foam shove' 'squid' 'nickname']
 ```
-
 
 If you want to perform lots of batching locally, you'll want to get an API key for etherscan to make more requests. The sequencer agent uses this API to fetch the most recent block height for ETH. [Get a free API key from etherscan](https://etherscan.io/apis) and save in %sequencer like so:
 ```hoon
@@ -116,13 +109,13 @@ First, create a pending transaction.
 The `%wallet` will send the transaction hash on a subscription wire as well as print it in the Dojo.
 ```hoon
 ::  Send zigs tokens.
-:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0x74.6361.7274.6e6f.632d.7367.697a town=0x0 ship=~ action=[%give to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de amount=123.456 item=0x7810.2b9f.109c.e44e.7de3.cd7b.ea4f.45dd.aed8.054c.0b52.b2c8.2788.93c6.5bb4.bb85]]
+:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0x74.6361.7274.6e6f.632d.7367.697a town=0x0 action=[%give to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de amount=123.456 item=0x7810.2b9f.109c.e44e.7de3.cd7b.ea4f.45dd.aed8.054c.0b52.b2c8.2788.93c6.5bb4.bb85]]
 
 ::  Send an NFT.
-:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0xb526.8432.294e.1c99.de7f.0cd9.2634.332a.28d3.9b76.4549.b51f.0fb2.80d5.91f1.1f5a town=0x0 ship=~ action=[%give-nft to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de item=0xd483.3b10.4b1a.5805.ef16.017f.d33f.a1f8.d9d9.865a.0da6.aaec.0a94.9613.59de.1734]]
+:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0xb526.8432.294e.1c99.de7f.0cd9.2634.332a.28d3.9b76.4549.b51f.0fb2.80d5.91f1.1f5a town=0x0 action=[%give-nft to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de item=0xd483.3b10.4b1a.5805.ef16.017f.d33f.a1f8.d9d9.865a.0da6.aaec.0a94.9613.59de.1734]]
 
 ::  Use the custom transaction interface to send zigs tokens.
-:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0x74.6361.7274.6e6f.632d.7367.697a town=0x0 ship=~ action=[%noun [%give to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de amount=69.000 from-account=0x7810.2b9f.109c.e44e.7de3.cd7b.ea4f.45dd.aed8.054c.0b52.b2c8.2788.93c6.5bb4.bb85]]]
+:uqbar &wallet-poke [%transaction ~ from=0x7a9a.97e0.ca10.8e1e.273f.0000.8dca.2b04.fc15.9f70 contract=0x74.6361.7274.6e6f.632d.7367.697a town=0x0 action=[%noun [%give to=0xd6dc.c8ff.7ec5.4416.6d4e.b701.d1a6.8e97.b464.76de amount=69.000 from-account=0x7810.2b9f.109c.e44e.7de3.cd7b.ea4f.45dd.aed8.054c.0b52.b2c8.2788.93c6.5bb4.bb85]]]
 ```
 
 Then, sign the transaction and assign it a gas budget.
@@ -136,8 +129,8 @@ Transactions can also be signed using a hardware wallet, via `%submit-signed`.
 
 ### Submitting a `%batch`
 
-Each signed transaction sent to the `%sequencer` will be stored in the `%sequencer`s `basket` (analogous to a mempool).
-To run the transactions, create the new batch with updated town state, and send it to the `%rollup`, poke the `%sequencer`:
+Each signed transaction sent to the `%sequencer` will be stored in the `mempool`.
+To run the transactions and create the new batch with updated town state, poke the `%sequencer`:
 ```hoon
 :sequencer|batch
 ```
@@ -240,32 +233,14 @@ squid
 
 ## Joining an Existing Testnet
 
-To add a new ship to a fakeship testnet or to a live testnet, follow these instructions.
-First make sure your ship is on the [whitelist](https://github.com/uqbar-dao/ziggurat/blob/master/lib/rollup.hoon) of the ship hosting the rollup simulator.
-The following two examples assume `~nec` is the host:
-
-
-### Indexing on an existing testnet
+To add a new ship to a fakeship testnet or to a live testnet, first install the %zig desk
+either manually from this repo or by running `|install ~nec %zig`, replacing `~nec` with
+a ship known to publish the software. By default, the sequencer is set as `~nec`.
+Make sure to either edit `app/indexer.hoon` to connect to your specified sequencer ship, or run these commands, replacing `~nec` with the known sequencer:
 ```hoon
 :indexer &indexer-action [%set-sequencer [~nec %sequencer]]
-:indexer &indexer-action [%set-rollup [~nec %rollup]]
 :indexer &indexer-action [%bootstrap [~nec %indexer]]
 ```
-In this example, not all the hosts need be the same ship.
-To give a specific example, `~nec` might be running the `%rollup`, while `~bus` runs the `%sequencer` for town `0x0` and also the `%indexer`.
-Every user who wishes to interact with the chain must currently run their own `%indexer`, so there will likely be many options to `%bootstrap` from.
-
-
-### Sequencing on an existing testnet
-
-To start sequencing a new town:
-```hoon
-:sequencer|init ~nec <YOUR_town_ID> <YOUR_PRIVATE_KEY>
-```
-
-`%sequencer` does not create batches automatically unless configured to do so.
-Instructions for how to manually or automatically create batches are [here](#submitting-a-batch).
-
 
 ## Why Route Reads and Writes Through `%uqbar`
 
@@ -350,10 +325,10 @@ Or a `data` of the `nft` `pact` might be a particular `nft` with certain charact
 ### `pact`
 
 A `pact` is a piece of code: it is a contract.
-For example, the `zigs` contract that governs the base rollup tokens is a `pact`, and the `nft` contract that enables NFTs to be held and sent is another.
+For example, the `zigs` contract that governs the base   tokens is a `pact`, and the `nft` contract that enables NFTs to be held and sent is another.
 
 
 ### `town`
 
 A segment of chain-state within the Uqbar rollup.
-A `%sequencer` runs a `town`, receiving transactions from users, executing them, and then sending the updated state to the `%rollup`.
+A `%sequencer` runs a `town`, receiving transactions from users, executing them, and then sending the updated state to the rollup.
