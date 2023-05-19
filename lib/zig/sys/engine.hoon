@@ -2,6 +2,8 @@
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
 |_  [library=vase zink-cax=(map * @) jets=jetmap:zink sigs-on=? hints-on=?]
 ::
+++  fixed-abstraction-budget  5.000
+::
 ::  +engine: the execution engine for Uqbar.
 ::
 ++  engine
@@ -86,39 +88,54 @@
     |_  [=chain tx=transaction:smart]
     +$  move  (quip call:smart diff:smart)
     ::
+    ++  valid-eoa
+      |=  abstract=?
+      ^-  (unit [output scry-fees])
+      ?:  abstract  ~
+      ?.  ?:(sigs-on (verify-sig tx) %.y)
+        ~&  >>>  "engine: signature mismatch"
+        `(exhaust bud.gas.tx %1 ~ ~)
+      ?.  .=  nonce.caller.tx
+          +((gut:pig q.chain address.caller.tx 0))
+        ~&  >>>  "engine: nonce mismatch"
+        `(exhaust bud.gas.tx %2 ~ ~)
+      ?.  (~(audit tax p.chain) tx)
+        ~&  >>>  "engine: tx failed gas audit"
+        `(exhaust bud.gas.tx %3 ~ ~)
+      ~
+    ::
     ++  intake
       ^-  [output scry-fees]
       ::  if the signature field is empty, and the head
       ::  of the calldata is %validate, allow contract
       ::  to partially-execute, for account abstraction
-      =/  abstract=?
-        &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
-      =/  invalid=(unit [output scry-fees])
-        ?:  abstract
-          ?~  pac=(get:big p.chain contract.tx)
-            ~&  >>>  "engine: call to missing pact"
-            (exhaust bud.gas.tx %4 ~ ~)
-          ?.  ?=(%| -.u.pac)
-            ~&  >>>  "engine: call to data, not pact"
-          (exhaust bud.gas.tx %5 ~ ~)
-          =/  [mov=(unit move) fees=scry-fees gas-remaining=@ud =errorcode:smart]
-            (combust code.p.u.pac context calldata.tx bud.gas.tx)
-          ?~  mov  (exhaust gas-remaining errorcode ~ fees)
-        ?.  ?:(sigs-on (verify-sig tx) %.y)
-          ~&  >>>  "engine: signature mismatch"
-          (exhaust bud.gas.tx %1 ~ ~)
-        ?.  .=  nonce.caller.tx
-            +((gut:pig q.chain address.caller.tx 0))
-          ~&  >>>  "engine: nonce mismatch"
-          (exhaust bud.gas.tx %2 ~ ~)
-        ?.  (~(audit tax p.chain) tx)
-          ~&  >>>  "engine: tx failed gas audit"
-          (exhaust bud.gas.tx %3 ~ ~)
-        ~
-      ?^  invalid  u.invalid
+      ::
+      =/  abstract=(unit (each transaction:smart [output scry-fees]))
+        ?.  &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
+          ~
+        :-  ~
+        ?~  pac=(get:big p.chain contract.tx)
+          ~&  >>>  "engine: abstract call to missing pact"
+          %|^(exhaust bud.gas.tx %1 ~ ~)
+        ?.  ?=(%| -.u.pac)
+          ~&  >>>  "engine: abstract call to data, not pact"
+          %|^(exhaust bud.gas.tx %1 ~ ~)
+        =/  mov=(unit move)
+          =-  (abstract-combust code.p.u.pac - calldata.tx)
+          [contract.tx [0x0 0] batch-num eth-block-height town-id]
+        ?~  mov
+          %|^(exhaust 0 %1 ~ ~)
+        ?.  ?=([[call:smart ~] [~ ~ ~ ~]] u.mov)
+          %|^(exhaust 0 %1 ~ ~)
+        %&^tx(contract contract.i.-.u.mov)
+      ?^  v=(valid-eoa ?:(?=(^ abstract) %.y %.n))
+        u.v
       ::
       =/  gas-payer  address.caller.tx
       |-
+      ?^  abstract
+        ?:  ?=(%| -.u.abstract)  p.u.abstract
+        $(gas-payer contract.tx, tx p.u.abstract, abstract ~)
       ::  special burn transaction: remove an item from a town and
       ::  reinstantiate it on a different town.
       ::
@@ -283,22 +300,6 @@
       ::  ~&  >>  u.m
       [u.m pays.q.book gas.q.book %0]
       ::
-      ::  +abstract-combust: perform only %validate transactions
-      ::  to abstract-account contracts.
-      ::
-      ::
-      ::  +load: take contract code and combine with smart-lib
-      ::
-      ++  load
-        |=  code=[bat=* pay=*]
-        ^-  vase
-        :-  -:!>(*contract:smart)
-        =/  payload  (mink [q.library pay.code] ,~)
-        ?.  ?=(%0 -.payload)  +:!>(*contract:smart)
-        =/  cor  (mink [[q.library product.payload] bat.code] ,~)
-        ?.  ?=(%0 -.cor)  +:!>(*contract:smart)
-        product.cor
-      ::
       ::  +search: scry available inside contract runner
       ::  returns an updated gas budget to account for execution
       ::  performed inside the scry, a possible payment to a contract
@@ -359,6 +360,26 @@
           p.p.book
         ==
       --
+    ::
+    ::  +abstract-combust: perform only %validate transactions
+    ::  to abstract-account contracts.
+    ::
+    ++  abstract-combust
+      |=  [code=[bat=* pay=*] =context:smart =calldata:smart]
+      ^-  (unit move)
+      !!
+    ::
+    ::  +load: take contract code and combine with smart-lib
+    ::
+    ++  load
+      |=  code=[bat=* pay=*]
+      ^-  vase
+      :-  -:!>(*contract:smart)
+      =/  payload  (mink [q.library pay.code] ,~)
+      ?.  ?=(%0 -.payload)  +:!>(*contract:smart)
+      =/  cor  (mink [[q.library product.payload] bat.code] ,~)
+      ?.  ?=(%0 -.cor)  +:!>(*contract:smart)
+      product.cor
     ::
     ::  +clean: validate a diff's changed, issued, and burned items
     ::
