@@ -3,7 +3,7 @@
 ::
 /+  *test, smart=zig-sys-smart, *zig-sys-engine, merk
 /*  smart-lib-noun          %noun  /lib/zig/sys/smart-lib/noun
-/*  nft-contract            %jam   /con/compiled/nft/jam
+/*  nft-contract            %jam   /con/compiled/bridge-nft/jam
 /*  zigs-contract           %jam   /con/compiled/zigs/jam
 /*  fung-contract           %jam   /con/compiled/fungible/jam
 /*  engine-tester-contract  %jam   /con/compiled/engine-tester/jam
@@ -1282,10 +1282,10 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 1 l1-address:nft))
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address:nft (scot %ud 1)))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 2 l1-address:nft))
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address:nft (scot %ud 2)))
   =/  new-meta=item:smart  (got:big modified.st id.p:metadata:nft)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-nft-1)
@@ -1325,10 +1325,10 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 2 l1-address))
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address (scot %ud 2)))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 3 l1-address))
+    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address (scot %ud 3)))
   =/  new-meta=item:smart  
     %+  got:big  modified.st
     (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
