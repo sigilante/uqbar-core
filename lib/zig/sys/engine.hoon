@@ -464,7 +464,6 @@
   ++  process-deposits
     |=  [st=state-transition deposits=(list deposit)]
     ^-  state-transition
-    ::  handle deposits TODO this is ugly
     |-
     ?~  deposits  st
     =*  deposit  i.deposits
@@ -474,7 +473,7 @@
       ::
       ?>  (gte amount.deposit 0)
       =/  metadata-id=id:smart
-        ?:  .=  token-contract.deposit
+        ?:  .=  token-contract.deposit  :: special case for bridged ETH
             0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
           ueth-contract-id:smart
         %:  hash-data:eng
@@ -521,7 +520,7 @@
               town-id
               token-contract.deposit
               %token-metadata
-              :: TODO the token metadata is very fucked, double check this before merging
+              :: TODO inject token metadata
               :*  %name     :: TODO
                   %symbol   :: TODO
                   %decimals :: TODO
@@ -547,8 +546,8 @@
         `@ux`'nft-bridge-pact'
         destination-address.deposit
         town-id
-        :: TODO is there a cleaner way to combine token+contract?
-        (cat 3 [token-id token-contract]:deposit)
+        ::  salt matches nft.hoon salt process
+        (cat 3 [token-contract (scot %ud token-id)]:deposit)
       ==
     =;  modified=state
       =.  p.chain.st   (uni:big p.chain.st modified)
@@ -578,7 +577,7 @@
             town-id
             token-contract.deposit
             %token-metadata
-            :: TODO the token metadata is very fucked, double check this before merging
+            :: TODO inject token metadata
             :*  'name'     :: TODO
                 'symbol'   :: TODO
                 ~          :: TODO properties
