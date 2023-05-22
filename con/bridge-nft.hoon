@@ -16,7 +16,7 @@
 ::
 |_  =context
 ++  write
-  |=  act=action:sur
+  |=  act=action
   ^-  (quip call diff)
   ?-  -.act
     %give           (give:lib:nft context act)
