@@ -526,7 +526,7 @@
                   %decimals :: TODO
                   amount.deposit
                   ~
-                  %.y :: doesn't matter anymore
+                  %.n
                   ~
                   *address:smart
                   token-contract.deposit
@@ -583,7 +583,7 @@
                 ~          :: TODO properties
                 1
                 ~
-                %.y :: doesn't matter anymore
+                %.n
                 ~
                 *address:smart
                 token-contract.deposit
