@@ -547,7 +547,7 @@
         destination-address.deposit
         town-id
         ::  salt matches nft.hoon salt process
-        (cat 3 [token-contract (scot %ud token-id)]:deposit)
+        (cat 3 token-contract.deposit (scot %ud token-id.deposit))
       ==
     =;  modified=state
       =.  p.chain.st   (uni:big p.chain.st modified)
