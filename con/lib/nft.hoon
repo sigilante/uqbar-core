@@ -180,6 +180,8 @@
   ++  deploy
     |=  [=context act=deploy:sur]
     ^-  (quip call diff)
+    ::  make salt unique by including deployer + their input
+    =/  salt  (cat 3 salt.act id.caller.context)
     ::  create new NFT collection with a metadata item
     ::  and optional initial mint
     =/  =metadata:sur
@@ -191,9 +193,9 @@
           ?~(minters.act %.n %.y)
           minters.act
           id.caller.context
-          salt.act
+          salt
       ==
-    =/  =id    (hash-data this.context this.context town.context salt.act)
+    =/  =id  (hash-data this.context this.context town.context salt)
     =/  =data  [id this.context this.context town.context salt.act %metadata metadata]
     ?~  initial-distribution.act
       `(result ~ [[%& data] ~] ~ ~)
