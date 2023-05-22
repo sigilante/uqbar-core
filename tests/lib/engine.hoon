@@ -1101,7 +1101,7 @@
     (expect-eq !>(3) !>(~(wyt by modified.st)))
   ==
 ::
-::  TODO deposit multiple test 
+::  deposit tests
 ::
 ++  test-deposit-fungible
   =/  d1=deposit
@@ -1223,6 +1223,35 @@
     (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc-2))
     (expect-eq !>(3.000.000.000) !>(-:|3:noun.p.new-meta))
   ==
+::
+::  make sure there is no bad interaction between %give and %deposit
+::
+++  test-deposit-and-send-tokens
+  =/  =memlist
+    :~  :+  0x0
+          :+  fake-sig
+            [%give address-2 100.000.000 id.p:account-1:ueth]
+          [caller-1 ~ id.p:pact:ueth [1 100.000] town-id 0]
+        ~
+    ==
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-id=0
+        destination-address=address-1
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      memlist
+    ~[deposit]
+  =/  new-acc=item:smart  (got:big modified.st id.p:account-1:ueth)
+  ?>  ?=(%& -.new-acc)
+  (expect-eq !>(1.200.000.000) !>(-.noun.p.new-acc))
 ::
 ::  nft-tests
 ::
