@@ -3,9 +3,9 @@
 ::
 /+  *test, smart=zig-sys-smart, *zig-sys-engine, merk
 /*  smart-lib-noun          %noun  /lib/zig/sys/smart-lib/noun
-/*  nft-contract            %jam   /con/compiled/bridge-nft/jam
-/*  zigs-contract           %jam   /con/compiled/zigs/jam
+/*  nft-contract            %jam   /con/compiled/nft/jam
 /*  fung-contract           %jam   /con/compiled/fungible/jam
+/*  zigs-contract           %jam   /con/compiled/zigs/jam
 /*  engine-tester-contract  %jam   /con/compiled/engine-tester/jam
 =>
 |%
@@ -103,7 +103,7 @@
     ==
   --
 ::
-++  ueth :: stands in for any ERC20 bridged from L1, there is no special case for ETH
+++  ueth :: can be any token bridged from L1
   |%
   ++  pact
     ^-  item:smart
@@ -143,16 +143,16 @@
         ~
     ==
   ++  metadata
-  ^-  item:smart
-  :*  %&
-      (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
-      `@ux`'nft-bridge-pact'
-      `@ux`'nft-bridge-pact'
-      town-id
-      l1-address
-      %metadata
-      ['name' 'symbol' ~ 4 ~ %.y ~ *address:smart l1-address]
-  ==
+    ^-  item:smart
+    :*  %&
+        (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
+        `@ux`'nft-bridge-pact'
+        `@ux`'nft-bridge-pact'
+        town-id
+        l1-address
+        %metadata
+        ['name' 'symbol' ~ 4 ~ %.y ~ *address:smart l1-address]
+    ==
   --
 ::
 ++  engine-tester
@@ -1106,7 +1106,7 @@
 ++  test-deposit-fungible
   =/  d1=deposit
     :*  town-id=0x0
-        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-contract=uethereum
         token-id=0
         destination-address=address-1
         amount=1.000.000.000
@@ -1115,7 +1115,7 @@
     ==
   =/  d2=deposit
     :*  town-id=0x0
-        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-contract=uethereum
         token-id=0
         destination-address=address-1
         amount=1.000.000.000
@@ -1135,7 +1135,7 @@
 ++  test-deposit-fungible-create-account
   =/  d1=deposit
     :*  town-id=0x0
-        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-contract=uethereum
         token-id=0
         destination-address=address-2
         amount=1.000.000.000
@@ -1144,7 +1144,7 @@
     ==
   =/  d2=deposit
     :*  town-id=0x0
-        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-contract=uethereum
         token-id=0
         destination-address=address-3
         amount=1.000.000.000
@@ -1224,9 +1224,8 @@
     (expect-eq !>(3.000.000.000) !>(-:|3:noun.p.new-meta))
   ==
 ::
-::  make sure there is no bad interaction between %give and %deposit
-::
 ++  test-deposit-and-send-tokens
+  ::  make sure there is no bad interaction between %give and %deposit
   =/  =memlist
     :~  :+  0x0
           :+  fake-sig
@@ -1236,7 +1235,7 @@
     ==
   =/  =deposit
     :*  town-id=0x0
-        token-contract=0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+        token-contract=uethereum
         token-id=0
         destination-address=address-1
         amount=1.000.000.000
@@ -1252,6 +1251,36 @@
   =/  new-acc=item:smart  (got:big modified.st id.p:account-1:ueth)
   ?>  ?=(%& -.new-acc)
   (expect-eq !>(1.200.000.000) !>(-.noun.p.new-acc))
+::
+++  test-deposit-fungible-mint-fail
+  =/  l1-token-address
+    0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=l1-token-address
+        token-id=0
+        destination-address=address-2
+        amount=1.000.000.000
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[deposit]
+  =/  meta-id=id:smart
+    (hash-data:smart `@ux`'bridge-pact' `@ux`'bridge-pact' town-id l1-token-address)
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%mint meta-id [address-1 100]~]
+    [caller-1 ~ id.p:pact:nft [1 100.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  (expect-eq !>(%6) !>(errorcode.output))
 ::
 ::  nft-tests
 ::
@@ -1340,4 +1369,31 @@
     (expect-eq !>(3) !>(-.noun.p.new-nft-2))
     (expect-eq !>(2) !>(-:|3:noun.p.new-meta))
   ==
+++  test-deposit-nft-mint-fail
+  =/  l1-address
+    0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
+  =/  =deposit
+    :*  town-id=0x0
+        token-contract=l1-address
+        token-id=2
+        destination-address=address-1
+        amount=0
+        block-number=763
+        previous-deposit-root=0x0
+    ==
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      ~ :: memlist
+    ~[deposit]
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%mint id.p:metadata:nft [address-1 'uri' ~ %.y]~]
+    [caller-1 ~ id.p:pact:nft [1 100.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  (expect-eq !>(%6) !>(errorcode.output))
 --
