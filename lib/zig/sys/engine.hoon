@@ -565,6 +565,7 @@
       (sham +.tx)
     u.eth-hash.tx
   =?  v.sig.tx  (gte v.sig.tx 27)  (sub v.sig.tx 27)
+  =?  hash  (gth (met 3 hash) 32)  (end [3 32] hash)
   =/  virt=toon
     %+  mong
       :-  ecdsa-raw-recover:secp256k1:secp:crypto
