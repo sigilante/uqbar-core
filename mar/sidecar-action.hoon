@@ -11,10 +11,19 @@
     |%
     ++  process
       %-  of
-      :~  [%trigger-batch (ot ~[[%deposits (ar sa)]])]
+      :~  [%trigger-batch (ot ~[[%deposits (ar parse-deposit)]])]
           [%batch-posted (ot ~[[%town-root (su ;~(pfix (jest '0x') hex))] [%block-at (su dem)]])]
           [%batch-rejected (ot ~[[%town-root (su ;~(pfix (jest '0x') hex))]])]
       ==
+    ++  parse-deposit
+      %-  ot
+      :~  [%bytes sa]
+          :-  %metadata
+          %-  of
+          :~  [%eth (su dem)]
+              [%erc20 (ot ~[[%name se] [%symbol se] [%decimals (su dem)]])]
+              [%erc721 (ot ~[[%'tokenURI' se]])]
+      ==  ==
     --
   --
 ::
