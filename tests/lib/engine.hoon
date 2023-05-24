@@ -1103,7 +1103,7 @@
 ::
 ::  deposit tests
 ::
-++  test-deposit-fungible
+++  test-oz-deposit-fungible
   =/  d1=deposit
     :*  town-id=0x0
         token-contract=uethereum
@@ -1132,7 +1132,7 @@
   ?>  ?=(%& -.new-acc)
   (expect-eq !>(2.300.000.000) !>(-.noun.p.new-acc))
 ::
-++  test-deposit-fungible-create-account
+++  test-oy-deposit-fungible-create-account
   =/  d1=deposit
     :*  town-id=0x0
         token-contract=uethereum
@@ -1170,7 +1170,7 @@
     (expect-eq !>(1.000.000.000) !>(-.noun.p.new-acc-2))
   ==
 ::
-++  test-deposit-fungible-create-token-and-account
+++  test-ox-deposit-fungible-create-token-and-account
   =/  l1-token-address
     0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
   =/  d1=deposit
@@ -1224,7 +1224,7 @@
     (expect-eq !>(3.000.000.000) !>(-:|3:noun.p.new-meta))
   ==
 ::
-++  test-deposit-and-send-tokens
+++  test-ow-deposit-and-send-tokens
   ::  make sure there is no bad interaction between %give and %deposit
   =/  =memlist
     :~  :+  0x0
@@ -1252,7 +1252,7 @@
   ?>  ?=(%& -.new-acc)
   (expect-eq !>(1.200.000.000) !>(-.noun.p.new-acc))
 ::
-++  test-deposit-fungible-mint-fail
+++  test-ov-deposit-fungible-mint-fail
   =/  l1-token-address
     0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
   =/  =deposit
@@ -1284,7 +1284,7 @@
 ::
 ::  nft-tests
 ::
-++  test-deposit-nft
+++  test-nz-deposit-nft
   =/  d1=deposit
     :*  town-id=0x0
         token-contract=l1-address:nft
@@ -1325,7 +1325,7 @@
     (expect-eq !>(6) !>(-:|3:noun.p.new-meta))
   ==
 ::
-++  test-deposit-nft-create-metadata
+++  test-ny-deposit-nft-create-metadata
   =/  l1-address
     0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
   =/  d1=deposit
@@ -1358,7 +1358,7 @@
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
     (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address (scot %ud 3)))
-  =/  new-meta=item:smart  
+  =/  new-meta=item:smart
     %+  got:big  modified.st
     (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
   ?>  ?=(%& -.new-meta)
@@ -1369,7 +1369,7 @@
     (expect-eq !>(3) !>(-.noun.p.new-nft-2))
     (expect-eq !>(2) !>(-:|3:noun.p.new-meta))
   ==
-++  test-deposit-nft-mint-fail
+++  test-nx-deposit-nft-mint-fail
   =/  l1-address
     0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
   =/  =deposit
