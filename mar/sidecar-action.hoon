@@ -21,8 +21,8 @@
           :-  %metadata
           %-  of
           :~  [%eth (su dem)]
-              [%erc20 (ot ~[[%name se] [%symbol se] [%decimals (su dem)]])]
-              [%erc721 (ot ~[[%'tokenURI' se]])]
+              [%erc20 (ot ~[[%name so] [%symbol so] [%decimals (su dem)]])]
+              [%erc721 (ot ~[[%'tokenURI' so]])]
       ==  ==
     --
   --
