@@ -1,5 +1,7 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
+/=  nft  /con/lib/nft
+::
 |_  [library=vase jets=jetmap:zink sigs-on=?]
 ::
 ::  +engine: the execution engine for Uqbar.
@@ -19,7 +21,7 @@
     ?~  pending
       ::  finished with execution:
       ::  (1) handle deposits
-      =.  st  (process-deposits st chain deposits)
+      =.  st  (process-deposits st deposits)
       ::  (2) put processed txns in correct order
       =.  processed.st  (flop processed.st)
       ::  (3) pay accumulated gas to ourself
@@ -460,64 +462,128 @@
   ::  inject state to produce bridged tokens (TODO support for more)
   ::
   ++  process-deposits
-    |=  [st=state-transition =chain deposits=(list deposit)]
+    |=  [st=state-transition deposits=(list deposit)]
     ^-  state-transition
+    |-
     ?~  deposits  st
-    ::  process the deposit bytes
     =*  deposit  i.deposits
     ?>  =(town-id.deposit town-id)
+    ?:  =(0 token-id.deposit)
+      :: fungible deposit
+      ::
+      ?>  (gte amount.deposit 0)
+      =/  metadata-id=id:smart
+        ?:  .=  token-contract.deposit  :: special case for bridged ETH
+            0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+          ueth-contract-id:smart
+        %:  hash-data:eng
+          `@ux`'bridge-pact'
+          `@ux`'bridge-pact'
+          town-id
+          token-contract.deposit
+        ==
+      =/  acc-id=id:smart
+        %:  hash-data:eng
+          `@ux`'bridge-pact'
+          destination-address.deposit
+          town-id
+          token-contract.deposit
+        ==
+      =;  modified=state
+        =.  p.chain.st   (uni:big p.chain.st modified)
+        =.  modified.st  (uni:big p.chain.st modified)
+        $(deposits t.deposits)
+      %+  gas:big  *state:eng
+      :~  :-  acc-id
+          ?^  item=(get:big p.chain.st acc-id)
+            ?>  ?=(%& -.u.item)
+            =+  ;;(token-account noun.p.u.item)
+            u.item(noun.p -(balance (add balance.- amount.deposit)))
+          :*  %&  acc-id
+              metadata-id
+              destination-address.deposit
+              town-id
+              token-contract.deposit
+              %account
+              [amount.deposit ~ metadata-id ~]
+          ==
+      ::
+          :-  metadata-id
+          ?^  item=(get:big p.chain.st metadata-id)
+            ?>  ?=(%& -.u.item)
+            =+  ;;(token-metadata noun.p.u.item)
+            u.item(noun.p -(supply (add supply.- amount.deposit)))
+          :*  %& 
+              metadata-id
+              `@ux`'bridge-pact'
+              `@ux`'bridge-pact'
+              town-id
+              token-contract.deposit
+              %token-metadata
+              :: TODO inject token metadata
+              :*  %name     :: TODO
+                  %symbol   :: TODO
+                  %decimals :: TODO
+                  amount.deposit
+                  ~
+                  %.n
+                  ~
+                  *address:smart
+                  token-contract.deposit
+      ==  ==  ==
+    ?>  =(0 amount.deposit)
+    :: non-fungible deposit
+    ::
     =/  metadata-id=id:smart
       %:  hash-data:eng
-        `@ux`'bridge-pact' :: TODO what is the source of the bridge contract metadata?
-        `@ux`'bridge-pact' :: TODO who is holder of the metadata? No one right?
+        `@ux`'nft-bridge-pact'
+        `@ux`'nft-bridge-pact'
         town-id
         token-contract.deposit
       ==
-    =/  acc-id=id:smart
+    =/  nft-id=id:smart
       %:  hash-data:eng
-        `@ux`'bridge-pact'  :: TODO what is the source of the bridge contract account?
+        `@ux`'nft-bridge-pact'
         destination-address.deposit
         town-id
-        token-contract.deposit
+        ::  salt matches nft.hoon salt process
+        (cat 3 token-contract.deposit (scot %ud token-id.deposit))
       ==
     =;  modified=state
-      =.  p.chain.st   (uni:big p.chain modified)
-      =.  modified.st  (uni:big p.chain modified)
+      =.  p.chain.st   (uni:big p.chain.st modified)
+      =.  modified.st  (uni:big p.chain.st modified)
       $(deposits t.deposits)
     %+  gas:big  *state:eng
-    :~  :-  acc-id
-        ?^  item=(get:big p.chain acc-id)
-          ?>  ?=(%& -.u.item)
-          =+  ;;(token-account noun.p.u.item)
-          u.item(noun.p -(balance (add balance.- amount.deposit)))
-        :*  %&  acc-id
+    :~  :-  nft-id  :: you can guarantee that this nft-id doesn't exist
+        ?<  (has:big p.chain.st nft-id)
+        :*  %&  nft-id
             metadata-id
             destination-address.deposit
             town-id
             token-contract.deposit
-            %account
-            [amount.deposit ~ metadata-id ~]
+            %nft
+            [token-id.deposit '' metadata-id ~ ~ %.y] :: TODO, URI, properties, transferrable
         ==
     ::
         :-  metadata-id
-        ?^  item=(get:big p.chain metadata-id)
+        ?^  item=(get:big p.chain.st metadata-id)
           ?>  ?=(%& -.u.item)
-          =+  ;;(token-metadata noun.p.u.item)
-          u.item(noun.p -(supply (add supply.- amount.deposit)))
-        :*  %&
+          =+  ;;(metadata:sur:nft noun.p.u.item)
+          u.item(noun.p -(supply +(supply.-)))
+        :*  %& 
             metadata-id
-            0x0 :: TODO what is source
-            0x0
+            `@ux`'nft-bridge-pact'
+            `@ux`'nft-bridge-pact'
             town-id
             token-contract.deposit
             %token-metadata
-            :: TODO make this real
-            :*  %name     :: TODO
-                %symbol   :: TODO
-                %decimals :: TODO
-                amount.deposit
+            :: TODO inject token metadata
+            :*  'name'     :: TODO
+                'symbol'   :: TODO
+                ~          :: TODO properties
+                1
                 ~
-                %.y :: doesn't matter anymore
+                %.n
                 ~
                 *address:smart
                 token-contract.deposit
@@ -565,6 +631,7 @@
       (sham +.tx)
     u.eth-hash.tx
   =?  v.sig.tx  (gte v.sig.tx 27)  (sub v.sig.tx 27)
+  =?  hash  (gth (met 3 hash) 32)  (end [3 32] hash)
   =/  virt=toon
     %+  mong
       :-  ecdsa-raw-recover:secp256k1:secp:crypto
