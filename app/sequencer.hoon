@@ -184,26 +184,26 @@
             working-batch    `batch
             pending-batch    `batch
           ==
-      ::  remote scry: only poke indexers with the hash of new batch.
-      ::  they will scry for the actual batch contents. NOTE:
-      ::  replace with sticky-scry / subscription once available.
-      ::  pin the actual batch to a path of its hash.
-      :-  :*  %pass  /pin-batch
-              %grow  /batch/(scot %ux town-id.hall.u.town)/(scot %ux root.batch)
-              ^-  page
-              :-  %sequencer-indexer-update
-              ^-  indexer-update
-              :^  %update  root.batch
-                processed-txs.batch
-              (transition-state u.town batch)
-          ==
+      :: ::  remote scry: only poke indexers with the hash of new batch.
+      :: ::  they will scry for the actual batch contents. NOTE:
+      :: ::  replace with sticky-scry / subscription once available.
+      :: ::  pin the actual batch to a path of its hash.
+      :: :-  :*  %pass  /pin-batch
+      ::         %grow  /batch/(scot %ux town-id.hall.u.town)/(scot %ux root.batch)
+      ::         ^-  page
+      ::         :-  %sequencer-indexer-update
+      ::         ^-  indexer-update
+      ::         :^  %update  root.batch
+      ::           processed-txs.batch
+      ::         (transition-state u.town batch)
+      ::     ==
       %+  turn   ~(tap by indexers)
       |=  [=dock @da]
       %+  ~(poke pass:io /indexer-updates)
         dock
       :-  %sequencer-indexer-update
-      ?.  =(p.dock our.bowl)
-        !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
+      :: ?.  =(p.dock our.bowl)
+      ::   !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
       !>  ^-  indexer-update
       :^  %update  root.batch
         processed-txs.batch
