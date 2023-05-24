@@ -1,5 +1,5 @@
 ::  UQ| non-fungible token standard v0.1
-::  last updated: 2022/08/20
+::  last updated: 2023/5/24
 ::
 ::  TODO: add gasless signing for %takes like in fungible
 ::
@@ -196,7 +196,8 @@
           salt
       ==
     =/  =id  (hash-data this.context this.context town.context salt)
-    =/  =data  [id this.context this.context town.context salt.act %metadata metadata]
+    =/  =data
+      [id this.context this.context town.context salt.act %metadata metadata]
     ?~  initial-distribution.act
       `(result ~ [[%& data] ~] ~ ~)
     ::  perform optional mint
