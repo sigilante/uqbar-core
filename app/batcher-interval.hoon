@@ -48,8 +48,12 @@
   =/  wait  (add now.bowl interval)
   :_  this
   :~  [%pass /batch-timer %arvo %b %wait wait]
-      =-  [%pass /seq-poke %agent [our.bowl %sequencer] %poke -]
-      [%sequencer-town-action !>(`town-action:seq`[%trigger-batch ~])]
+      %+  ~(poke pass:io /make-batch/(scot %da now.bowl))
+        [our.bowl %spider]
+      :-  %spider-start
+      !>  :^  ~  `tid
+            byk.bowl(r da+now.bowl)
+          batch+!>(~)
   ==
 ::
 ++  on-init   `this(state [%0 %.n ~m1])
