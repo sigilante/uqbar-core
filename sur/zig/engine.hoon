@@ -47,7 +47,7 @@
       amount=@ud
       block-number=@ud
       previous-deposit-root=@ux
-      =deposit-metadata
+      kind=deposit-metadata
   ==
 ::
 ::  mold for token metadata associated with deposits

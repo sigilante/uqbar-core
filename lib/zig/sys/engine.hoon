@@ -1,6 +1,5 @@
 /-  *zig-engine
 /+  smart=zig-sys-smart, zink=zink-zink, ethereum
-/=  nft  /con/lib/nft
 ::
 |_  [library=vase jets=jetmap:zink sigs-on=?]
 ::
@@ -467,24 +466,31 @@
     |-
     ?~  deposits  st
     =*  deposit  i.deposits
-    ?>  =(town-id.deposit town-id)
-    ?:  =(0 token-id.deposit)
-      :: fungible deposit
+    ?.  =(town-id.deposit town-id)
+      ~&  >>>  "engine: deposit failed, town id mismatch"
+      $(deposits t.deposits)
+    ?:  ?=(?(%eth %erc20) -.kind.deposit)
+      ::  fungible deposit
       ::
-      ?>  (gte amount.deposit 0)
+      ?.  (gte amount.deposit 0)
+        ~&  >>>  "engine: deposit failed, amount = 0"
+        $(deposits t.deposits)
+      ::  all fungible tokens deposited are handled by a bridge
+      ::  contract which matches the uqbar fungible standard
+      =/  pact-id=id:smart  `@ux`'bridge-pact'
       =/  metadata-id=id:smart
-        ?:  .=  token-contract.deposit  :: special case for bridged ETH
+        ?:  .=  token-contract.deposit  ::  special case for bridged ETH
             0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
           ueth-contract-id:smart
         %:  hash-data:eng
-          `@ux`'bridge-pact'
-          `@ux`'bridge-pact'
+          pact-id
+          pact-id
           town-id
           token-contract.deposit
         ==
       =/  acc-id=id:smart
         %:  hash-data:eng
-          `@ux`'bridge-pact'
+          pact-id
           destination-address.deposit
           town-id
           token-contract.deposit
@@ -496,96 +502,109 @@
       %+  gas:big  *state:eng
       :~  :-  acc-id
           ?^  item=(get:big p.chain.st acc-id)
-            ?>  ?=(%& -.u.item)
-            =+  ;;(token-account noun.p.u.item)
-            u.item(noun.p -(balance (add balance.- amount.deposit)))
+            ::  if depositor already has a token account,
+            ::  add to their existing balance
+            ?.  ?=(%& -.u.item)                 u.item
+            ?~  s=((soft @ud) -.noun.p.u.item)  u.item
+            u.item(-.noun.p (add u.s amount.deposit))
+          ::  otherwise generate an account item for them
           :*  %&  acc-id
-              metadata-id
-              destination-address.deposit
+              pact-id                      ::  source
+              destination-address.deposit  ::  holder
               town-id
-              token-contract.deposit
+              token-contract.deposit       ::  salt
               %account
-              [amount.deposit ~ metadata-id ~]
+              `token-account`[amount.deposit ~ metadata-id ~]
           ==
       ::
           :-  metadata-id
           ?^  item=(get:big p.chain.st metadata-id)
-            ?>  ?=(%& -.u.item)
+            ::  update bridged token's metadata to keep supply correct
+            ?.  ?=(%& -.u.item)  u.item
             =+  ;;(token-metadata noun.p.u.item)
             u.item(noun.p -(supply (add supply.- amount.deposit)))
-          :*  %& 
-              metadata-id
-              `@ux`'bridge-pact'
-              `@ux`'bridge-pact'
+          ::  if metadata item does not exist, generate it
+          :*  %&  metadata-id
+              pact-id                 ::  source
+              pact-id                 ::  holder
               town-id
-              token-contract.deposit
+              token-contract.deposit  ::  salt
               %token-metadata
-              :: TODO inject token metadata
-              :*  %name     :: TODO
-                  %symbol   :: TODO
-                  %decimals :: TODO
+              ^-  token-metadata
+              :*  ?:  ?=(%erc20 -.kind.deposit)
+                    name.kind.deposit
+                  'Uqbar Wrapped Ethereum'
+                  ?:  ?=(%erc20 -.kind.deposit)
+                    symbol.kind.deposit
+                  'UETH'
+                  ?:  ?=(%erc20 -.kind.deposit)
+                    decimals.kind.deposit
+                  18
                   amount.deposit
-                  ~
-                  %.n
-                  ~
-                  *address:smart
-                  token-contract.deposit
+                  ~  %.n  ~  ::  no cap, not mintable, no minters
+                  0x0  ::  no deployer
+                  token-contract.deposit  ::  salt is eth contract id
       ==  ==  ==
-    ?>  =(0 amount.deposit)
+    ::
     :: non-fungible deposit
     ::
+    =/  pact-id=id:smart  `@ux`'nft-bridge-pact'
     =/  metadata-id=id:smart
       %:  hash-data:eng
-        `@ux`'nft-bridge-pact'
-        `@ux`'nft-bridge-pact'
+        pact-id                 ::  source
+        pact-id                 ::  holder
         town-id
-        token-contract.deposit
+        token-contract.deposit  ::  collection salt
       ==
+    =/  item-salt=@
+      (cat 3 token-contract.deposit token-id.deposit)
     =/  nft-id=id:smart
       %:  hash-data:eng
-        `@ux`'nft-bridge-pact'
+        pact-id
         destination-address.deposit
         town-id
-        ::  salt matches nft.hoon salt process
-        (cat 3 token-contract.deposit (scot %ud token-id.deposit))
+        item-salt
       ==
     =;  modified=state
       =.  p.chain.st   (uni:big p.chain.st modified)
       =.  modified.st  (uni:big p.chain.st modified)
       $(deposits t.deposits)
     %+  gas:big  *state:eng
-    :~  :-  nft-id  :: you can guarantee that this nft-id doesn't exist
-        ?<  (has:big p.chain.st nft-id)
+    :~  :-  nft-id
         :*  %&  nft-id
-            metadata-id
+            pact-id
             destination-address.deposit
             town-id
-            token-contract.deposit
+            item-salt
             %nft
-            [token-id.deposit '' metadata-id ~ ~ %.y] :: TODO, URI, properties, transferrable
-        ==
+            ^-  nft
+            :*  token-id.deposit
+                token-uri.kind.deposit
+                metadata-id
+                ~  ~  %.y  ::  TODO consider grabbing properties
+        ==  ==
     ::
         :-  metadata-id
         ?^  item=(get:big p.chain.st metadata-id)
-          ?>  ?=(%& -.u.item)
-          =+  ;;(metadata:sur:nft noun.p.u.item)
+          ::  update bridged token's metadata to keep supply correct
+          ?.  ?=(%& -.u.item)  u.item
+          =+  ;;(nft-metadata noun.p.u.item)
           u.item(noun.p -(supply +(supply.-)))
-        :*  %& 
-            metadata-id
-            `@ux`'nft-bridge-pact'
-            `@ux`'nft-bridge-pact'
+        ::  if metadata item for collection does not exist, generate it
+        :*  %&  metadata-id
+            pact-id
+            pact-id
             town-id
             token-contract.deposit
             %token-metadata
-            :: TODO inject token metadata
-            :*  'name'     :: TODO
-                'symbol'   :: TODO
-                ~          :: TODO properties
+            ::  TODO inject nft metadata
+            ^-  nft-metadata
+            :*  'name'     ::  TODO
+                'symbol'   ::  TODO
+                ~          ::  TODO properties
                 1
-                ~
-                %.n
-                ~
-                *address:smart
+                ~  %.n  ~  ::  not mintable here
+                0x0  ::  no deployer
                 token-contract.deposit
     ==  ==  ==
   --
