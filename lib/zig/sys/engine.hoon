@@ -477,7 +477,8 @@
         $(deposits t.deposits)
       ::  all fungible tokens deposited are handled by a bridge
       ::  contract which matches the uqbar fungible standard
-      =/  pact-id=id:smart  `@ux`'bridge-pact'
+      =/  pact-id=id:smart
+        0x7abb.3cfe.50ef.afec.95b7.aa21.4962.e859.87a0.b22b.ec9b.3812.69d3.296b.24e1.d72a
       =/  metadata-id=id:smart
         ?:  .=  token-contract.deposit  ::  special case for bridged ETH
             0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
@@ -548,7 +549,8 @@
     ::
     :: non-fungible deposit
     ::
-    =/  pact-id=id:smart  `@ux`'nft-bridge-pact'
+    =/  pact-id=id:smart
+      0xc7ac.2b08.6748.221b.8628.3813.5875.3579.01d9.2bbe.e6e8.d385.f8c3.b801.84fc.00ae
     =/  metadata-id=id:smart
       %:  hash-data:eng
         pact-id                 ::  source
