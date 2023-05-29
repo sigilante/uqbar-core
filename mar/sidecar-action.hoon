@@ -22,7 +22,7 @@
           %-  of
           :~  [%eth (su dem)]
               [%erc20 (ot ~[[%name so] [%symbol so] [%decimals (su dem)]])]
-              [%erc721 (ot ~[[%'tokenURI' so]])]
+              [%erc721 (ot ~[[%name so] [%symbol so] [%'tokenURI' so]])]
       ==  ==
     --
   --

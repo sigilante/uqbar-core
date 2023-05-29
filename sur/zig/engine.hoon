@@ -55,7 +55,7 @@
 +$  deposit-metadata
   $%  [%eth decimals=_18]
       [%erc20 name=@t symbol=@t decimals=@ud]
-      [%erc721 token-uri=@t]
+      [%erc721 name=@t symbol=@t token-uri=@t]
   ==
 ::
 ::  the mold for %withdraw transaction calldata

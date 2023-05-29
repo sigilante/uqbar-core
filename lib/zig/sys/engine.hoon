@@ -458,23 +458,38 @@
     --
   ::
   ::  +process-deposits: take in L1 deposit transactions and
-  ::  inject state to produce bridged tokens (TODO support for more)
+  ::  inject state to produce bridged tokens
   ::
   ++  process-deposits
     |=  [st=state-transition deposits=(list deposit)]
     ^-  state-transition
     |-
     ?~  deposits  st
-    =*  deposit  i.deposits
+    ::  add deposit as a transaction so we can do each only-once
+    ::  deposit calldata is enough to make deposits hash uniquely
+    =/  tx=transaction:smart
+      [[0 0 0] [%deposit i.deposits] *shell:smart]
+    =/  =output
+      (bridge-token p.chain.st i.deposits)
+    %=  $
+      deposits      t.deposits
+      p.chain.st    (uni:big p.chain.st modified.output)
+      modified.st   (uni:big p.chain.st modified.output)
+      processed.st  [[`@ux`(sham +.tx) tx output] processed.st]
+    ==
+  ::
+  ++  bridge-token
+    |=  [=state =deposit]
+    ^-  output
     ?.  =(town-id.deposit town-id)
       ~&  >>>  "engine: deposit failed, town id mismatch"
-      $(deposits t.deposits)
+      [0 %6 ~ ~ ~]
     ?:  ?=(?(%eth %erc20) -.kind.deposit)
       ::  fungible deposit
       ::
       ?.  (gte amount.deposit 0)
         ~&  >>>  "engine: deposit failed, amount = 0"
-        $(deposits t.deposits)
+        [0 %6 ~ ~ ~]
       ::  all fungible tokens deposited are handled by a bridge
       ::  contract which matches the uqbar fungible standard
       =/  pact-id=id:smart
@@ -496,13 +511,13 @@
           town-id
           token-contract.deposit
         ==
-      =;  modified=state
-        =.  p.chain.st   (uni:big p.chain.st modified)
-        =.  modified.st  (uni:big p.chain.st modified)
-        $(deposits t.deposits)
+      =/  event=contract-event
+        :+  pact-id  %deposit
+        [token-contract destination-address amount]:deposit
+      =-  [0 %0 - ~ [event]^~]
       %+  gas:big  *state:eng
       :~  :-  acc-id
-          ?^  item=(get:big p.chain.st acc-id)
+          ?^  item=(get:big state acc-id)
             ::  if depositor already has a token account,
             ::  add to their existing balance
             ?.  ?=(%& -.u.item)                 u.item
@@ -519,7 +534,7 @@
           ==
       ::
           :-  metadata-id
-          ?^  item=(get:big p.chain.st metadata-id)
+          ?^  item=(get:big state metadata-id)
             ::  update bridged token's metadata to keep supply correct
             ?.  ?=(%& -.u.item)  u.item
             =+  ;;(token-metadata noun.p.u.item)
@@ -543,11 +558,11 @@
                   18
                   amount.deposit
                   ~  %.n  ~  ::  no cap, not mintable, no minters
-                  0x0  ::  no deployer
+                  0x0        ::  no deployer
                   token-contract.deposit  ::  salt is eth contract id
       ==  ==  ==
     ::
-    :: non-fungible deposit
+    ::  non-fungible deposit
     ::
     =/  pact-id=id:smart
       0xc7ac.2b08.6748.221b.8628.3813.5875.3579.01d9.2bbe.e6e8.d385.f8c3.b801.84fc.00ae
@@ -567,10 +582,10 @@
         town-id
         item-salt
       ==
-    =;  modified=state
-      =.  p.chain.st   (uni:big p.chain.st modified)
-      =.  modified.st  (uni:big p.chain.st modified)
-      $(deposits t.deposits)
+    =/  event=contract-event
+      :+  pact-id  %deposit
+      [token-contract destination-address token-id]:deposit
+    =-  [0 %0 - ~ [event]^~]
     %+  gas:big  *state:eng
     :~  :-  nft-id
         :*  %&  nft-id
@@ -587,7 +602,7 @@
         ==  ==
     ::
         :-  metadata-id
-        ?^  item=(get:big p.chain.st metadata-id)
+        ?^  item=(get:big state metadata-id)
           ::  update bridged token's metadata to keep supply correct
           ?.  ?=(%& -.u.item)  u.item
           =+  ;;(nft-metadata noun.p.u.item)
@@ -599,11 +614,10 @@
             town-id
             token-contract.deposit
             %token-metadata
-            ::  TODO inject nft metadata
             ^-  nft-metadata
-            :*  'name'     ::  TODO
-                'symbol'   ::  TODO
-                ~          ::  TODO properties
+            :*  name.kind.deposit
+                symbol.kind.deposit
+                ~          ::  TODO consider grabbing properties
                 1
                 ~  %.n  ~  ::  not mintable here
                 0x0  ::  no deployer

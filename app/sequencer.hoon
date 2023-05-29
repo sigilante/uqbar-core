@@ -16,14 +16,14 @@
 ::  ETH block height, but spoof the town-root.
 ::
 /-  uqbar=zig-uqbar
-/+  default-agent, dbug, io=agentio, verb,
+/+  default-agent, dbug, agentio, verb,
     *zig-sequencer, zink=zink-zink, sig=zig-sig,
     engine=zig-sys-engine
 ::  Choose which library smart contracts are executed against here
 ::
 /*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
 |%
-+$  card  card:agent:gall
++$  card  $+(card card:agent:gall)
 ::
 +$  state-4
   $:  %4
@@ -52,6 +52,7 @@
 ^-  agent:gall
 |_  =bowl:gall
 +*  this  .
+    io    ~(. agentio bowl)
     def   ~(. (default-agent this %|) bowl)
 ::
 ++  on-init
@@ -114,7 +115,8 @@
     ?-    -.act
         %batch-posted
       ::  converts pending-batch into current town state
-      ::  and clears pending-batch
+      ::  and clears pending-batch, then shares the batch
+      ::  with indexers
       ?~  town  !!
       ?~  pending-batch
         ~|("received batch approval without pending batch" !!)
@@ -124,7 +126,49 @@
       ::  inject received town-root into state of town
       =.  chain.new-town
         (inject-town-root chain.new-town town-root.act)
-      `this(pending-batch ~, town `new-town, last-batch-block block-at.act)
+      =/  root=@ux
+        ->-.p.chain.new-town
+      ::  poke all watching indexers with update and
+      ::  remove indexers who have not ack'd recently enough.
+      =.  indexers
+        %-  malt
+        %+  skim  ~(tap by indexers)
+        |=  [dock last-ack=@da]
+        (gte last-ack last-batch-time)
+      :_  %=  this
+            pending-batch     ~
+            town              `new-town
+            last-batch-time   now.bowl
+            last-batch-block  block-at.act
+          ==
+      ::  remote scry: only poke indexers with the hash of new batch.
+      ::  they will scry for the actual batch contents. NOTE:
+      ::  replace with sticky-scry / subscription once available.
+      ::  pin the actual batch to a path of its hash.
+      :-  :*  %pass  /pin-batch
+              %grow  :~  %batch
+                         (scot %ux town-id.hall.new-town)
+                         (scot %ux root)
+                     ==
+              ^-  page
+              :-  %sequencer-indexer-update
+              ^-  indexer-update
+              :^  %update  root
+                processed-txs.u.pending-batch
+              new-town
+          ==
+      ~&  >>  [%notify town-id.hall.new-town root]
+      %+  turn   ~(tap by indexers)
+      |=  [=dock @da]
+      %+  ~(poke pass:io /indexer-updates)
+        dock
+      :-  %sequencer-indexer-update
+      !>  ^-  indexer-update
+      ?.  =(p.dock our.bowl)
+        [%notify town-id.hall.new-town root]
+      :^  %update  root
+        processed-txs.u.pending-batch
+      new-town
     ::
         %batch-rejected
       ::  handle pending-batch being invalid
@@ -139,15 +183,9 @@
         ~|("%sequencer: no state" !!)
       ::  ?~  rollup
       ::    ~|("%sequencer: no known rollup contract" !!)
-      ?^  pending-batch
-        ~|("%sequencer: cannot batch, last one still pending" !!)
       ~&  %perform-batch
       ~>  %bout
       ?>  ?=(%full-publish -.mode.hall.u.town)
-      ::  publish full diff data
-      ::
-      ::  produce diff and new state with engine
-      ::
       =/  addr  p.sequencer.hall.u.town
       =/  our-caller
         (get-our-caller addr town-id.hall.u.town [our now]:bowl)
@@ -155,15 +193,33 @@
       ::  convert deposit bytes into mold, feed into engine
       =/  deposits=(list deposit)
         (turn deposits.act deposit-from-tape)
+      ::  if we've already performed a batch, the trigger is
+      ::  meant to add further deposits to this batch. this must
+      ::  clear outputs in our working-batch, optimistic
+      ::  computation of which must be discarded.
+      ::  also, deposits will be checked against list of those
+      ::  already processed, and only new ones will be computed
       =/  new=state-transition
-        %^    %~  run  eng
-              :^    our-caller
-                  town-id.hall.u.town
-                batch-num.hall.u.town
-              last-batch-block
-            chain.u.town
-          memlist
-        deposits
+        %-  %~  run  eng
+            :^    our-caller
+                town-id.hall.u.town
+              batch-num.hall.u.town
+            last-batch-block
+        ?~  pending-batch
+          ::  batch is being triggered fresh
+          ::  produce diff and new state with engine
+          ::
+          [chain.u.town memlist deposits]
+        ::  batch is being re-triggered with new deposits:
+        ::  take the current pending, and simply add deposits
+        =/  tx-set=(set @ux)
+          %-  ~(gas in *(set @ux))
+          (turn processed-txs.u.pending-batch head)
+        =-  [chain.u.pending-batch ~ -]
+        %+  skip  deposits
+        |=  =deposit
+        %-  ~(has in tx-set)
+        `@ux`(sham [[%deposit deposit] *shell:smart])
       =/  batch=proposed-batch
         :*  +(batch-num.hall.u.town)
             processed.new
@@ -171,43 +227,30 @@
             `@ux`(sham ~[modified.new])
             root=->-.p.chain.new  ::  top level merkle root
         ==
-      ::  poke all watching indexers with update and
-      ::  remove indexers who have not ack'd recently enough.
-      =.  indexers
-        %-  malt
-        %+  skim  ~(tap by indexers)
-        |=  [dock last-ack=@da]
-        (gte last-ack last-batch-time)
-      :_  %=  this
-            memlist          ~
-            last-batch-time  now.bowl
-            working-batch    `batch
-            pending-batch    `batch
-          ==
-      ::  remote scry: only poke indexers with the hash of new batch.
-      ::  they will scry for the actual batch contents. NOTE:
-      ::  replace with sticky-scry / subscription once available.
-      ::  pin the actual batch to a path of its hash.
-      :-  :*  %pass  /pin-batch
-              %grow  /batch/(scot %ux town-id.hall.u.town)/(scot %ux root.batch)
-              ^-  page
-              :-  %sequencer-indexer-update
-              ^-  indexer-update
-              :^  %update  root.batch
-                processed-txs.batch
-              (transition-state u.town batch)
-          ==
-      %+  turn   ~(tap by indexers)
-      |=  [=dock @da]
-      %+  ~(poke pass:io /indexer-updates)
-        dock
-      :-  %sequencer-indexer-update
-      ?.  =(p.dock our.bowl)
-        !>(`indexer-update`[%notify town-id.hall.u.town root.batch])
-      !>  ^-  indexer-update
-      :^  %update  root.batch
-        processed-txs.batch
-      (transition-state u.town batch)
+      ?~  pending-batch
+        :-  ~
+        %=  this
+          memlist          ~
+          working-batch    `batch
+          pending-batch    `batch
+        ==
+      ::  force recomputing of outputs by pushing memlist
+      ::  back into the mempool -- we will get all receipts.
+      ::  TODO super ugly, try to fix in future.
+      ~&  >>  "sequencer: batch re-triggered, recomputing working state"
+      =.  pending
+        %-  ~(gas by *mempool)
+        %+  turn  memlist
+        |=  [hash=@ux tx=transaction:smart *]
+        [hash [our.bowl tx]]
+      :-  :_  ~
+          %-  ~(poke-self pass:io /rerun-on-reorg)
+          sequencer-town-action+!>([%run-pending ~])
+      %=  this
+        memlist        ~
+        working-batch  ~
+        pending-batch  `batch
+      ==
     ==
   ==
   ::
@@ -275,8 +318,7 @@
       =+  [`@ux`(sham +.transaction.act) src.bowl transaction.act]
       :_  state(pending (~(put by pending) -))
       :_  ~
-      %+  ~(poke pass:io /run-single)
-        [our dap]:bowl
+      %-  ~(poke-self pass:io /run-single)
       sequencer-town-action+!>([%run-pending ~])
     ::
         %run-pending
