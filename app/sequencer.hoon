@@ -173,6 +173,7 @@
         %batch-rejected
       ::  handle pending-batch being invalid
       ::  (working-batch also becomes invalid!)
+      ::  TODO reinstantiate mempool from rejected batch..
       ~&  >>>  "%sequencer: pending batch REJECTED"
       `this(pending-batch ~, working-batch ~)
     ::
@@ -183,7 +184,7 @@
         ~|("%sequencer: no state" !!)
       ::  ?~  rollup
       ::    ~|("%sequencer: no known rollup contract" !!)
-      ~&  %perform-batch
+      ~&  %sequencer-perform-batch
       ~>  %bout
       ?>  ?=(%full-publish -.mode.hall.u.town)
       =/  addr  p.sequencer.hall.u.town
@@ -212,10 +213,14 @@
           [chain.u.town memlist deposits]
         ::  batch is being re-triggered with new deposits:
         ::  take the current pending, and simply add deposits
+        =/  rerun
+          %+  turn  processed-txs.u.pending-batch
+          |=  [a=@ux b=transaction:smart c=output]
+          [a b `c]
         =/  tx-set=(set @ux)
           %-  ~(gas in *(set @ux))
           (turn processed-txs.u.pending-batch head)
-        =-  [chain.u.pending-batch ~ -]
+        =-  [chain.u.town rerun -]
         %+  skip  deposits
         |=  =deposit
         %-  ~(has in tx-set)
@@ -227,30 +232,7 @@
             `@ux`(sham ~[modified.new])
             root=->-.p.chain.new  ::  top level merkle root
         ==
-      ?~  pending-batch
-        :-  ~
-        %=  this
-          memlist          ~
-          working-batch    `batch
-          pending-batch    `batch
-        ==
-      ::  force recomputing of outputs by pushing memlist
-      ::  back into the mempool -- we will get all receipts.
-      ::  TODO super ugly, try to fix in future.
-      ~&  >>  "sequencer: batch re-triggered, recomputing working state"
-      =.  pending
-        %-  ~(gas by *mempool)
-        %+  turn  memlist
-        |=  [hash=@ux tx=transaction:smart *]
-        [hash [our.bowl tx]]
-      :-  :_  ~
-          %-  ~(poke-self pass:io /rerun-on-reorg)
-          sequencer-town-action+!>([%run-pending ~])
-      %=  this
-        memlist        ~
-        working-batch  ~
-        pending-batch  `batch
-      ==
+      `this(memlist ~, working-batch ~, pending-batch `batch)
     ==
   ==
   ::
@@ -287,9 +269,9 @@
           !>  ^-  indexer-update
           [%update new-root ~ town]
       %=  state
-        private-key  `private-key.act
-        town         `town
-        status        %available
+        private-key    `private-key.act
+        town           `town
+        status          %available
         working-batch  `[0 ~ chain.town 0x0 new-root]
       ==
     ::
@@ -317,12 +299,18 @@
       =/  ta-now  `@ta`(scot %da now.bowl)
       =+  [`@ux`(sham +.transaction.act) src.bowl transaction.act]
       :_  state(pending (~(put by pending) -))
+      ::  only build out next batch in advance if we don't
+      ::  have one pending already
+      ?^  pending-batch  ~
       :_  ~
       %-  ~(poke-self pass:io /run-single)
       sequencer-town-action+!>([%run-pending ~])
     ::
         %run-pending
       ?>  =(src.bowl our.bowl)
+      ?^  pending-batch
+        ~&  >>>  "sequencer: waiting for last batch confirmation"
+        `state
       ?:  =(~ pending)
         ~&  >  "%sequencer: no pending txns to run"
         `state
@@ -351,6 +339,7 @@
             memlist        (weld memlist `^memlist`processed)
             working-batch  `[0 ~ chain.new 0x0 0x0]
           ==
+      ::  give out receipts for all transactions just processed
       ^-  (list card)
       =<  p
       %^  spin  processed.new  0
