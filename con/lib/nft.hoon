@@ -1,5 +1,5 @@
 ::  UQ| non-fungible token standard v0.1
-::  last updated: 2022/08/20
+::  last updated: 2023/5/24
 ::
 ::  TODO: add gasless signing for %takes like in fungible
 ::
@@ -165,7 +165,7 @@
     ::  create new item for NFT
     ::  unique salt for each item in collection
     =*  m  i.mints.act
-    =/  salt    (cat 3 salt.meta (scot %ud next-item-id))
+    =/  salt    (cat 3 salt.meta next-item-id)
     =/  new-id  (hash-data this.context to.m town.context salt)
     ::  properties must match those in metadata spec!
     ?>  =(properties.noun.meta ~(key py properties.m))
@@ -180,6 +180,8 @@
   ++  deploy
     |=  [=context act=deploy:sur]
     ^-  (quip call diff)
+    ::  make salt unique by including deployer + their input
+    =/  salt  (cat 3 salt.act id.caller.context)
     ::  create new NFT collection with a metadata item
     ::  and optional initial mint
     =/  =metadata:sur
@@ -191,10 +193,11 @@
           ?~(minters.act %.n %.y)
           minters.act
           id.caller.context
-          salt.act
+          salt
       ==
-    =/  =id    (hash-data this.context this.context town.context salt.act)
-    =/  =data  [id this.context this.context town.context salt.act %metadata metadata]
+    =/  =id  (hash-data this.context this.context town.context salt)
+    =/  =data
+      [id this.context this.context town.context salt.act %metadata metadata]
     ?~  initial-distribution.act
       `(result ~ [[%& data] ~] ~ ~)
     ::  perform optional mint

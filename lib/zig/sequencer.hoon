@@ -2,7 +2,7 @@
 /+  merk
 |%
 ++  deposit-from-tape
-  |=  =tape
+  |=  [=tape =deposit-metadata]
   ^-  deposit
   ::  TODO this format will probably change
   =+  %+  rev  3
@@ -14,6 +14,7 @@
       (rev 3 32 (cut 3 [128 32] -))  ::  amount
       (rev 3 32 (cut 3 [160 32] -))  ::  block-number
       (rev 3 32 (cut 3 [192 32] -))  ::  previous deposit root
+      deposit-metadata
   ==
 ::
 ++  transition-state

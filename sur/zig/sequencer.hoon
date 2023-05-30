@@ -78,7 +78,7 @@
   ==
 ::
 +$  sidecar-action
-  $%  [%trigger-batch deposits=(list tape)]
+  $%  [%trigger-batch deposits=(list [bytes=tape =deposit-metadata])]
       [%batch-posted town-root=@ux block-at=@ud]
       [%batch-rejected town-root=@ux]
   ==

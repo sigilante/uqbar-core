@@ -47,6 +47,15 @@
       amount=@ud
       block-number=@ud
       previous-deposit-root=@ux
+      kind=deposit-metadata
+  ==
+::
+::  mold for token metadata associated with deposits
+::
++$  deposit-metadata
+  $%  [%eth decimals=_18]
+      [%erc20 name=@t symbol=@t decimals=@ud]
+      [%erc721 name=@t symbol=@t token-uri=@t]
   ==
 ::
 ::  the mold for %withdraw transaction calldata
