@@ -45,4 +45,4 @@
   |=  =desk
   [desk /(scot %p p.bec)/[desk]/(scot %da now)]
 ::
-(brass:pill sys dez prime)
+(brass:pill sys dez prime ~)
