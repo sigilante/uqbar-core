@@ -24,11 +24,13 @@
 ::  fake data
 ::
 ::  separate addresses necessary to avoid circular definitions in zigs
-++  sequencer-address   0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0
+++  sequencer-address  0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0
 ++  address-1          0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-++  address-2           0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
+++  address-2          0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
 ++  address-3          0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
 ++  uethereum          0xeeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee.eeee
+++  bridge-pact        0x7abb.3cfe.50ef.afec.95b7.aa21.4962.e859.87a0.b22b.ec9b.3812.69d3.296b.24e1.d72a
+++  nft-bridge-pact    0xc7ac.2b08.6748.221b.8628.3813.5875.3579.01d9.2bbe.e6e8.d385.f8c3.b801.84fc.00ae
 ++  caller-1   `caller:smart`[address-1 1 id.p:account-1:zigs]
 ++  caller-2   `caller:smart`[address-2 1 id.p:account-2:zigs]
 ++  caller-3   `caller:smart`[address-3 6 id.p:account-3:zigs]
@@ -108,9 +110,9 @@
   ++  pact
     ^-  item:smart
     :*  %|
-        `@ux`'bridge-pact'  ::  id
-        `@ux`'bridge-pact'  ::  source
-        `@ux`'bridge-pact'  ::  holder
+        bridge-pact  ::  id
+        bridge-pact  ::  source
+        bridge-pact  ::  holder
         town-id
         [- +]:(cue fung-contract)
         ~
@@ -118,8 +120,8 @@
   ++  account-1
     ^-  item:smart
     :*  %&
-        (hash-data:smart `@ux`'bridge-pact' address-1 town-id uethereum)
-        `@ux`'bridge-pact'
+        (hash-data:smart bridge-pact address-1 town-id uethereum)
+        bridge-pact
         address-1
         town-id
         uethereum
@@ -135,9 +137,9 @@
   ++  pact
     ^-  item:smart
     :*  %|
-        `@ux`'nft-bridge-pact'  ::  id
-        `@ux`'nft-bridge-pact'  ::  source
-        `@ux`'nft-bridge-pact'  ::  holder
+        nft-bridge-pact  ::  id
+        nft-bridge-pact  ::  source
+        nft-bridge-pact  ::  holder
         town-id
         [- +]:(cue nft-contract)
         ~
@@ -145,9 +147,9 @@
   ++  metadata
     ^-  item:smart
     :*  %&
-        (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
-        `@ux`'nft-bridge-pact'
-        `@ux`'nft-bridge-pact'
+        (hash-data:smart nft-bridge-pact nft-bridge-pact town-id l1-address)
+        nft-bridge-pact
+        nft-bridge-pact
         town-id
         l1-address
         %metadata
@@ -1112,6 +1114,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%eth decimals=18]
     ==
   =/  d2=deposit
     :*  town-id=0x0
@@ -1121,6 +1124,7 @@
         amount=1.000.000.000
         block-number=764
         previous-deposit-root=0x1
+        [%eth decimals=18]
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1141,6 +1145,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%eth decimals=18]
     ==
   =/  d2=deposit
     :*  town-id=0x0
@@ -1150,6 +1155,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%eth decimals=18]
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1159,10 +1165,10 @@
     ~[d1 d2]
   =/  new-acc-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'bridge-pact' address-2 town-id uethereum)
+    (hash-data:smart bridge-pact address-2 town-id uethereum)
   =/  new-acc-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'bridge-pact' address-3 town-id uethereum)
+    (hash-data:smart bridge-pact address-3 town-id uethereum)
   ?>  ?=(%& -.new-acc-1)
   ?>  ?=(%& -.new-acc-2)
   ;:  weld
@@ -1181,6 +1187,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%erc20 name='asdf' symbol='asdf' decimals=18]
     ==
   =/  d2=deposit
     :*  town-id=0x0
@@ -1190,6 +1197,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%erc20 name='asdf' symbol='asdf' decimals=18]
     ==
   =/  d3=deposit
     :*  town-id=0x0
@@ -1199,6 +1207,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%erc20 name='asdf' symbol='asdf' decimals=18]
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1208,13 +1217,13 @@
     ~[d1 d2 d3]
   =/  new-acc-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'bridge-pact' address-2 town-id l1-token-address)
+    (hash-data:smart bridge-pact address-2 town-id l1-token-address)
   =/  new-acc-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'bridge-pact' address-3 town-id l1-token-address)
+    (hash-data:smart bridge-pact address-3 town-id l1-token-address)
   =/  new-meta=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'bridge-pact' `@ux`'bridge-pact' town-id l1-token-address)
+    (hash-data:smart bridge-pact bridge-pact town-id l1-token-address)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-acc-1)
   ?>  ?=(%& -.new-acc-2)
@@ -1241,6 +1250,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%eth decimals=18]
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1263,6 +1273,7 @@
         amount=1.000.000.000
         block-number=763
         previous-deposit-root=0x0
+        [%erc20 name='asdf' symbol='asdf' decimals=18]
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1271,7 +1282,7 @@
       ~ :: memlist
     ~[deposit]
   =/  meta-id=id:smart
-    (hash-data:smart `@ux`'bridge-pact' `@ux`'bridge-pact' town-id l1-token-address)
+    (hash-data:smart bridge-pact bridge-pact town-id l1-token-address)
   =/  tx=transaction:smart
     :+  fake-sig
       [%mint meta-id [address-1 100]~]
@@ -1293,6 +1304,7 @@
         amount=0
         block-number=763
         previous-deposit-root=0x0
+        [%erc721 name='asdf' symbol='asdf' token-uri='']
     ==
   =/  d2=deposit
     :*  town-id=0x0
@@ -1302,6 +1314,7 @@
         amount=0
         block-number=763
         previous-deposit-root=0x0
+        [%erc721 name='asdf' symbol='asdf' token-uri='']
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1311,10 +1324,10 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address:nft (scot %ud 1)))
+    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 1))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address:nft (scot %ud 2)))
+    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 2))
   =/  new-meta=item:smart  (got:big modified.st id.p:metadata:nft)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-nft-1)
@@ -1336,6 +1349,7 @@
         amount=0
         block-number=763
         previous-deposit-root=0x0
+        [%erc721 name='asdf' symbol='asdf' token-uri='']
     ==
   =/  d2=deposit
     :*  town-id=0x0
@@ -1345,6 +1359,7 @@
         amount=0
         block-number=763
         previous-deposit-root=0x0
+        [%erc721 name='asdf' symbol='asdf' token-uri='']
     ==
   =/  st=state-transition
     %^    %~  run  eng
@@ -1354,13 +1369,13 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address (scot %ud 2)))
+    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address 2))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' address-1 town-id (cat 3 l1-address (scot %ud 3)))
+    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address 3))
   =/  new-meta=item:smart
     %+  got:big  modified.st
-    (hash-data:smart `@ux`'nft-bridge-pact' `@ux`'nft-bridge-pact' town-id l1-address)
+    (hash-data:smart nft-bridge-pact nft-bridge-pact town-id l1-address)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-nft-1)
   ?>  ?=(%& -.new-nft-2)
@@ -1380,6 +1395,7 @@
         amount=0
         block-number=763
         previous-deposit-root=0x0
+        [%erc721 name='asdf' symbol='asdf' token-uri='']
     ==
   =/  st=state-transition
     %^    %~  run  eng

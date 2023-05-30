@@ -165,7 +165,7 @@
     ::  create new item for NFT
     ::  unique salt for each item in collection
     =*  m  i.mints.act
-    =/  salt    (cat 3 salt.meta (scot %ud next-item-id))
+    =/  salt    (cat 3 salt.meta next-item-id)
     =/  new-id  (hash-data this.context to.m town.context salt)
     ::  properties must match those in metadata spec!
     ?>  =(properties.noun.meta ~(key py properties.m))
