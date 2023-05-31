@@ -38,12 +38,6 @@
     =/  =output
       ?^  output.i.pending
         u.output.i.pending
-      ::  if transaction is unsigned, convert caller to designated
-      ::  contract account
-      =?    caller.tx
-          &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
-        =-  [contract.tx 0 -]
-        (hash-data zigs-contract-id:smart contract.tx town-id `@`'zigs')
       ::
       =/  op=[output scry-fees]
         ~(intake eng chain.st tx)
@@ -140,11 +134,15 @@
           contract  contract.i.-.u.mov
           town      town.i.-.u.mov
           calldata  calldata.i.-.u.mov
+          caller  =-  [contract.tx 0 -]
+          (hash-data zigs-contract-id:smart contract.tx town-id `@`'zigs')
         ==
       ?^  v=(valid-eoa ?:(?=(^ abstract) %.y %.n))
         u.v
-      ::
-      =/  gas-payer  address.caller.tx
+      =/  gas-payer=address:smart
+        ?:  &(?=(^ abstract) ?=(%& -.u.abstract))
+          address.caller.p.u.abstract
+        address.caller.tx
       |-
       ?^  abstract
         ?:  ?=(%| -.u.abstract)  p.u.abstract
@@ -153,7 +151,7 @@
         ?.  (~(audit tax p.chain) tx)
           ~&  >>>  "engine: abstract contract failed gas audit"
           $(abstract `%|^(exhaust bud.gas.tx %3 ~ ~))
-        $(gas-payer contract.tx, abstract ~)
+        $(abstract ~)
       ::  special burn transaction: remove an item from a town and
       ::  reinstantiate it on a different town.
       ::
@@ -212,7 +210,7 @@
         ::  only assert budget check when gas-payer is interacting
         ?.  =(address.caller.tx gas-payer)
           [0 q.calldata.tx]
-        [bud.gas.tx q.calldata.tx]
+        [(mul [rate bud]:gas.tx) q.calldata.tx]
       ?~  pac=(get:big p.chain contract.tx)
         ~&  >>>  "engine: call to missing pact"
         (exhaust bud.gas.tx %4 ~ ~)
@@ -400,7 +398,6 @@
         ~
       ?~  m=((soft (unit move)) p.p.book)
         ~
-      ~&  >  u.m
       u.m
     ::
     ::  +load: take contract code and combine with smart-lib

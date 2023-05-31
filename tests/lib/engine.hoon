@@ -6,6 +6,7 @@
 /*  nft-contract            %jam   /con/compiled/nft/jam
 /*  fung-contract           %jam   /con/compiled/fungible/jam
 /*  zigs-contract           %jam   /con/compiled/zigs/jam
+/*  aa-contract             %jam   /con/compiled/account/jam
 /*  engine-tester-contract  %jam   /con/compiled/engine-tester/jam
 =>
 |%
@@ -18,7 +19,7 @@
 ++  fake-sig  [0 0 0]
 ++  eng
   %~  engine  engine
-  :+  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
+  :+  !<(vase [-:!>(*vase) (cue q.q.smart-lib-noun)])
   jets:zink  %.n  ::  sigs off
 ::
 ::  fake data
@@ -51,7 +52,7 @@
   ++  sequencer-account
     ^-  item:smart
     :*  %&
-        (hash-data:smart zigs-contract-id:smart sequencer-address town-id `@`'zigs')
+        (hash-data zigs-contract-id:smart sequencer-address town-id `@`'zigs')
         zigs-contract-id:smart
         sequencer-address
         town-id
@@ -63,7 +64,7 @@
     |=  [holder=id:smart amt=@ud]
     ^-  item:smart
     :*  %&
-        (hash-data:smart zigs-contract-id:smart holder town-id `@`'zigs')
+        (hash-data zigs-contract-id:smart holder town-id `@`'zigs')
         zigs-contract-id:smart
         holder
         town-id
@@ -73,7 +74,7 @@
   ++  account-1
     ^-  item:smart
     :*  %&
-        (hash-data:smart zigs-contract-id:smart address-1 town-id `@`'zigs')
+        (hash-data zigs-contract-id:smart address-1 town-id `@`'zigs')
         zigs-contract-id:smart
         address-1
         town-id
@@ -84,7 +85,7 @@
   ++  account-2
     ^-  item:smart
     :*  %&
-        (hash-data:smart zigs-contract-id:smart address-2 town-id `@`'zigs')
+        (hash-data zigs-contract-id:smart address-2 town-id `@`'zigs')
         zigs-contract-id:smart
         address-2
         town-id
@@ -95,7 +96,7 @@
   ++  account-3
     ^-  item:smart
     :*  %&
-        (hash-data:smart zigs-contract-id:smart address-3 town-id `@`'zigs')
+        (hash-data zigs-contract-id:smart address-3 town-id `@`'zigs')
         zigs-contract-id:smart
         address-3
         town-id
@@ -120,7 +121,7 @@
   ++  account-1
     ^-  item:smart
     :*  %&
-        (hash-data:smart bridge-pact address-1 town-id uethereum)
+        (hash-data bridge-pact address-1 town-id uethereum)
         bridge-pact
         address-1
         town-id
@@ -147,7 +148,7 @@
   ++  metadata
     ^-  item:smart
     :*  %&
-        (hash-data:smart nft-bridge-pact nft-bridge-pact town-id l1-address)
+        (hash-data nft-bridge-pact nft-bridge-pact town-id l1-address)
         nft-bridge-pact
         nft-bridge-pact
         town-id
@@ -173,7 +174,7 @@
   ++  dummy-data
     ^-  item:smart
     :*  %&
-        (hash-data:smart id.p:pact id.p:pact town-id 'salt')
+        (hash-data id.p:pact id.p:pact town-id 'salt')
         id.p:pact
         id.p:pact
         town-id
@@ -181,6 +182,23 @@
         %dummy
         'my-noun'
     ==
+  --
+::
+++  abstract-account
+  |%
+  ++  pact
+    ^-  item:smart
+    =/  code  (cue aa-contract)
+    :*  %|
+        (hash-pact 0x0 0x0 town-id code)  ::  id
+        0x0  ::  source
+        0x0  ::  holder
+        town-id
+        [-.code +.code]
+        ~
+    ==
+  ++  zigs  ^-  id:smart
+    (hash-data zigs-contract-id:smart id.p:pact town-id `@`'zigs')
   --
 ::
 ++  burnable
@@ -212,6 +230,8 @@
   ::
       [id.p:pact pact]:nft
       [id.p:metadata metadata]:nft
+  ::
+      [id.p:pact pact]:abstract-account
   ==
 ++  fake-nonces
   ^-  nonces
@@ -231,16 +251,18 @@
 ::
 ::  begin single-transaction tests
 ::  calls +intake in eng core, examines single-transaction *output*
-::  alphabet chars at beginning of test name are to make order roughly match
+::  alphabet chars at beginning of test name are to make order
+::  of execution match order in file, and to specific groups of
+::  tests by name to only do a partial run-through
 ::
 ::
 ::  tests for zigs contract interactions
 ::
 ++  test-zz-engine-zigs-give
-  =/  =calldata:smart
-    [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
-  =/  =shell:smart  [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
-  =/  tx=transaction:smart  [fake-sig calldata shell]
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%give address:caller-2:zigs 1.000 id.p:account-1:zigs]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=1 eth-block-height=0]
@@ -1165,10 +1187,10 @@
     ~[d1 d2]
   =/  new-acc-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart bridge-pact address-2 town-id uethereum)
+    (hash-data bridge-pact address-2 town-id uethereum)
   =/  new-acc-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart bridge-pact address-3 town-id uethereum)
+    (hash-data bridge-pact address-3 town-id uethereum)
   ?>  ?=(%& -.new-acc-1)
   ?>  ?=(%& -.new-acc-2)
   ;:  weld
@@ -1217,13 +1239,13 @@
     ~[d1 d2 d3]
   =/  new-acc-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart bridge-pact address-2 town-id l1-token-address)
+    (hash-data bridge-pact address-2 town-id l1-token-address)
   =/  new-acc-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart bridge-pact address-3 town-id l1-token-address)
+    (hash-data bridge-pact address-3 town-id l1-token-address)
   =/  new-meta=item:smart
     %+  got:big  modified.st
-    (hash-data:smart bridge-pact bridge-pact town-id l1-token-address)
+    (hash-data bridge-pact bridge-pact town-id l1-token-address)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-acc-1)
   ?>  ?=(%& -.new-acc-2)
@@ -1263,6 +1285,7 @@
   (expect-eq !>(1.200.000.000) !>(-.noun.p.new-acc))
 ::
 ++  test-ov-deposit-fungible-mint-fail
+  =/  eng  eng
   =/  l1-token-address
     0xffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff.ffff
   =/  =deposit
@@ -1282,7 +1305,7 @@
       ~ :: memlist
     ~[deposit]
   =/  meta-id=id:smart
-    (hash-data:smart bridge-pact bridge-pact town-id l1-token-address)
+    (hash-data bridge-pact bridge-pact town-id l1-token-address)
   =/  tx=transaction:smart
     :+  fake-sig
       [%mint meta-id [address-1 100]~]
@@ -1324,10 +1347,10 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 1))
+    (hash-data nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 1))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 2))
+    (hash-data nft-bridge-pact address-1 town-id (cat 3 l1-address:nft 2))
   =/  new-meta=item:smart  (got:big modified.st id.p:metadata:nft)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-nft-1)
@@ -1369,13 +1392,13 @@
     ~[d1 d2]
   =/  new-nft-1=item:smart
     %+  got:big  modified.st
-    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address 2))
+    (hash-data nft-bridge-pact address-1 town-id (cat 3 l1-address 2))
   =/  new-nft-2=item:smart
     %+  got:big  modified.st
-    (hash-data:smart nft-bridge-pact address-1 town-id (cat 3 l1-address 3))
+    (hash-data nft-bridge-pact address-1 town-id (cat 3 l1-address 3))
   =/  new-meta=item:smart
     %+  got:big  modified.st
-    (hash-data:smart nft-bridge-pact nft-bridge-pact town-id l1-address)
+    (hash-data nft-bridge-pact nft-bridge-pact town-id l1-address)
   ?>  ?=(%& -.new-meta)
   ?>  ?=(%& -.new-nft-1)
   ?>  ?=(%& -.new-nft-2)
@@ -1384,7 +1407,9 @@
     (expect-eq !>(3) !>(-.noun.p.new-nft-2))
     (expect-eq !>(2) !>(-:|3:noun.p.new-meta))
   ==
+::
 ++  test-nx-deposit-nft-mint-fail
+  =/  eng  eng
   =/  l1-address
     0xcccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc.cccc
   =/  =deposit
@@ -1412,4 +1437,155 @@
       [sequencer town-id batch=2 eth-block-height=0]
     [chain.st tx]
   (expect-eq !>(%6) !>(errorcode.output))
+::
+::  tests for account abstraction
+::
+++  test-mz-abstract-call
+  =/  eng  eng
+  ::  first, fund the contract account
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%give id.p:pact:abstract-account 100.000 id.p:account-1:zigs]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      [`@ux`(sham +.tx) tx ~]^~
+    ~
+  ::  then make a %validate call to it
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 7.777 zigs:abstract-account]
+    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  ::  assert that our call went through
+  (expect-eq !>(%0) !>(errorcode.output))
+::
+++  test-my-abstract-call-fail
+  =/  eng  eng
+  ::  first, fund the contract account
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%give id.p:pact:abstract-account 100.000 id.p:account-1:zigs]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      [`@ux`(sham +.tx) tx ~]^~
+    ~
+  ::  then make a %validate call to it
+  ::  creating bad calldata
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give ~]
+    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  ::
+  (expect-eq !>(%6) !>(errorcode.output))
+::
+++  test-mx-abstract-call-gas-fail
+  =/  eng  eng
+  ::  first, fund the contract account
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%give id.p:pact:abstract-account 100.000 id.p:account-1:zigs]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      [`@ux`(sham +.tx) tx ~]^~
+    ~
+  ::  then make a %validate call to it
+  ::  trying to send more zigs than we have (after gas)
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 96.000 zigs:abstract-account]
+    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  ::  assert that our call failed
+  (expect-eq !>(%6) !>(errorcode.output))
+::
+++  test-mw-abstract-call-missing-contract
+  ::  make a %validate call to the wrong contract
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 96.000 zigs:abstract-account]
+    [caller-1 ~ 0x1234.5678.1234.5678 [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [fake-chain tx]
+  ::  assert that our call failed
+  (expect-eq !>(%1) !>(errorcode.output))
+::
+++  test-mv-abstract-call-to-data-item
+  ::  make a %validate call to a data item id
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 96.000 zigs:abstract-account]
+    [caller-1 ~ zigs:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [fake-chain tx]
+  ::  assert that our call failed
+  (expect-eq !>(%1) !>(errorcode.output))
+::
+++  test-mu-abstract-call-no-gas-in-contract
+  ::  make legit call, but before funding contract account
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 7.777 zigs:abstract-account]
+    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [fake-chain tx]
+  ::  assert that our call fails gas audit
+  (expect-eq !>(%3) !>(errorcode.output))
+::
+++  test-mt-abstract-call-burn-free-gas
+  =/  eng  eng
+  ::  first, fund the contract account
+  =/  tx=transaction:smart
+    :+  fake-sig
+      [%give id.p:pact:abstract-account 100.000 id.p:account-1:zigs]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] town-id 0]
+  =/  st=state-transition
+    %^    %~  run  eng
+          [sequencer town-id batch=1 eth-block-height=0]
+        fake-chain
+      [`@ux`(sham +.tx) tx ~]^~
+    ~
+  ::  then make a %validate call to it: using num=5 tells
+  ::  account.hoon to burn through all gas
+  =/  tx=transaction:smart
+    :+  fake-sig
+      =-  [%validate num=5 call=[id.p:pact:zigs town-id -]]
+      [%give address:caller-2:zigs 7.777 zigs:abstract-account]
+    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+  =/  =output  =<  -
+    %~  intake  %~  eng  eng
+      [sequencer town-id batch=2 eth-block-height=0]
+    [chain.st tx]
+  ::  assert that our call failed
+  (expect-eq !>(%1) !>(errorcode.output))
 --
