@@ -3,7 +3,7 @@
 ::
 |_  [library=vase jets=jetmap:zink sigs-on=?]
 ::
-++  fixed-abstraction-budget  5.000
+++  fixed-abstraction-budget  30.000
 ::
 ::  +engine: the execution engine for Uqbar.
 ::
@@ -296,7 +296,6 @@
     ++  combust
       |=  [code=[bat=* pay=*] =context:smart =calldata:smart bud=@ud]
       ^-  [(unit move) =scry-fees gas=@ud =errorcode:smart]
-      |^
       =/  dor=vase  (load code)
       =/  gun  (ajar dor %write !>(context) !>(calldata) %$)
       ::  useful debug prints
@@ -304,7 +303,7 @@
       ::  ~&  >  "calldata: {<calldata>}"
       ::  ~&  >>  u.m
       =/  =book:zink
-        (zebra:zink bud jets search gun)
+        (zebra:zink bud jets (search context bud) gun)
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
         [~ pays.q.book gas.q.book %6]
@@ -315,67 +314,6 @@
         ::  error in contract execution
         [~ pays.q.book gas.q.book %6]
       [u.m pays.q.book gas.q.book %0]
-      ::
-      ::  +search: scry available inside contract runner
-      ::  returns an updated gas budget to account for execution
-      ::  performed inside the scry, a possible payment to a contract
-      ::  with a fee-gated read path, and a noun product.
-      ::
-      ++  search
-        |=  [gas=@ud pit=^]
-        ^-  [gas=@ud =scry-fees product=(unit *)]
-        =/  rem  (sub gas 100)  ::  FIXED SCRY COST
-        ?+    +.pit  rem^~^~
-          ::  TODO when typed paths are included in core:
-          ::  convert these matching types to good syntax
-            [%0 %state [%ux @ux] ~]
-          ::  /state/[item-id]
-          =/  item-id=id:smart  +.-.+.+.+.pit
-          ::  ~&  >>  "looking for item: {<item-id>}"
-          ?~  item=(get:big p.chain item-id)
-            ::  ~&  >>>  "didn't find it"
-            rem^~^~
-          rem^~^item
-        ::
-            [%0 %contract [%ux @ux] ^]
-          ::  /contract/[contract-id]/pith/in/contract
-          =/  contract-id=id:smart  +.-.+.+.+.pit
-          =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.pit)
-          ::  if the first value in the read path is `%fee`, this
-          ::  is a *fee-gated* scry path, and the second value will
-          ::  be a gas token amount paid to the contract being read from
-          =/  fee=(unit [id:smart @ud])
-            ?~  read-pith                ~
-            ?.  ?=(%fee i.read-pith)     ~
-            ?~  t.read-pith              ~
-            ?@  i.t.read-pith            ~
-            ::  note: value must match fee in contract!
-            [~ contract-id `@ud`+.i.t.read-pith]
-          ?~  item=(get:big p.chain contract-id)
-            ::  ~&  >>>  "didn't find it"
-            rem^~^~
-          ?.  ?=(%| -.u.item)
-            ::  ~&  >>>  "wasn't a pact"
-            rem^~^~
-          =/  dor=vase  (load code.p.u.item)
-          =/  gun
-            (ajar dor %read !>(context(this contract-id)) !>(read-pith) %$)
-          =/  =book:zink  (zebra:zink rem jets search gun)
-          ?:  ?=(%| -.p.book)
-            ::  crash inside contract execution
-            gas.q.book^~^~
-          ?~  p.p.book
-            ::  ran out of gas inside execution
-            gas.q.book^~^~
-          ?~  fee  gas.q.book^pays.q.book^p.p.book
-          ?:  (lth gas.q.book +.u.fee)
-            ::  cannot afford fee for this scry
-            0^pays.q.book^~
-          :+  (sub gas.q.book +.u.fee)
-            (~(put by pays.q.book) u.fee)
-          p.p.book
-        ==
-      --
     ::
     ::  +abstract-combust: perform only %validate transactions
     ::  to abstract-account contracts.
@@ -388,7 +326,9 @@
       =/  =book:zink
         %:  zebra:zink
             fixed-abstraction-budget
-            jets  *chain-state-scry:zink  gun
+            jets
+            (search context fixed-abstraction-budget)
+            gun
         ==
       ?:  ?=(%| -.p.book)
         ::  error in contract execution
@@ -399,6 +339,69 @@
       ?~  m=((soft (unit move)) p.p.book)
         ~
       u.m
+    ::
+    ::  +search: scry available inside contract runner
+    ::  returns an updated gas budget to account for execution
+    ::  performed inside the scry, a possible payment to a contract
+    ::  with a fee-gated read path, and a noun product.
+    ::
+    ++  search
+      |=  [=context:smart bud=@ud]
+      |=  [gas=@ud pit=^]
+      ^-  [gas=@ud =scry-fees product=(unit *)]
+      =/  rem  (sub gas 100)  ::  FIXED SCRY COST
+      ?+    +.pit  rem^~^~
+        ::  TODO when typed paths are included in core:
+        ::  convert these matching types to good syntax
+          [%0 %state [%ux @ux] ~]
+        ::  /state/[item-id]
+        =/  item-id=id:smart  +.-.+.+.+.pit
+        ::  ~&  >>  "looking for item: {<item-id>}"
+        ?~  item=(get:big p.chain item-id)
+          ::  ~&  >>>  "didn't find it"
+          rem^~^~
+        rem^~^item
+      ::
+          [%0 %contract [%ux @ux] ^]
+        ::  /contract/[contract-id]/pith/in/contract
+        =/  contract-id=id:smart  +.-.+.+.+.pit
+        =/  read-pith=pith:smart  ;;(pith:smart +.+.+.+.pit)
+        ::  if the first value in the read path is `%fee`, this
+        ::  is a *fee-gated* scry path, and the second value will
+        ::  be a gas token amount paid to the contract being read from
+        =/  fee=(unit [id:smart @ud])
+          ?~  read-pith                ~
+          ?.  ?=(%fee i.read-pith)     ~
+          ?~  t.read-pith              ~
+          ?@  i.t.read-pith            ~
+          ::  note: value must match fee in contract!
+          [~ contract-id `@ud`+.i.t.read-pith]
+        ?~  item=(get:big p.chain contract-id)
+          ::  ~&  >>>  "didn't find it"
+          rem^~^~
+        ?.  ?=(%| -.u.item)
+          ::  ~&  >>>  "wasn't a pact"
+          rem^~^~
+        =/  dor=vase  (load code.p.u.item)
+        =.  this.context  contract-id
+        =/  gun
+          (ajar dor %read !>(context) !>(read-pith) %$)
+        =/  =book:zink
+          (zebra:zink rem jets (search context bud) gun)
+        ?:  ?=(%| -.p.book)
+          ::  crash inside contract execution
+          gas.q.book^~^~
+        ?~  p.p.book
+          ::  ran out of gas inside execution
+          gas.q.book^~^~
+        ?~  fee  gas.q.book^pays.q.book^p.p.book
+        ?:  (lth gas.q.book +.u.fee)
+          ::  cannot afford fee for this scry
+          0^pays.q.book^~
+        :+  (sub gas.q.book +.u.fee)
+          (~(put by pays.q.book) u.fee)
+        p.p.book
+      ==
     ::
     ::  +load: take contract code and combine with smart-lib
     ::
