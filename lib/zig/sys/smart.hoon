@@ -88,7 +88,7 @@
 ::
 ::  an item holds either some data or a contract.
 ::
-+$  item  (each data pact)
++$  item  $+(item (each data pact))
 ::
 ::  each piece of data includes a contract-defined salt and label
 ::  salt is for hashing, to be combined with source/holder/town for
@@ -148,7 +148,7 @@
 ::
 ::  transaction types
 ::
-+$  transaction  [=sig =calldata shell]
++$  transaction  $+(transaction [=sig =calldata shell])
 +$  caller  [=address nonce=@ud zigs=id]
 +$  calldata  (pair @tas *)
 +$  shell
