@@ -212,19 +212,11 @@
           ::
           [chain.u.town memlist deposits]
         ::  batch is being re-triggered with new deposits:
-        ::  take the current pending, and simply add deposits
-        =/  rerun
-          %+  turn  processed-txs.u.pending-batch
-          |=  [a=@ux b=transaction:smart c=output]
-          [a b `c]
-        =/  tx-set=(set @ux)
-          %-  ~(gas in *(set @ux))
-          (turn processed-txs.u.pending-batch head)
-        =-  [chain.u.town rerun -]
-        %+  skip  deposits
-        |=  =deposit
-        %-  ~(has in tx-set)
-        `@ux`(sham [[%deposit deposit] *shell:smart])
+        ::  add pre-processed txns back in, and run again
+        =-  [chain.u.town - deposits]
+        %+  turn  processed-txs.u.pending-batch
+        |=  [a=@ux b=transaction:smart c=output]
+        [a b `c]
       =/  batch=proposed-batch
         :*  +(batch-num.hall.u.town)
             processed.new
