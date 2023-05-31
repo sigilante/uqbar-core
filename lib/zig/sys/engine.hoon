@@ -538,17 +538,11 @@
     ^-  state-transition
     |-
     ?~  deposits  st
-    ::  add deposit as a transaction so we can do each only-once
-    ::  deposit calldata is enough to make deposits hash uniquely
-    =/  tx=transaction:smart
-      [[0 0 0] [%deposit i.deposits] *shell:smart]
-    =/  =output
-      (bridge-token p.chain.st i.deposits)
+    =/  =output  (bridge-token p.chain.st i.deposits)
     %=  $
       deposits      t.deposits
       p.chain.st    (uni:big p.chain.st modified.output)
       modified.st   (uni:big p.chain.st modified.output)
-      processed.st  [[`@ux`(sham +.tx) tx output] processed.st]
     ==
   ::
   ++  bridge-token
