@@ -1,10 +1,10 @@
 :~  title+'Uqbar Core'
     info+'The wallet and block explorer from Uqbar'
     color+0xf2.f3ef
-    glob-http+['https://ziggurat-app-distro.s3.us-east-2.amazonaws.com/glob-0v2.ogdok.l1li9.fuuda.f4lvq.g6vov.glob' 0v2.ogdok.l1li9.fuuda.f4lvq.g6vov]
+    glob-http+['https://ziggurat-app-distro.s3.us-east-2.amazonaws.com/glob-0v5.secm3.locbh.jdric.tnt58.ni19c.glob' 0v5.secm3.locbh.jdric.tnt58.ni19c]
     base+'uqbar'
     image+'https://hodzod-walrus.s3.us-east-2.amazonaws.com/hodzod-walrus/uqbar-core-logo.png'
-    version+[0 1 6]
+    version+[0 1 7]
     website+'https://uqbar.network'
     license+'MIT'
 ==
