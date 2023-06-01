@@ -9,7 +9,7 @@
 ::  the flow works as such:
 ::  :sequencer &sidecar-action [%trigger-batch deposits=~]
 ::  (sequencer produces batch, posts at /pending-batch scry path)
-::  :sequencer &sidecar-action [%batch-posted town-root=0x0 block-at=0]
+::  :sequencer &sidecar-action [%batch-posted town-root=0x0 state-root=0x0 block-at=0]
 ::
 ::  to use this agent locally, for testing, one can use the -zig!batch
 ::  thread included in this repo, which will automatically fetch a recent
@@ -25,8 +25,8 @@
 |%
 +$  card  $+(card card:agent:gall)
 ::
-+$  state-4
-  $:  %4
++$  state-5
+  $:  %5
       last-batch-time=@da      ::  saved to compare against indexer acks
       last-batch-block=@ud     ::  most recent L1 block we can commit to
       indexers=(map dock @da)  ::  indexers receiving batch updates
@@ -37,15 +37,16 @@
       =memlist                 ::  executed transactions in working state
       working-batch=(unit proposed-batch)  ::  stores working state
       pending-batch=(unit proposed-batch)
+      pending-deposits=(list [bytes=tape =deposit-metadata])
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==
-+$  inflated-state-4  [state-4 =eng smart-lib-vase=vase]
-::  sigs on, hints off
++$  inflated-state-5  [state-5 =eng smart-lib-vase=vase]
+::  sigs on
 +$  eng  $_  ~(engine engine !>(0) jets:zink %.y)
 --
 ::
-=|  inflated-state-4
+=|  inflated-state-5
 =*  state  -
 %-  agent:dbug
 %+  verb  &
@@ -60,7 +61,7 @@
   =/  smart-lib=vase
     ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   =/  eng  ~(engine engine smart-lib jets:zink %.y)
-  `this(state [*state-4 eng smart-lib])
+  `this(state [*state-5 eng smart-lib])
 ++  on-save  !>(-.state)
 ++  on-load
   |=  =old=vase
@@ -69,9 +70,13 @@
     ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   =/  eng  ~(engine engine smart-lib jets:zink %.y)
   ?+    -.q.old-vase
-    `this(state [*state-4 eng smart-lib])
+    `this(state [*state-5 eng smart-lib])
+      %5
+    `this(state [!<(state-5 old-vase) eng smart-lib])
       %4
-    `this(state [!<(state-4 old-vase) eng smart-lib])
+    =/  old  !<(state-4 old-vase)
+    =+  [~ |11:old]
+    (on-load !>(`state-5`[%5 +.old(|11 -)]))
       %3
     =/  old  !<(state-3 old-vase)
     =-  %-  on-load
@@ -123,6 +128,9 @@
       ~&  >>  "%sequencer: batch approved by rollup"
       =/  new-town=^town
         (transition-state u.town u.pending-batch)
+      ::  assert that received state-root matches what we expect
+      ?.  =(root.u.pending-batch state-root.act)
+        ~|("posted state root doesn't match" !!)
       ::  inject received town-root into state of town
       =.  chain.new-town
         (inject-town-root chain.new-town town-root.act)
@@ -402,6 +410,11 @@
         ['txRoot' s+(crip (z-co:co txs-hash))]
         ['stateRoot' s+(crip (z-co:co root.u.pend))]
         ['prevStateRoot' s+(crip (z-co:co (rear roots.hall.u.town)))]
+        :-  'deposits'
+        :-  %a
+        %+  turn  pending-deposits
+        |=  [t=^tape =deposit-metadata]
+        (tape t)
     ==
   ::
   ::  state reads fail if sequencer not active
