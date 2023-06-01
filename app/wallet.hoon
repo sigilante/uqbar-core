@@ -541,6 +541,43 @@
         pending-store  (~(put by pending-store) from.act my-pending)
       ==
     ::
+        %unsigned-transaction
+      =/  =caller:smart
+        :+  0x0
+          0
+        :: zigs account of contract?
+        (hash-data:engine zigs-contract-id:smart contract.act town.act `@`'zigs')
+      ::  build calldata of transaction, depending on argument type
+      =/  =calldata:smart
+          ;;(calldata:smart +.action.act)
+      ::  
+      =/  =shell:smart
+        :*  caller
+            eth-hash=~
+            to=contract.act
+            gas=gas.act
+            town.act
+            status=%101
+        ==
+      ::  generate hash
+      =/  hash  (hash-transaction [calldata shell])
+      =/  tx=transaction:smart  [[0 0 0] calldata shell]
+      ~&  >>  "%wallet: submitting unsigned tx with hash {<hash>}"
+      ::  update stores
+      :_  %=    state
+              unfinished-transaction-store
+            %+  ~(put by unfinished-transaction-store)
+              hash
+            [origin.act tx action.act ~]
+          ==
+      :~  (tx-update-card hash tx action.act)
+          :*  %pass  /submit-tx/(scot %ux hash)
+              %agent  [our.bowl %uqbar]
+              %poke  %uqbar-write
+              !>(`write:uqbar`[%submit tx])
+          ==
+      ==
+    ::
         %transaction-to-ship
       ::  instead of making transaction, poke thread that will ask ship
       ::  for an address, then re-poke wallet with filled in info
