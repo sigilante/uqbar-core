@@ -1,5 +1,5 @@
 /-  seq=zig-sequencer
-/+  default-agent, dbug, verb
+/+  default-agent, dbug, verb, io=agentio
 |%
 +$  card  card:agent:gall
 +$  state-0
@@ -46,6 +46,7 @@
   ?>  ?=([%batch-timer ~] wire)
   ?.  active  `this
   =/  wait  (add now.bowl interval)
+  =/  tid  `@ta`(cat 3 'make-batch' (scot %uv (sham eny.bowl)))
   :_  this
   :~  [%pass /batch-timer %arvo %b %wait wait]
       :*  %pass   /make-batch/(scot %da now.bowl)
