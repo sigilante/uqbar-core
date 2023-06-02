@@ -75,8 +75,8 @@
     `this(state [!<(state-5 old-vase) eng smart-lib])
       %4
     =/  old  !<(state-4 old-vase)
-    =+  [~ |11:old]
-    (on-load !>(`state-5`[%5 +.old(|11 -)]))
+    =+  [~ status block-height-api-key]:old
+    (on-load !>(`state-5`[%5 +.old(|10 -)]))
       %3
     =/  old  !<(state-3 old-vase)
     =-  %-  on-load
