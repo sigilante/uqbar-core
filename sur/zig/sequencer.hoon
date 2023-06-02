@@ -79,7 +79,7 @@
 ::
 +$  sidecar-action
   $%  [%trigger-batch deposits=(list [bytes=tape =deposit-metadata])]
-      [%batch-posted town-root=@ux block-at=@ud]
+      [%batch-posted town-root=@ux state-root=@ux block-at=@ud]
       [%batch-rejected town-root=@ux]
   ==
 ::
@@ -142,6 +142,21 @@
       =memlist                 ::  executed transactions in working state
       working-batch=(unit old-proposed-batch)  ::  stores working state
       pending-batch=(unit old-proposed-batch)
+      status=?(%available %off)
+      block-height-api-key=(unit @t)
+  ==
++$  state-4
+  $:  %4
+      last-batch-time=@da      ::  saved to compare against indexer acks
+      last-batch-block=@ud     ::  most recent L1 block we can commit to
+      indexers=(map dock @da)  ::  indexers receiving batch updates
+      rollup=(unit @ux)        ::  rollup contract address
+      private-key=(unit @ux)   ::  our signing key
+      town=(unit town)         ::  chain-state
+      pending=mempool          ::  unexecuted transactions
+      =memlist                 ::  executed transactions in working state
+      working-batch=(unit proposed-batch)  ::  stores working state
+      pending-batch=(unit proposed-batch)
       status=?(%available %off)
       block-height-api-key=(unit @t)
   ==

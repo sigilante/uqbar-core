@@ -12,8 +12,13 @@
     ++  process
       %-  of
       :~  [%trigger-batch (ot ~[[%deposits (ar parse-deposit)]])]
-          [%batch-posted (ot ~[[%town-root (su ;~(pfix (jest '0x') hex))] [%block-at (su dem)]])]
           [%batch-rejected (ot ~[[%town-root (su ;~(pfix (jest '0x') hex))]])]
+          :-  %batch-posted
+          %-  ot
+          :~  [%town-root (su ;~(pfix (jest '0x') hex))]
+              [%state-root (su ;~(pfix (jest '0x') hex))]
+              [%block-at (su dem)]
+          ==
       ==
     ++  parse-deposit
       %-  ot
