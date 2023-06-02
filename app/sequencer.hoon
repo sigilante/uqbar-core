@@ -145,6 +145,7 @@
         (gte last-ack last-batch-time)
       :_  %=  this
             pending-batch     ~
+            pending-deposits  ~
             town              `new-town
             last-batch-time   now.bowl
             last-batch-block  block-at.act
