@@ -174,7 +174,6 @@
           =origin
           contract=id:smart
           town=@ux
-          gas=[rate=@ud bud=@ud]
           action=[%noun [%validate *]]
       ==
       ::
