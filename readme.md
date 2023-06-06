@@ -132,7 +132,7 @@ Transactions can also be signed using a hardware wallet, via `%submit-signed`.
 Each signed transaction sent to the `%sequencer` will be stored in the `mempool`.
 To run the transactions and create the new batch with updated town state, poke the `%sequencer`:
 ```hoon
-:sequencer|batch
+-zig!batch
 ```
 
 Alternatively, use `%batcher-interval` or `%batcher-threshold` to automatically create batches.
@@ -152,19 +152,6 @@ However, if `%sequencer` has not received any transactions, it will not create a
 :batcher-interval ~
 ```
 
-
-#### `%batcher-threshold`
-
-`%batcher-threshold` creates batches after some number of transactions has been received by `%sequencer`.
-```hoon
-|rein %zig [& %batcher-threshold]
-
-::  Batch every 10 transactions.
-:batcher-threshold `10
-
-::  Stop automatic batching.
-:batcher-threshold ~
-```
 
 ### Example: reading chain state with `%indexer`:
 

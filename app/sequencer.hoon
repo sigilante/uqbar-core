@@ -166,7 +166,6 @@
                 processed-txs.u.pending-batch
               new-town
           ==
-      ~&  >>  [%notify town-id.hall.new-town root]
       %+  turn   ~(tap by indexers)
       |=  [=dock @da]
       %+  ~(poke pass:io /indexer-updates)
@@ -417,6 +416,11 @@
         |=  [t=^tape =deposit-metadata]
         (tape t)
     ==
+  ::
+      [%pending-batch-root ~]
+    ?~  town  ``noun+!>(~)
+    ?~  pend=pending-batch  ``noun+!>(~)
+    ``noun+!>(`@ux`root.u.pend)
   ::
   ::  state reads fail if sequencer not active
   ::
