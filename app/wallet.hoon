@@ -78,14 +78,7 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  :_  this(state *state-3)
-  ::  auto-populate %wallet with a random seed on install
-  :_  ~
-  :*  %pass  /self-poke
-      %agent  [our.bowl %wallet]
-      %poke  %wallet-poke
-      !>([%generate-hot-wallet '' 'wallet'])
-  ==
+  `this(state *state-3)
 ::
 ++  on-save  !>(state)
 ++  on-load
