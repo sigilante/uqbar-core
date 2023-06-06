@@ -22,10 +22,13 @@
 =/  eth-block
   `@ud`(scan `tape`(slag 2 (pars json)) hex)
 ::
+;<  batch-root=@ux  bind:m
+  (scry:strandio @ux /gx/sequencer/pending-batch-root/noun)
+::
 ;<  ~  bind:m
   %+  poke-our:strandio  %sequencer
   :-  %sidecar-action
-  !>([%batch-posted 0x0 eth-block])
+  !>([%batch-posted 0x0 batch-root eth-block])
 (pure:m !>(~))
 ::
 +$  api-key  cord
