@@ -199,6 +199,8 @@
     ==
   ++  zigs  ^-  id:smart
     (hash-data zigs-contract-id:smart id.p:pact town-id `@`'zigs')
+  ++  caller
+    [id.p:pact 0 zigs]
   --
 ::
 ++  burnable
@@ -1458,7 +1460,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 7.777 zigs:abstract-account]
-    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ id.p:pact:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1485,7 +1487,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give ~]
-    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ id.p:pact:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1512,7 +1514,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 96.000 zigs:abstract-account]
-    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ id.p:pact:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1526,7 +1528,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 96.000 zigs:abstract-account]
-    [caller-1 ~ 0x1234.5678.1234.5678 [1 50.000] town-id 0]
+    [[0x1234.5678.1234.5678 0 0x0] ~ 0x1234.5678.1234.5678 [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1540,7 +1542,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 96.000 zigs:abstract-account]
-    [caller-1 ~ zigs:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ zigs:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1554,7 +1556,7 @@
     :+  fake-sig
       =-  [%validate num=7 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 7.777 zigs:abstract-account]
-    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ id.p:pact:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]
@@ -1581,7 +1583,7 @@
     :+  fake-sig
       =-  [%validate num=5 call=[id.p:pact:zigs town-id -]]
       [%give address:caller-2:zigs 7.777 zigs:abstract-account]
-    [caller-1 ~ id.p:pact:abstract-account [1 50.000] town-id 0]
+    [caller:abstract-account ~ id.p:pact:abstract-account [1 50.000] town-id 0]
   =/  =output  =<  -
     %~  intake  %~  eng  eng
       [sequencer town-id batch=2 eth-block-height=0]

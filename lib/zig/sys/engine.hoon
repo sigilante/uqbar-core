@@ -38,6 +38,11 @@
     =/  =output
       ?^  output.i.pending
         u.output.i.pending
+      ::  if abstract account transaction, modify caller
+      =?    caller.tx
+          &(=([0 0 0] sig.tx) =(%validate p.calldata.tx))
+        =-  [contract.tx 0 -]
+        (hash-data zigs-contract-id:smart contract.tx town-id `@`'zigs')
       ::
       =/  op=[output scry-fees]
         ~(intake eng chain.st tx)
@@ -134,14 +139,10 @@
           contract  contract.i.-.u.mov
           town      town.i.-.u.mov
           calldata  calldata.i.-.u.mov
-          caller  =-  [contract.tx 0 -]
-          (hash-data zigs-contract-id:smart contract.tx town-id `@`'zigs')
         ==
       ?^  v=(valid-eoa ?:(?=(^ abstract) %.y %.n))
         u.v
       =/  gas-payer=address:smart
-        ?:  &(?=(^ abstract) ?=(%& -.u.abstract))
-          address.caller.p.u.abstract
         address.caller.tx
       |-
       ?^  abstract
@@ -150,7 +151,7 @@
         =.  tx  p.u.abstract
         ?.  (~(audit tax p.chain) tx)
           ~&  >>>  "engine: abstract contract failed gas audit"
-          $(abstract `%|^(exhaust bud.gas.tx %3 ~ ~))
+          (exhaust bud.gas.tx %3 ~ ~)
         $(abstract ~)
       ::  special burn transaction: remove an item from a town and
       ::  reinstantiate it on a different town.
