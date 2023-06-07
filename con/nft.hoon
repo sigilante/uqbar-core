@@ -13,6 +13,8 @@
   ?-  -.act
     %give           (give:lib:nft context act)
     %take           (take:lib:nft context act)
+    %push           (push:lib:nft context act)
+    %pull           (pull:lib:nft context act)
     %set-allowance  (set-allowance:lib:nft context act)
     %mint           (mint:lib:nft context act)
     %deploy         (deploy:lib:nft context act)
