@@ -174,7 +174,7 @@
           =origin
           contract=id:smart
           town=@ux
-          action=[%noun [%validate *]]
+          action=$%([%noun [%validate *]] [%text @t])
       ==
       ::
       $:  %transaction-to-ship

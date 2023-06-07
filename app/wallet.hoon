@@ -565,7 +565,22 @@
     ::
         %unsigned-transaction
       ::  build calldata of transaction, depending on argument type
-      =/  =calldata:smart  +.action.act
+      =/  =calldata:smart
+        ?-    -.action.act
+            %noun
+          +.action.act
+        ::    
+            %text
+          =/  smart-lib-vase
+            .^  ^vase  %gx
+              /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/smart-lib/noun
+            ==
+          ~|  "wallet: failed to compile custom action!"
+          =/  data-hoon  (ream ;;(@t +.action.act))
+          =/  res
+            (slap smart-lib-vase data-hoon)
+          !<([@tas *] res)
+        ==
       =/  =shell:smart  [[0x0 0 0x0] ~ contract.act [0 0] town.act %100]
       ::  generate hash
       =/  hash  (hash-transaction [calldata shell])

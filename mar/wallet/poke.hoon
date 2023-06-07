@@ -10,8 +10,8 @@
     %-  wallet-poke
     |^
     =/  procd  (process jon)
-    ?.  ?=(%transaction -.procd)  procd
-    [%transaction origin=~ +.procd]
+    ?.  ?=(?(%transaction %unsigned-transaction) -.procd)  procd
+    [-.procd origin=~ +.procd]
     ++  process
       %-  of
       :~  [%import-seed (ot ~[[%mnemonic so] [%password so] [%nick so]])]
@@ -25,6 +25,7 @@
           [%submit parse-submit]
           [%delete-pending parse-delete]
           [%transaction parse-transaction]
+          [%unsigned-transaction parse-unsigned]
       ==
     ++  parse-signed
       %-  ot
@@ -44,6 +45,12 @@
       %-  ot
       :~  [%from (se %ux)]
           [%hash (se %ux)]
+      ==
+    ++  parse-unsigned
+      %-  ot
+      :~  [%contract (se %ux)]
+          [%town (se %ux)]
+          [%action (of ~[[%text so]])]
       ==
     ++  parse-transaction
       %-  ot
