@@ -86,7 +86,10 @@
         [holder.giver to.act amount.act nonce.act deadline.act]
     ?>  =((recover typed-message sig.act) holder.giver)
     ::  assert nonce is valid
-    ?>  .=(nonce.act (~(gut by nonces.noun.giver) to.act 0))
+    =/  nonce  (~(gut by nonces.noun.giver) to.act 0)
+    ?>  .=(nonce.act nonce)
+    ::  increment nonce
+    =.  nonces.noun.giver  (~(put by nonces.noun.giver) to.act +(nonce))
     ::  assert deadline is valid
     ?>  (lte eth-block.context deadline.act)
     ::  locate receiver account
