@@ -380,10 +380,95 @@
 ::  tests for %mint
 ::
 ++  test-uz-mint  ^-  test-txn
-  *test-txn
+  =/  new-item-2
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 2))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt:collection-1 2)
+        %nft
+        :*  2
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  ::  new collection metadata supply is 2
+  ::  todo: just change noun.p.metadata( wing
+  =/  new-metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt:collection-1)
+        id:nft
+        id:nft
+        default-town-id
+        salt:collection-1
+        %metadata
+        :*  name='collection-1'
+            symbol='TC1'
+            properties=~
+            supply=2
+            cap=~
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt:collection-1
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%mint id.p:metadata:collection-1 ~[[addr-1:zigs 'asdfasdfasdf' ~ %.y]]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-2
+          new-metadata          
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
 ::  tests for %deploy
 ::
 ++  test-tz-deploy  ^-  test-txn
-  *test-txn
+  =/  salt  (cat 3 'deploy-salt' addr-1:zigs)  
+  =/  new-collection
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt)
+        id:nft
+        id:nft
+        default-town-id
+        salt
+        %metadata
+        :*  name='collection-3'
+            symbol='TC3'
+            properties=~
+            supply=0
+            cap=~
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%deploy 'collection-3' 'TC3' 'deploy-salt' ~ ~ [addr-1:zigs ~ ~] ~]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-collection
+      ==
+      burned=`~
+      events=`~
+  ==
 --
