@@ -272,7 +272,7 @@
       ==
     =/  =id  (hash-data this.context this.context town.context salt)
     =/  =data
-      [id this.context this.context town.context salt.act %metadata metadata]
+      [id this.context this.context town.context salt %metadata metadata]
     ?~  initial-distribution.act
       `(result ~ [[%& data] ~] ~ ~)
     ::  perform optional mint
