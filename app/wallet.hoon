@@ -790,6 +790,18 @@
         ['password' [%s pass.seed.state]]
     ==
   ::
+      [%encrypted-accounts ~]
+    =;  =json  ``json+!>(json)
+    %-  pairs:enjs
+    %+  turn  ~(tap by encrypted-keys.state)
+    |=  [pub=@ux [nick=@t priv=@t seed=@t]]
+    :-  (scot %ux pub)
+    %-  pairs:enjs
+    :~  ['nick' s+nick]
+        ['priv' s+priv]
+        ['seed' s+seed]
+    ==
+  ::
       [%accounts ~]
     =;  =json  ``json+!>(json)
     %-  pairs:enjs
