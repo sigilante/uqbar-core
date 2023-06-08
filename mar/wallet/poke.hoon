@@ -16,6 +16,7 @@
       %-  of
       :~  [%import-seed (ot ~[[%mnemonic so] [%password so] [%nick so]])]
           [%generate-hot-wallet (ot ~[[%password so] [%nick so]])]
+          [%store-hot-wallet (ot ~[[%nick so] [%address (se %ux)] [%priv so] [%seed so]])]
           [%derive-new-address (ot ~[[%hdpath sa] [%nick so]])]
           [%delete-address (ot ~[[%address (se %ux)]])]
           [%edit-nickname (ot ~[[%address (se %ux)] [%nick so]])]

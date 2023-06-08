@@ -11,43 +11,18 @@
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  state-2
-  $:  %2
++$  state-4
+  $:  %4
       ::  wallet holds a single seed at once
       ::  address-index notes where we are in derivation path
       seed=[mnem=@t pass=@t address-index=@ud]
       ::  many keys can be derived or imported
       ::  if the private key is ~, that means it's a hardware wallet import
       keys=(map address:smart [priv=(unit @ux) nick=@t])
-      ::  we track the nonce of each address we're handling
-      ::  TODO: introduce a poke to check nonce from chain and re-align
-      nonces=(map address:smart (map town=@ux nonce=@ud))
-      ::  signatures tracks any signed calls we've made
-      =signed-message-store
-      ::  tokens tracked for each address we're handling
-      tokens=(map address:smart =book)
-      ::  metadata for tokens we track
-      =metadata-store
-      ::  origins we automatically sign and approve txns from
-      approved-origins=(map (pair term wire) [rate=@ud bud=@ud])
-      ::  transactions we've sent that haven't been finalized by sequencer
-      =unfinished-transaction-store
-      ::  finished transactions we've sent
-      =transaction-store
-      ::  transactions we've been asked to sign, keyed by hash
-      =pending-store
-  ==
-+$  state-3
-  $:  %3
-      ::  wallet holds a single seed at once
-      ::  address-index notes where we are in derivation path
-      seed=[mnem=@t pass=@t address-index=@ud]
-      ::  many keys can be derived or imported
-      ::  if the private key is ~, that means it's a hardware wallet import
-      keys=(map address:smart [priv=(unit @ux) nick=@t])
+      encrypted-keys=(map address:smart [nick=@t priv=@t seed=@t])
       =share-prefs
       ::  we track the nonce of each address we're handling
-      ::  TODO: introduce a poke to check nonce from chain and re-align
+      ::  TODO: introduce a mechanism to check nonce from chain and re-align
       nonces=(map address:smart (map town=@ux nonce=@ud))
       ::  signatures tracks any signed calls we've made
       =signed-message-store
@@ -66,7 +41,7 @@
   ==
 --
 ::
-=|  state-3
+=|  state-4
 =*  state  -
 ::
 %-  agent:dbug
@@ -78,19 +53,22 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  `this(state *state-3)
+  `this(state *state-4)
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
+      %4
+    `this(state !<(state-4 old-vase))
       %3
-    `this(state !<(state-3 old-vase))
+    =+  old=!<(state-3 old-vase)
+    (on-load !>(`state-4`[%4 seed.old keys.old ~ |3:old]))
       %2
     =+  old=!<(state-2 old-vase)
     =+  new=[%3 -.+.old -.+.+.old *^share-prefs +.+.+.old]
-    `this(state `state-3`new)
+    (on-load !>(`state-3`new))
   ==
 ::
 ++  on-watch
@@ -267,6 +245,19 @@
         transaction-store  [[addr sent] ~ ~]
         keys  %+  ~(put by *(map address:smart [(unit @ux) @t]))
               addr  [`private-key:core nick.act]
+      ==
+    ::
+        %store-hot-wallet
+      ::  get transaction history for this new address
+      =/  sent  (get-sent-history address.act %.n [our now]:bowl)
+      =/  tokens
+        (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
+      :-  ~
+      %=  state
+        tokens  tokens
+        nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
+        encrypted-keys     (~(put by encrypted-keys) [address nick priv seed]:act)
+        transaction-store  (~(put by transaction-store) address.act sent)
       ==
     ::
         %derive-new-address
@@ -562,7 +553,7 @@
         ?-    -.action.act
             %noun
           +.action.act
-        ::    
+        ::
             %text
           =/  smart-lib-vase
             .^  ^vase  %gx
