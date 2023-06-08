@@ -34,10 +34,21 @@
 ::
 ++  zigs
   |%
-  ++  addr-1  0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-  ++  addr-2  0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
-  ++  addr-3  0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
-  ++  addr-4  0xface.face.face.face.face.face.face.face.face.face
+  ++  addr-1  0xc2b5.5ddf.1ca6.c126.6a62.f178.39d9.5c0a.1ffd.fa9f
+  ++  addr-2  0xabdc.3d01.ca62.692d.cd20.dfde.b93e.8891.ef69.43a1
+  ++  addr-3  0x525c.8ddc.0707.4917.dd3b.492a.5a24.cccf.96a6.8b54
+  ++  addr-4  0x2c9a.d6fc.4e14.5199.c64b.0d6d.0d48.41f8.4d45.55fe
+  ::
+  ::  private-keys for these addresses, only for testing
+  ::
+  ++  priv-1  0x4989.cbf4.1d0e.9e42.f945.705d.ad15.1d54.36be.944c.8caa.3acf.3578.26f7.9fa3.ec98
+  ++  priv-2  0x90c7.a2b9.50ac.a8c9.c178.2eac.41ed.1345.47b4.0bcd.314d.1a2e.d9d6.a2e9.4ec4.b5dc
+  ++  priv-3  0x30ce.cf28.4ae5.0175.eb32.707f.fcfc.b098.3492.567f.a0cd.a27f.d32b.1967.4701.663e
+  ++  priv-4  0x49c7.d462.0a04.849c.8f8f.d875.a446.c3fe.dd6d.4b19.3c45.ecc8.b16a.c955.ca97.1074
+  ::
+  ::  seed: 
+  ::  must meat cinnamon borrow candy immense slush adapt repair aware evidence item make order cry twenext library index forget
+  ::
   ++  id
     |=  holder=id:smart
     %:  hash-data:smart
