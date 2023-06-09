@@ -277,7 +277,46 @@
 ::  tests for %pull
 ::
 ++  test-wz-pull  ^-  test-txn
-  *test-txn
+  =/  new-item-1
+    :*  %&
+        id.p:item-1:collection-1
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  =/  =typed-message:smart
+    :+  id.p:item-1:collection-1                      :: domain, giver nft account
+      0x7743.b53e.7d64.a85c.4813.5bf3.a245.120e       :: pull-jold hash
+    :^    addr-1:zigs                                 :: msg: [from to item-id deadline]
+        addr-2:zigs
+      id.p:item-1:collection-1
+    1.000
+  =/  =sig:smart
+    %+  ecdsa-raw-sign:secp256k1:secp:crypto
+    `@uvI`(shag:smart typed-message)  priv-1:zigs
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%pull addr-1:zigs addr-2:zigs id.p:item-1:collection-1 1.000 sig]
+    [caller-2 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
 ::  tests for %set-allowance
 ::
