@@ -130,7 +130,7 @@
 +$  wallet-poke
   $%  [%import-seed mnemonic=@t password=@t nick=@t]
       [%generate-hot-wallet password=@t nick=@t]
-      [%store-hot-wallet address=@ux nick=@t priv=@t seed=@t]
+      [%store-hot-wallet nick=@t address=@ux priv=@t seed=@t]
       [%derive-new-address hdpath=tape nick=@t]
       [%delete-address address=@ux]
       [%edit-nickname address=@ux nick=@t]
