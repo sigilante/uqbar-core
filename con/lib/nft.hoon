@@ -74,7 +74,6 @@
         from=address
         to=address
         item-id=id
-        nonce=@ud
         deadline=@ud
         =sig
     ==
@@ -180,7 +179,7 @@
     =/  =typed-message
         :+  (hash-data this.context from.act town.context salt.gift)
           pull-jold-hash
-        [from to item-id nonce deadline]:act
+        [from to item-id deadline]:act
     ?>  =((recover typed-message sig.act) from.act)
     ::  assert deadline is valid
     ?>  (lte eth-block.context deadline.act)
