@@ -196,12 +196,26 @@
     :+  fake-sig
       [%pull addr-2:zigs addr-1:zigs 100.000 (id:zigs addr-2:zigs) 0 1.000 sig]
     [caller-1 ~ id.p:pact:zigs [1 1.000.000] default-town-id 0]
+  =/  new-giver  ::  incrementing nonces for giver
+    ^-  item:smart
+    :*  %&
+        (id addr-2):zigs
+        id.p:pact:zigs
+        addr-2:zigs
+        default-town-id
+        `@`'zigs'
+        %account
+        :*  balance=199.900.000
+            allowances=~
+            metadata=`@ux`'zigs-metadata'
+            nonces=(make-pmap:smart ~[[addr-1:zigs 1]])
+    ==  ==
   :*  gas=~
       errorcode=`%0
       :-  ~
       %-  make-chain-state
       :~  (account addr-1 300.100.000 [addr-2 1.000.000]^~):zigs
-          (account addr-2 199.900.000 ~):zigs
+          new-giver
       ==
       burned=`~
       events=`~
