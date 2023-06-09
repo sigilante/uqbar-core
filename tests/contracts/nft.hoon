@@ -1,130 +1,513 @@
 ::
-::  Tests for nft.hoon
+::  tests for con/nft.hoon
 ::
-/-  zink
-/+  *test, smart=zig-sys-smart, *sequencer, merk
-/*  smart-lib-noun  %noun  /lib/zig/sys/smart-lib/noun
-/*  zink-cax-noun   %noun  /lib/zig/sys/hash-cache/noun
-/*  nft-contract    %noun  /con/compiled/nft/noun
+/+  *test, *transaction-sim
+/=  nft-lib  /con/lib/nft
+/*  nft-contract  %jam  /con/compiled/nft/jam
 |%
 ::
-::  constants / dummy info for mill
+::  test data
 ::
-++  big  (bi:merk id:smart item:smart)  ::  merkle engine for granary
-++  pig  (bi:merk id:smart @ud)          ::                for populace
-++  town-id   0x0
-++  fake-sig  [0 0 0]
-++  mil
-  %~  mill  mill
-  :+    ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-    ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun)))
-  %.y
+++  sequencer  caller-1
+++  caller-1  ^-  caller:smart  [addr-1 1 (id addr-1)]:zigs
+++  caller-2  ^-  caller:smart  [addr-2 1 (id addr-2)]:zigs
+++  caller-3  ^-  caller:smart  [addr-3 1 (id addr-3)]:zigs
+++  caller-4  ^-  caller:smart  [addr-4 1 (id addr-4)]:zigs
 ::
-+$  single-result
-  [fee=@ud =land burned=granary =errorcode:smart hits=(list hints:zink) =crow:smart]
+++  my-shell  ^-  shell:smart
+  [caller-1 ~ 0x0 [1 1.000.000] default-town-id 0]
 ::
-::  fake data
-::
-++  miller  ^-  caller:smart
-  [0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0 1 0x0]  ::  zigs account not used
-++  pubkey-1  0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-++  caller-1  ^-  caller:smart  [pubkey-1 1 id.p:account-1:zigs]
-::
-++  zigs
+++  nft
   |%
-  ++  account-1
+  ++  code
+    (cue nft-contract)
+  ++  id
+    (hash-pact 0x1234.5678 0x1234.5678 default-town-id code)
+  ++  pact
     ^-  item:smart
-    :*  %&
-        `@`'zigs'
-        %account
-        [300.000.000 ~ `@ux`'zigs-metadata']
-        (fry-data:smart zigs-contract-id:smart pubkey-1 town-id `@`'zigs')
-        zigs-contract-id:smart
-        pubkey-1
-        town-id
+    :*  %|  id
+        0x1234.5678  ::  source
+        0x1234.5678  ::  holder
+        default-town-id
+        [- +]:code
+        ~
     ==
   --
 ::
-++  nft-metadata-rice
-  ^-  data:smart
-  :*  salt=`@`'nftsalt'
-      label=%metadata
-      :*  name='Ziggurat Girls'
-          symbol='GOODART'
-          properties=(~(gas pn:smart *(pset:smart @tas)) `(list @tas)`~[%hat %eyes %mouth])
-          supply=1
-          cap=`5
-          mintable=%.y
-          minters=(~(gas pn:smart *(pset:smart address:smart)) ~[pubkey-1])
-          deployer=pubkey-1
-          salt=`@`'nftsalt'
+++  collection-1
+  |%
+  ++  salt
+    (cat 3 'test-salt' addr-1:zigs)
+  ++  metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt)
+        id:nft
+        id:nft
+        default-town-id
+        salt
+        %metadata
+        :*  name='collection-1'
+            symbol='TC1'
+            properties=~
+            supply=1
+            cap=~
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  ++  item-1
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt 1))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata
+            allowances=[addr-2:zigs ~ ~]
+            properties=~
+            transferrable=%.y
+    ==  ==
+  --
+::
+++  collection-2
+  |%
+  ++  salt
+    (cat 3 'test-salt' addr-2:zigs)
+  ++  metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt)
+        id:nft
+        id:nft
+        default-town-id
+        salt
+        %metadata
+        :*  name='collection-2'
+            symbol='TC2'
+            properties=~
+            supply=1
+            cap=~
+            mintable=%.y
+            minters=[addr-2:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  ++  item-1
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt 1))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata
+            allowances=~
+            properties=~
+            transferrable=%.n
+    ==  ==
+  ++  item-2
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt 2))
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt 2)
+        %nft
+        :*  2
+            'asdfasdfasdf'
+            id.p:metadata
+            allowances=~
+            properties=~
+            transferrable=%.n
+    ==  ==
+  --
+::
+++  state
+  %-  make-chain-state
+  :~  pact:zigs
+      pact:nft
+      metadata:collection-1
+      item-1:collection-1
+      metadata:collection-2
+      item-1:collection-2
+      item-2:collection-2
+      (account addr-1 300.000.000 [addr-2 1.000.000]^~):zigs
+      (account addr-2 200.000.000 ~):zigs
+      (account addr-3 100.000.000 [addr-1 50.000]^~):zigs
+      (account addr-4 500.000 ~):zigs
+  ==
+++  chain
+  ^-  chain:engine
+  [state ~]
+::
+::  tests for %give
+::
+++  test-zz-nft-give  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%give addr-2:zigs id.p:item-1:collection-1]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
       ==
-      id=`@ux`'nft-metadata'
-      lord=0xcafe.babe
-      holder=0xcafe.babe
-      town-id
+      burned=`~
+      events=`~
   ==
-++  nft-1  (fry-data:smart 0xcafe.babe pubkey-1 town-id `@`'nftsalt1')
-++  nft-rice
-  ^-  data:smart
-  :*  salt=`@`'nftsalt1'
-      label=%nft
-      :*  1
-          'ipfs://QmUbFVTm113tJEuJ4hZY2Hush4Urzx7PBVmQGjv1dXdSV9'
-          id:nft-metadata-rice
-          ~
-          %-  ~(gas py:smart *(pmap:smart @tas @t))
-          `(list [@tas @t])`~[[%hat 'pyramid'] [%eyes 'big'] [%mouth 'smile']]
-          %.y
+::
+++  test-zy-nft-give-not-owned  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%give addr-2:zigs id.p:item-1:collection-1]
+    [caller-2 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%6
+      modified=`~
+      burned=`~
+      events=`~
+  ==
+::
+++  test-zx-nft-give-nontransferrable  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%give addr-2:zigs id.p:item-1:collection-2]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%6
+      modified=`~
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %take
+::
+++  test-yz-take  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%take addr-2:zigs id.p:item-1:collection-1]
+    [caller-2 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
       ==
-      nft-1
-      0xcafe.babe
-      pubkey-1
-      town-id
-  ==
-++  nft-wheat
-  ^-  pact:smart
-  :*  `;;([bat=* pay=*] (cue +.+:;;([* * @] nft-contract)))
-      interface=~  ::  TODO
-      types=~      ::  TODO
-      0xcafe.babe  ::  id
-      0xcafe.babe  ::  lord
-      0xcafe.babe  ::  holder
-      town-id      ::  town-id
+      burned=`~
+      events=`~
   ==
 ::
-++  fake-granary
-  ^-  granary
-  %+  gas:big  *(merk:merk id:smart item:smart)
-  :~  [id:nft-wheat [%| nft-wheat]]
-      [id:nft-metadata-rice [%& nft-metadata-rice]]
-      [id:nft-rice [%& nft-rice]]
-      [id.p:account-1:zigs account-1:zigs]
+::  tests for %push
+::
+++  test-xz-push  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=(make-pset:smart ~[addr-2:zigs 0x1234.5678])
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%push 0x1234.5678 id.p:item-1:collection-1 [%hello ~]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%4  ::  0x1234.5678 is a missing pact, this is success
+      modified=`~
+      burned=`~
+      events=`~
   ==
-++  fake-populace
-  ^-  populace
-  %+  gas:pig  *(merk:merk id:smart @ud)
-  ~[[id:caller-1 0]]
-++  fake-land
-  ^-  land
-  [fake-granary fake-populace]
 ::
-::  begin tests
+::  tests for %pull
 ::
-++  test-mill-nft-give
-  =/  =calldata:smart  [%give 0xffff.ffff.ffff.ffff id:nft-rice]
-  =/  shel=shell:smart
-    [caller-1 ~ id:nft-wheat 1 1.000.000 town-id 0]
-  =/  res=single-result
-    %+  ~(mill mil miller town-id 1)
-      fake-land
-    `transaction:smart`[fake-sig shel yolk]
-  ::
-  ~&  >  "fee: {<fee.res>}"
-  ~&  p.land.res
-  ;:  weld
-  ::  assert that our call went through
-    %+  expect-eq
-    !>(%0)  !>(errorcode.res)
+++  test-wz-pull  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        id.p:item-1:collection-1
+        id:nft
+        addr-2:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  =/  =typed-message:smart
+    :+  id.p:item-1:collection-1                      :: domain, giver nft account
+      0x7743.b53e.7d64.a85c.4813.5bf3.a245.120e       :: pull-jold hash
+    :^    addr-1:zigs                                 :: msg: [from to item-id deadline]
+        addr-2:zigs
+      id.p:item-1:collection-1
+    1.000
+  =/  =sig:smart
+    %+  ecdsa-raw-sign:secp256k1:secp:crypto
+    `@uvI`(shag:smart typed-message)  priv-1:zigs
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%pull addr-1:zigs addr-2:zigs id.p:item-1:collection-1 1.000 sig]
+    [caller-2 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %set-allowance
+::
+++  test-vz-set-new-allowance  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=(make-pset:smart ~[addr-2:zigs 0x1234.5678])
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance ~[[0x1234.5678 id.p:item-1:collection-1 %.y]]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+++  test-vy-clear-allowance  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance ~[[addr-2:zigs id.p:item-1:collection-1 %.n]]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+++  test-vx-set-new-allowance-clear-old  ^-  test-txn
+  =/  new-item-1
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 1))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt:collection-1 1)
+        %nft
+        :*  1
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=[0x1234.5678 ~ ~]
+            properties=~
+            transferrable=%.y
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance ~[[0x1234.5678 id.p:item-1:collection-1 %.y] [addr-2:zigs id.p:item-1:collection-1 %.n]]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-1
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %mint
+::
+++  test-uz-mint  ^-  test-txn
+  =/  new-item-2
+    :*  %&
+        (hash-data id:nft addr-1:zigs default-town-id (cat 3 salt:collection-1 2))
+        id:nft
+        addr-1:zigs
+        default-town-id
+        (cat 3 salt:collection-1 2)
+        %nft
+        :*  2
+            'asdfasdfasdf'
+            id.p:metadata:collection-1
+            allowances=~
+            properties=~
+            transferrable=%.y
+    ==  ==
+  ::  new collection metadata supply is 2
+  ::  todo: just change noun.p.metadata( wing
+  =/  new-metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt:collection-1)
+        id:nft
+        id:nft
+        default-town-id
+        salt:collection-1
+        %metadata
+        :*  name='collection-1'
+            symbol='TC1'
+            properties=~
+            supply=2
+            cap=~
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt:collection-1
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%mint id.p:metadata:collection-1 ~[[addr-1:zigs 'asdfasdfasdf' ~ %.y]]]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-item-2
+          new-metadata          
+      ==
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %deploy
+::
+++  test-tz-deploy  ^-  test-txn
+  =/  salt  (cat 3 'deploy-salt' addr-1:zigs)  
+  =/  new-collection
+    ^-  item:smart
+    :*  %&
+        (hash-data id:nft id:nft default-town-id salt)
+        id:nft
+        id:nft
+        default-town-id
+        salt
+        %metadata
+        :*  name='collection-3'
+            symbol='TC3'
+            properties=~
+            supply=0
+            cap=~
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%deploy 'collection-3' 'TC3' 'deploy-salt' ~ ~ [addr-1:zigs ~ ~] ~]
+    [caller-1 ~ id:nft [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-collection
+      ==
+      burned=`~
+      events=`~
   ==
 --

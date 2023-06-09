@@ -19,7 +19,7 @@
 ++  fake-sig  [0 0 0]
 ++  eng
   %~  engine  engine
-  :+  !<(vase [-:!>(*vase) (cue q.q.smart-lib-noun)])
+  :+  !<(vase [-:!>(*vase) (cue q.q.smart-lib-noun)])  ::  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
   jets:zink  %.n  ::  sigs off
 ::
 ::  fake data

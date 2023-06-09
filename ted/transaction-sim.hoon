@@ -22,7 +22,9 @@
 |-  ^-  form:m
 =/  eng
   %~  engine  engine
-  :+  !<(vase [-:!>(*vase) (cue q.q.smart-lib-noun)])  ::  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
+  ::  alternative incantations:
+  ::  ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))  ::  !<(vase [-:!>(*vase) (cue q.q.smart-lib-noun)])
+  :+  !<(vase [-:!>(*vase) (cue +.+:;;([* * @] smart-lib-noun))])
   jets:zink  %.n  ::  sigs off
 ::
 =*  gather-tests  $
