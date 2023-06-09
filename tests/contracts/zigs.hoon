@@ -160,4 +160,50 @@
       [sequencer default-town-id batch=1 eth-block-height=0]
     tx
   tx-fail
+::
+::  tests for %push
+::
+++  test-zz-push  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%push addr-1:zigs 100.000 (id:zigs addr-2:zigs) [%random-call ~]]
+    [caller-2 ~ id.p:pact:zigs [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%4  ::  0x1234.5678 is a missing pact, this is success
+      modified=`~
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %pull
+::
+++  test-zzx-pull  ^-  test-txn
+  =/  =typed-message:smart
+    :+  (id:zigs addr-2:zigs)                         :: domain, giver zigs account
+      0x8a0c.ebea.b35e.84a1.1729.7c78.f677.f39a       :: pull-jold hash
+    :*  addr-2:zigs                                   :: msg: [giver to amount nonce deadline]
+        addr-1:zigs
+        100.000
+        0
+        1.000
+    ==
+  =/  =sig:smart
+    %+  ecdsa-raw-sign:secp256k1:secp:crypto
+    `@uvI`(shag:smart typed-message)  priv-2:zigs
+  :^    chain
+     [sequencer default-town-id batch=1 eth-block-height=999]
+    :+  fake-sig
+      [%pull addr-2:zigs addr-1:zigs 100.000 (id:zigs addr-2:zigs) 0 1.000 sig]
+    [caller-1 ~ id.p:pact:zigs [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      :-  ~
+      %-  make-chain-state
+      :~  (account addr-1 300.100.000 [addr-2 1.000.000]^~):zigs
+          (account addr-2 199.900.000 ~):zigs
+      ==
+      burned=`~
+      events=`~
+  ==
 --
