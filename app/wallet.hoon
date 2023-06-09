@@ -400,8 +400,7 @@
               %agent  [our.bowl %uqbar]
               %poke  %uqbar-write
               !>(`write:uqbar`[%submit tx])
-          ==
-      ==
+      ==  ==
     ::
         %submit
       ::  sign a pending transaction from this hot wallet
@@ -409,6 +408,30 @@
       =/  my-pending  (~(got by pending-store) from.act)
       ?~  found=(~(get by my-pending) hash.act)
         ~|("%wallet: can't find pending transaction with that hash" !!)
+      ?:  =(0x0 from.act)
+        ::  submit an unsigned message, account abstracted contract pays for gas
+        =*  tx  transaction.u.found
+        =:  rate.gas.tx      rate.gas.act
+            bud.gas.tx       bud.gas.act
+            status.tx        %101
+        ==
+        ::  update hash of tx with new values
+        =/  hash  (hash-transaction +.tx)
+        :_  %=    state
+                pending-store
+              (~(put by pending-store) from.act (~(del by my-pending) hash.act))
+            ::
+                unfinished-transaction-store
+              %+  ~(put by unfinished-transaction-store)
+                hash
+              [origin.u.found tx action.u.found ~]
+            ==
+        :~  (tx-update-card hash tx action.u.found)
+            :*  %pass  /submit-tx/(scot %ux hash)
+                %agent  [our.bowl %uqbar]
+                %poke  %uqbar-write
+                !>(`write:uqbar`[%submit tx])
+        ==  ==
       ?~  keypair=(~(get by keys.state) from.act)
         ~|("%wallet: don't have knowledge of that address" !!)
       =*  tx  transaction.u.found
@@ -449,8 +472,7 @@
               %agent  [our.bowl %uqbar]
               %poke  %uqbar-write
               !>(`write:uqbar`[%submit tx])
-          ==
-      ==
+      ==  ==
     ::
         %delete-pending
       ~|  "%wallet: no pending transactions from that address"
@@ -532,6 +554,47 @@
           ==
       %=  state
         pending-store  (~(put by pending-store) from.act my-pending)
+      ==
+    ::
+        %unsigned-transaction
+      ::  build calldata of transaction, depending on argument type
+      =/  =calldata:smart
+        ?-    -.action.act
+            %noun
+          +.action.act
+        ::    
+            %text
+          =/  smart-lib-vase
+            .^  ^vase  %gx
+              /(scot %p our.bowl)/sequencer/(scot %da now.bowl)/smart-lib/noun
+            ==
+          ~|  "wallet: failed to compile custom action!"
+          =/  data-hoon  (ream ;;(@t +.action.act))
+          =/  res
+            (slap smart-lib-vase data-hoon)
+          !<([@tas *] res)
+        ==
+      =/  =shell:smart  [[0x0 0 0x0] ~ contract.act [0 0] town.act %100]
+      ::  generate hash
+      =/  hash  (hash-transaction [calldata shell])
+      =/  =transaction:smart  [[0 0 0] calldata shell]
+      ~&  >>  "%wallet: submitting unsigned tx with hash {<hash>}"
+      ::  update stores
+      =/  my-pending
+        %+  ~(put by (~(gut by pending-store) 0x0 ~))
+        hash  [origin.act transaction action.act]
+      :-  :-  (tx-update-card hash transaction action.act)
+          ?~  origin.act  ~
+          ?~  gas=(~(get by approved-origins) u.origin.act)  ~
+          :_  ~
+          :*  %pass  /self-submit
+              %agent  [our.bowl %wallet]
+              %poke  %wallet-poke
+              !>  ^-  wallet-poke
+              [%submit 0x0 hash u.gas]
+          ==
+      %=  state
+        pending-store  (~(put by pending-store) 0x0 my-pending)
       ==
     ::
         %transaction-to-ship

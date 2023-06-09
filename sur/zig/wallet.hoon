@@ -170,6 +170,12 @@
           town=@ux
           action=supported-actions
       ==
+      $:  %unsigned-transaction
+          =origin
+          contract=id:smart
+          town=@ux
+          action=$%([%noun [%validate *]] [%text @t])
+      ==
       ::
       $:  %transaction-to-ship
           =origin
