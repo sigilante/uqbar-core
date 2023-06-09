@@ -1,5 +1,5 @@
-::  UQ| non-fungible token standard v0.1
-::  last updated: 2023/5/24
+::  UQ| non-fungible token standard v0.2
+::  last updated: 2023/6/7
 ::
 ::  TODO: add gasless signing for %takes like in fungible
 ::
@@ -46,8 +46,8 @@
     [uri=@t properties=(pmap @tas @t) transferrable=?]
   ::
   +$  action
-    $%  give
-        take
+    $%  give  take
+        push  pull
         set-allowance
         mint
         deploy
@@ -62,6 +62,20 @@
     $:  %take
         to=address
         item-id=id
+    ==
+  +$  push
+    $:  %push
+        to=address
+        item-id=id
+        calldata=*
+    ==
+  +$  pull
+    $:  %pull
+        from=address
+        to=address
+        item-id=id
+        deadline=@ud
+        =sig
     ==
   +$  set-allowance
     $:  %set-allowance
@@ -90,7 +104,7 @@
     |=  [=context act=give:sur]
     ^-  (quip call diff)
     =+  (need (scry-state item-id.act))
-    ::  caller must hold NFT, this contract must be lord
+    ::  caller must hold NFT, this contract must be source
     =/  gift  (husk nft:sur - `this.context `id.caller.context)
     ::  NFT must be transferrable
     ?>  transferrable.noun.gift
@@ -105,7 +119,7 @@
     |=  [=context act=take:sur]
     ^-  (quip call diff)
     =+  (need (scry-state item-id.act))
-    ::  this contract must be lord
+    ::  this contract must be source
     =/  gift  (husk nft:sur - `this.context ~)
     ::  caller must be in allowances set
     ?>  (~(has pn allowances.noun.gift) id.caller.context)
@@ -118,26 +132,86 @@
     ==
     `(result [[%& gift] ~] ~ ~ ~)
   ::
+  ++  push
+    |=  [=context act=push:sur]
+    ^-  (quip call diff)
+    ::  In a single transaction you can approve an NFT for giving
+    ::  and call a function, saving an extra transaction. For any
+    ::  contract that wants to implement this, it must have an
+    ::  %on-push action: [%on-push from=account item-id=id calldata=*]
+    =+  (need (scry-state item-id.act))
+    =+  gift=(husk nft:sur - `this.context `id.caller.context)
+    ?>  transferrable.noun.gift
+    =.  allowances.noun.gift
+      (~(put pn allowances.noun.gift) to.act)
+    :_  (result [%&^gift ~] ~ ~ ~)
+    :_  ~
+    :+  to.act  town.context
+    [%on-push id.caller.context item-id.act calldata.act]
+  ::
+  ++  pull-jold-hash  0x7743.b53e.7d64.a85c.4813.5bf3.a245.120e
+    :: ^-  @ux
+    :: %-  sham
+    :: %-  need
+    :: %-  de-json:html
+    :: ^-  cord
+    :: '''
+    :: [
+    ::   {"from": "ux"},
+    ::   {"to": "ux"},
+    ::   {"item-id": "ux"},
+    ::   {"deadline": "ud"}
+    :: ]
+    :: '''
+  ::
+  ++  pull
+    |=  [=context act=pull:sur]
+    ^-  (quip call diff)
+    ::  %pull allows for gasless approvals for transferring NFTs
+    ::  the giver must sign the typed +$approve struct above,
+    ::  and the taker will pass in this action to take the item
+    =+  (need (scry-state item-id.act))
+    ::  assert that from address current holds NFT
+    =+  gift=(husk nft:sur - `this.context `from.act)
+    ::  assert that NFT is transferrable
+    ?>  transferrable.noun.gift
+    ::  verify signature is correct
+    =/  =typed-message
+        :+  (hash-data this.context from.act town.context salt.gift)
+          pull-jold-hash
+        [from to item-id deadline]:act
+    ?>  =((recover typed-message sig.act) from.act)
+    ::  assert deadline is valid
+    ?>  (lte eth-block.context deadline.act)
+    ::  change holder to reflect new ownership
+    ::  clear allowances
+    =:  holder.gift  to.act
+        allowances.noun.gift  ~
+    ==
+    `(result [%&^gift ~] ~ ~ ~)
+  ::
   ++  set-allowance
     |=  [=context act=set-allowance:sur]
     ^-  (quip call diff)
     ::  can set many allowances in single call
-    =|  changed=(list item)
+    =|  changed=(merk id item)
     |-
     ?~  items.act
       ::  finished
-      `(result changed ~ ~ ~)
-    ::  can optimize repeats here by storing these all in pmap at start
-    =+  (need (scry-state item.i.items.act))
+      `[changed ~ ~ ~]
+    =+  %^  gut:big  changed  item.i.items.act
+        (need (scry-state item.i.items.act))
     ::  must hold any NFT we set allowance for
     =/  nft  (husk nft:sur - `this.context `id.caller.context)
+    ::  cannot set allowance for ourselves
+    ?<  =(who.i.items.act holder.nft)
     =.  allowances.noun.nft
       ?:  allowed.i.items.act
         (~(put pn allowances.noun.nft) who.i.items.act)
       (~(del pn allowances.noun.nft) who.i.items.act)
     %=  $
       items.act  t.items.act
-      changed    [[%& nft] changed]
+      changed    (put:big changed id.nft [%& nft])
     ==
   ::
   ++  mint
@@ -197,7 +271,7 @@
       ==
     =/  =id  (hash-data this.context this.context town.context salt)
     =/  =data
-      [id this.context this.context town.context salt.act %metadata metadata]
+      [id this.context this.context town.context salt %metadata metadata]
     ?~  initial-distribution.act
       `(result ~ [[%& data] ~] ~ ~)
     ::  perform optional mint
