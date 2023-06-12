@@ -1,473 +1,455 @@
-::  fungible.hoon tests
-/-  zink
-/+  *test, smart=zig-sys-smart, *sequencer, merk, ethereum
-/*  smart-lib-noun     %noun  /lib/zig/sys/smart-lib/noun
-/*  zink-cax-noun      %noun  /lib/zig/sys/hash-cache/noun
-/*  zigs-contract      %noun  /con/compiled/zigs/noun
-/*  fungible-contract  %noun  /con/compiled/fungible/noun
+::
+::  tests for con/fungible.hoon
+::
+/+  *test, *transaction-sim
+/=  fungible-lib  /con/lib/fungible
+/*  fungible-contract  %jam  /con/compiled/fungible/jam
 |%
 ::
-::  constants / dummy info for mill
+::  test data
 ::
-++  big  (bi:merk id:smart item:smart)  ::  merkle engine for granary
-++  pig  (bi:merk id:smart @ud)          ::                for populace
-++  batch-num  1
-++  town-id    0x2
-++  rate    1
-++  budget  100.000
-++  fake-sig   [0 0 0]
-++  mil
-  %~  mill  mill
-  :+    ;;(vase (cue +.+:;;([* * @] smart-lib-noun)))
-    ;;((map * @) (cue +.+:;;([* * @] zink-cax-noun)))
-  %.y
+++  sequencer  caller-1
+++  caller-1  ^-  caller:smart  [addr-1 1 (id addr-1)]:zigs
+++  caller-2  ^-  caller:smart  [addr-2 1 (id addr-2)]:zigs
+++  caller-3  ^-  caller:smart  [addr-3 1 (id addr-3)]:zigs
+++  caller-4  ^-  caller:smart  [addr-4 1 (id addr-4)]:zigs
 ::
-+$  granary   (merk:merk id:smart item:smart)
-+$  single-result
-  [fee=@ud =land burned=granary =errorcode:smart hits=(list hints:zink) =crow:smart]
-++  gilt
-  ::  grains list to granary
-  |=  grz=(list item:smart)
-  (gas:big *granary (turn grz |=(g=item:smart [id.p.g g])))
+++  my-shell  [caller-1 ~ id.p:pact:zigs [1 1.000.000] default-town-id 0]
 ::
-::  fake data
-::
-++  miller
-  ^-  caller:smart
-  :+  0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0
-    1
-  (zig-id:zigs 0x24c.23b9.8535.cd5a.0645.5486.69fb.afbf.095e.fcc0)
-++  caller-1  ^-  caller:smart  [holder-1:zigs 1 (zig-id:zigs holder-1:zigs)]
-++  caller-2  ^-  caller:smart  [holder-2:zigs 1 (zig-id:zigs holder-2:zigs)]
-++  caller-3  ^-  caller:smart  [holder-3:zigs 1 (zig-id:zigs holder-3:zigs)]
-++  caller-4  ^-  caller:smart  [holder-4:zigs 1 (zig-id:zigs holder-4:zigs)]
-::
-++  zigs
+++  fungible
   |%
-  ++  holder-1  0xd387.95ec.b77f.b88e.c577.6c20.d470.d13c.8d53.2169
-  ++  holder-2  0x75f.da09.d4aa.19f2.2cad.929c.aa3c.aa7c.dca9.5902
-  ++  holder-3  0xa2f8.28f2.75a3.28e1.3ba1.25b6.0066.c4ea.399d.88c7
-  ++  holder-4  0xface.face.face.face.face.face.face.face.face.face
-  ++  zig-id
-    |=  holder=id:smart
-    (fry-data:smart zigs-contract-id:smart holder town-id `@`'zigs')
-  ++  zig-account
-    |=  [holder=id:smart amt=@ud]
+  ++  code
+    (cue fungible-contract)
+  ++  id
+    (hash-pact 0x1234.5678 0x1234.5678 default-town-id code)
+  ++  pact
     ^-  item:smart
-    =/  id  (zig-id holder)
-    :*  %&  `@`'zigs'  %account
-        [amt ~ `@ux`'zigs-metadata-id']
-        id
-        zigs-contract-id:smart
-        holder
-        town-id
+    :*  %|  id
+        0x1234.5678  ::  source
+        0x1234.5678  ::  holder
+        default-town-id
+        [- +]:code
+        ~
     ==
-  ++  wheat
+  ++  account
+  |=  [holder=id:smart metadata=id:smart amt=@ud salt=@ allowances=(list [@ux @ud])]
+  ^-  item:smart
+  :*  %&  (hash-data:smart id holder default-town-id salt)
+      id
+      holder
+      default-town-id
+      salt
+      %account
+      [amt (make-pmap:smart allowances) metadata ~]
+  ==
+--
+::
+++  token-1
+  |%
+  ++  salt
+    (cat 3 'test-salt' addr-1:zigs)
+  ++  metadata
     ^-  item:smart
-    =/  cont  ;;([bat=* pay=*] (cue +.+:;;([* * @] zigs-contract)))
-    =/  interface  ~
-    =/  types  ~
-    :*  %|
-        `cont
-        interface
-        types
-        zigs-contract-id:smart  ::  id
-        zigs-contract-id:smart  ::  lord
-        zigs-contract-id:smart  ::  holder
-        town-id
-    ==
+    :*  %&
+        (hash-data id:fungible id:fungible default-town-id salt)
+        id:fungible
+        id:fungible
+        default-town-id
+        salt
+        %token-metadata
+        :*  name='token-1'
+            symbol='TT1'
+            decimals=18
+            supply=100.000
+            cap=~
+            mintable=%.n
+            minters=~
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  ++  account-1
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible addr-1:zigs default-town-id salt)
+        id:fungible
+        addr-1:zigs
+        default-town-id
+        salt
+        %account
+        :*  balance=100.000
+            allowances=~
+            id.p:metadata
+            nonces=~
+    ==  ==
   --
 ::
+++  token-2
+  |%
+  ++  salt
+    (cat 3 'test-salt' addr-2:zigs)
+  ++  metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible id:fungible default-town-id salt)
+        id:fungible
+        id:fungible
+        default-town-id
+        salt
+        %token-metadata
+        :*  name='token-2'
+            symbol='TT2'
+            decimals=18
+            supply=200.000
+            cap=`10.000.000
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt
+    ==  ==
+  ++  account-1
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible addr-1:zigs default-town-id salt)
+        id:fungible
+        addr-1:zigs
+        default-town-id
+        salt
+        %account
+        :*  balance=100.000
+            allowances=~
+            id.p:metadata
+            nonces=~
+    ==  ==
+  ++  account-2
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible addr-2:zigs default-town-id salt)
+        id:fungible
+        addr-2:zigs
+        default-town-id
+        salt
+        %account
+        :*  balance=100.000
+            allowances=~
+            id.p:metadata
+            nonces=~
+    ==  ==
+  ++  account-3
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible addr-3:zigs default-town-id salt)
+        id:fungible
+        addr-3:zigs
+        default-town-id
+        salt
+        %account
+        :*  balance=100.000
+            allowances=(make-pmap:smart ~[[addr-2:zigs 5.000]])
+            id.p:metadata
+            nonces=~
+    ==  ==
+--
 ::
-::
-::  N.B. owner zigs ids must match the ones generated in `+zig-account`
-++  fun-account
-  |=  [holder=id:smart amt=@ud meta=item:smart allowances=(pmap:smart address:smart @ud)]
-  ::  meta - metadata of the fungible account. defaults to `@ux`'simple' unless provided
-  ^-  item:smart
-  ?>  ?=(%& -.meta)
-  =/  id  (fry-data:smart id.p:fungible-wheat holder town-id salt.p.meta)
-  :*  %&  salt.p.meta  %account
-      [amt allowances id.p:meta 0]
-      id
-      id.p:fungible-wheat
-      holder
-      town-id
+++  state
+  %-  make-chain-state
+  :~  pact:zigs
+      pact:fungible
+      metadata:token-1
+      account-1:token-1
+      metadata:token-2
+      account-1:token-2
+      account-2:token-2
+      account-3:token-2
+      (account addr-1 300.000.000 ~):zigs
+      (account addr-2 200.000.000 ~):zigs
+      (account addr-3 100.000.000 ~):zigs
+      (account addr-4 100.000.000 ~):zigs
   ==
+++  chain
+  ^-  chain:engine
+  [state ~]
 ::
-++  account-1-mintable
-  (fun-account holder-1:zigs 50 token-mintable ~)
-++  account-2-mintable
-  (fun-account holder-2:zigs 50 token-mintable ~)
-++  account-1
-  (fun-account holder-1:zigs 50 token-simple ~)
-++  account-2
-  (fun-account holder-2:zigs 50 token-simple ~)
-++  account-3
-  %:  fun-account
-      holder-3:zigs
-      20
-      token-simple
-      (~(gas py:smart *(pmap:smart address:smart @ud)) ~[[id:caller-4 10]])
-  ==
-++  account-4-different
-  (fun-account holder-4:zigs 20 token-different ~)
+::  tests for %deploy
 ::
-++  fungible-wheat
-  ^-  item:smart
-  =/  cont  ;;([bat=* pay=*] (cue +.+:;;([* * @] fungible-contract)))
-  =/  interface  ~
-  =/  types  ~
-  :*  %|
-      `cont
-      interface
-      types
-      id=`@ux`'fungible'
-      lord=`@ux`'fungible'
-      holder=`@ux`'fungible'
-      town-id
-  ==
-::
-++  token-simple
-  ^-  item:smart
-  =+  deployer=0x0
-  =+  sal=`@`'simple-token'
-  :*  %&  sal  %metadata
-      :*  name='Simple Token'
-          'ST'
-          decimals=0
-          supply=100
-          cap=~
-          mintable=%.n
-          minters=~
-          deployer
-          sal
+++  test-zzz-deploy  ^-  test-txn
+  =/  salt  (cat 3 'deploy-salt' addr-4:zigs)  
+  ::  replace supply, todo just change wing
+  =/  new-token-metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible id:fungible default-town-id salt)
+        id:fungible
+        id:fungible
+        default-town-id
+        salt
+        %token-metadata
+        :*  name='token-3'
+            symbol='TT3'
+            decimals=18
+            supply=5.000
+            cap=`10.000
+            mintable=%.n
+            minters=~
+            deployer=addr-4:zigs
+            salt
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%deploy 'token-3' 'TT3' 'deploy-salt' `10.000 ~ ~[[addr-4:zigs 5.000]]]
+    [caller-4 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-token-metadata
+          (account:fungible addr-4:zigs id.p:new-token-metadata 5.000 salt ~)
       ==
-      `@ux`'simple-metadata-1'
-      id.p:fungible-wheat
-      id.p:fungible-wheat
-      town-id
+      burned=`~
+      events=`~
   ==
-++  token-mintable
-  ^-  item:smart
-  =+  deployer=0x0
-  =+  sym='STM'
-  :*  %&  `@`'simple-token-mintable'  %metadata
-      :*  name='Simple Token Mintable'
-          sym
-          decimals=0
-          supply=100
-          cap=`1.000
-          mintable=%.y
-          minters=(~(gas pn:smart *(pset:smart address:smart)) ~[id:caller-1])
-          deployer
-          `@`'simple-token-mintable'
+::
+::  tests for %mint
+::
+++  test-zzz-mint  ^-  test-txn
+  =/  new-token-metadata
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible id:fungible default-town-id salt:token-2)
+        id:fungible
+        id:fungible
+        default-town-id
+        salt:token-2
+        %token-metadata
+        :*  name='token-2'
+            symbol='TT2'
+            decimals=18
+            supply=300.000
+            cap=`10.000.000
+            mintable=%.y
+            minters=[addr-1:zigs ~ ~]
+            deployer=addr-1:zigs
+            salt:token-2
+    ==  ==
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%mint id.p:metadata:token-2 ~[[addr-1:zigs 100.000]]]
+    [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  new-token-metadata
+          (account:fungible addr-1:zigs id.p:metadata:token-2 200.000 salt:token-2 ~)
       ==
-      `@ux`'simple-mintable'
-      id.p:fungible-wheat
-      id.p:fungible-wheat
-      town-id
+      burned=`~
+      events=`~
   ==
-++  token-different
-  ^-  item:smart
-  =+  deployer=0x0
-  =+  sym='DIF'
-  :*  %&  `@`'different-token'  %metadata
-      :*  name='Different'
-          sym
-          decimals=0
-          supply=0
-          cap=`12
-          mintable=%.y
-          minters=(~(gas pn:smart *(pset:smart address:smart)) ~[id:caller-1])
-          deployer
-          `@`'different-token'
+::
+::  tests for %give
+::
+++  test-zz-give  ^-  test-txn
+  :^    chain
+    [sequencer default-town-id batch=1 eth-block-height=0]
+  :+  fake-sig
+     [%give addr-2:zigs 50.000 id.p:account-1:token-2]
+  [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-1:zigs id.p:metadata:token-2 50.000 salt:token-2 ~)
+          (account:fungible addr-2:zigs id.p:metadata:token-2 150.000 salt:token-2 ~)
       ==
-      `@ux`'different-token'
-      id.p:fungible-wheat
-      id.p:fungible-wheat
-      town-id
-  ==
-++  salt-of
-  |=  tok=item:smart
-  ?>  ?=(%& -.tok)
-  salt.p.tok
-::
-++  token-metadata-mold
-  $:  name=@t                 ::  the name of a token (not unique!)
-      symbol=@t               ::  abbreviation (also not unique)
-      decimals=@ud            ::  granularity (maximum defined by implementation)
-      supply=@ud              ::  total amount of token in existence
-      cap=(unit @ud)          ::  supply cap (~ if no cap)
-      mintable=?              ::  whether or not more can be minted
-      minters=(pset:smart address:smart)  ::  pubkeys permitted to mint, if any
-      deployer=address:smart        ::  pubkey which first deployed token
-      salt=@
+      burned=`~
+      events=`~
   ==
 ::
-::
-::
-++  fake-granary
-  ^-  granary
-  %-  gilt
-  :~  fungible-wheat
-      token-simple
-      token-mintable
-      token-different
-      account-1
-      account-2
-      account-3
-      account-4-different
-      account-1-mintable
-      account-2-mintable
-      (zig-account:zigs id:caller-1 999.999.999)
-      (zig-account:zigs id:caller-2 999.999.999)
-      (zig-account:zigs id:caller-3 999.999.999)
-      (zig-account:zigs id:caller-4 999.999.999)
-      (zig-account:zigs id:miller 999.999.999)
+++  test-zz-give-new-address  ^-  test-txn
+  :^    chain
+    [sequencer default-town-id batch=1 eth-block-height=0]
+  :+  fake-sig
+     [%give addr-2:zigs 1.000 id.p:account-1:token-1]
+  [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-1:zigs id.p:metadata:token-1 99.000 salt:token-1 ~)
+          (account:fungible addr-2:zigs id.p:metadata:token-1 1.000 salt:token-1 ~)
+      ==
+      burned=`~
+      events=`~
   ==
-++  fake-populace
-  ^-  populace
-  %+  gas:pig  *(merk:merk id:smart @ud)
-  :~  [id:caller-1 0]
-      [id:caller-2 0]
-      [id:caller-3 0]
+::
+++  test-zz-give-yourself  ^-  test-txn  :: should fail
+  :^    chain
+    [sequencer default-town-id batch=1 eth-block-height=0]
+  :+  fake-sig
+     [%give addr-1:zigs 1.000 id.p:account-1:token-1]
+  [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%6  
+      modified=`~
+      burned=`~
+      events=`~
   ==
-++  fake-land
-  ^-  land
-  [fake-granary fake-populace]
 ::
-++  test-set-allowance
-  ^-  tang
-  =/  action  [%set-allowance id:caller-3 10 id.p:account-1]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  updated-1=item:smart
-    (fun-account id:caller-1 50 token-simple (malt ~[[id:caller-3 10]]))
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  res=item:smart  (got:big p.land.milled id.p:account-1)
-  =*  correct  updated-1
-  (expect-eq !>(correct) !>(res))
+++  test-zz-give-too-much  ^-  test-txn  :: should fail
+  :^    chain
+    [sequencer default-town-id batch=1 eth-block-height=0]
+  :+  fake-sig
+     [%give addr-2:zigs 100.000.000.000 id.p:account-1:token-1]
+  [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%6  
+      modified=`~
+      burned=`~
+      events=`~
+  ==
 ::
-::  %give
+::  tests for %take
 ::
-++  test-give-known-receiver  ::  failing on a subtract
-  ^-  tang
-  =/  action  [%give id:caller-2 30 id.p:account-1 `id.p:account-2]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  updated-1=item:smart  (fun-account id:caller-1 20 token-simple ~)
-  =/  updated-2=item:smart  (fun-account id:caller-2 80 token-simple ~)
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  expected=granary  (gas:big *granary ~[[id.p:updated-1 updated-1] [id.p:updated-2 updated-2]])
-  ::  N.B. we use int to filter out any grains whose keys are not in expected,
-  ::  but preserve the values of those keys from p.land.milled. this is a recurring pattern
-  =/  res=granary       (int:big expected p.land.milled)
-  (expect-eq !>(expected) !>(res))
-++  test-give-unknown-receiver  ::  failing on a subtract
-  ^-  tang
-  =/  action  [%give id:caller-4 30 id.p:account-1 ~]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  new-id  (fry-data:smart id.p:fungible-wheat id:caller-4 town-id (salt-of token-simple))
-  =/  new=item:smart  (fun-account id:caller-4 30 token-simple ~)
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  res=item:smart  (got:big p.land.milled new-id)
-  =*  correct  new
-  (expect-eq !>(correct) !>(res))
-++  test-give-not-enough
-  ^-  tang
-  ::  should fail on a subtract
-  =/  action  [%give id:caller-2 51 id.p:account-1 `id.p:account-2]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  (expect-eq !>(%6) !>(errorcode.milled))
-++  test-give-metadata-mismatch
-  ^-  tang
-  =/  action  [%give id:caller-4 10 id.p:account-1 `id.p:account-4-different]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  (expect-eq !>(%6) !>(errorcode.milled))
+++  test-yz-take  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%take addr-2:zigs 5.000 id.p:account-3:token-2]
+    [caller-2 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      ::  assert correct modified state
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-2:zigs id.p:metadata:token-2 105.000 salt:token-2 ~)
+          (account:fungible addr-3:zigs id.p:metadata:token-2 95.000 salt:token-2 ~[[addr-2:zigs 0]])
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
-:: %take
+++  test-yz-take-no-allowanc  ^-  test-txn  :: should fail
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%take addr-1:zigs 5.000 id.p:account-2:token-2]
+    [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~  ::  we don't care
+      errorcode=`%6
+      modified=`~
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-take-send-new-account
-  ^-  tang
-  ::  taking 10 "simple token" from account-3
-  ::  will produce a new account for caller-4, who has none
-  =/  action  [%take id:caller-4 10 id.p:account-3 ~]
-  =/  shel=shell:smart
-    [caller-4 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  new-id=id:smart  (fry-data:smart id.p:fungible-wheat id:caller-4 town-id (salt-of token-simple))
-  =/  correct=item:smart  (fun-account id:caller-4 10 token-simple ~)
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  res=item:smart  (got:big p.land.milled new-id)
-  (expect-eq !>(correct) !>(res))
+::  tests for %set-allowance
 ::
-::  %mint
+++  test-yz-set-allowance  ^-  test-txn  
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance addr-2:zigs 15.000 id.p:account-1:token-2]
+    [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~  ::  we don't care
+      errorcode=`%0
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-1:zigs id.p:metadata:token-2 100.000 salt:token-2 ~[[addr-2:zigs 15.000]])
+      ==
+      burned=`~
+      events=`~
+  ==
 ::
-++  test-mint-known-receivers
-  ^-  tang
-  =/  action
-    :*  %mint
-        id.p:token-mintable
-        ~[[id:caller-1 `id.p:account-1-mintable 50] [id:caller-2 `id.p:account-2-mintable 10]]
+++  test-xy-set-allowance-again  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance addr-2:zigs 0 id.p:account-3:token-2]
+    [caller-3 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~ 
+      errorcode=`%0
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-3:zigs id.p:metadata:token-2 100.000 salt:token-2 ~[[addr-2:zigs 0]])
+      ==
+      burned=`~
+      events=`~
+  ==
+::  
+++  test-xx-set-allowance-self  ^-  test-txn  ::  should fail
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%set-allowance addr-1:zigs 5.000 id.p:account-1:token-2]
+    [caller-1 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~ 
+      errorcode=`%6
+      modified=`~
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %push
+::
+++  test-zz-push  ^-  test-txn
+  :^    chain
+      [sequencer default-town-id batch=1 eth-block-height=0]
+    :+  fake-sig
+      [%push addr-1:zigs 50.000 id.p:account-2:token-2 [%random-call ~]]
+    [caller-2 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%4  ::  0x1234.5678 is a missing pact, this is success
+      modified=`~
+      burned=`~
+      events=`~
+  ==
+::
+::  tests for %pull
+::
+++  test-zzx-pull  ^-  test-txn
+  =/  =typed-message:smart
+    :+  id.p:account-1:token-2                         :: domain, giver zigs account
+      0x8a0c.ebea.b35e.84a1.1729.7c78.f677.f39a        :: pull-jold hash
+    :*  addr-1:zigs                                    :: msg: [giver to amount nonce deadline]
+        addr-2:zigs
+        50.000
+        0
+        1.000
     ==
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  new-simp-meta=item:smart
-    =-  [%& tok(supply.data 160)]
-    tok=(husk:smart token-metadata-mold token-mintable ~ ~)
-  =/  updated-1=item:smart
-    (fun-account id:caller-1 100 token-mintable ~)
-  =/  updated-2=item:smart
-    (fun-account id:caller-2 60 token-mintable ~)
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  expected=granary  (gilt ~[new-simp-meta updated-1 updated-2])
-  =/  res=granary       (int:big expected p.land.milled)
-  (expect-eq !>(expected) !>(res))
-++  test-mint-unknown-receiver
-  ^-  tang
-  =/  action
-    [%mint id.p:token-mintable ~[[id:caller-3 ~ 50]]]
-  =/  shel=shell:smart
-    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-  =/  expected=item:smart
-    (fun-account id:caller-3 50 token-mintable ~)
-  =/  milled=single-result
-    %+  ~(mill mil miller town-id 1)
-    fake-land  `transaction:smart`[fake-sig shel action]
-  =/  res=item:smart  (got:big p.land.milled id.p:expected)
-  (expect-eq !>(expected) !>(res))
-::
-::  %take-with-sig
-::
-::++  test-take-with-sig-known-reciever
-::  ^-  tang
-::  ::  owner-1 is giving owner-2 the ability to take 30
-::  =/  to            id:caller-2
-::  =/  account       id.p:account-2  :: a rice of account-2  :: TODO: something is really fishy here. the account rice should have to be signed but this is fucked
-::  =/  from-account  id.p:account-1
-::  =/  amount        30
-::  =/  nonce         0
-::  =/  deadline      (add batch-num 1)
-::  =/  =typed-message:smart
-::    :-  (fry-data:smart id.p:fungible-wheat id:caller-1 town-id (salt-of account-1))
-::    (sham [id:caller-1 to amount nonce deadline])
-::  =/  sig
-::    %+  ecdsa-raw-sign:secp256k1:secp:crypto
-::      (sham typed-message)
-::    priv-1
-::  =/  =action:sur:fun
-::    [%take-with-sig to `account from-account amount nonce deadline sig]
-::  ::  this bad boi guzzles gas like crazy
-::  =/  shel=shell:smart
-::    [caller-2 ~ id.p:fungible-wheat rate 999.999.999 town-id 0]
-::  =/  updated-1=item:smart
-::    =-  [%& g(nonce.data 1)]
-::    g=(husk:smart account:sur:fun (fun-account id:caller-1 20 token-simple ~) ~ ~)
-::  =/  updated-2=item:smart
-::    (fun-account id:caller-2 60 token-simple ~)
-::  =/  milled=single-result
-::    %+  ~(mill mil miller town-id 1)
-::    fake-land  `transaction:smart`[fake-sig shel action]
-::  =/  expected=granary  (gilt ~[updated-1 updated-2])
-::  =/  res=granary       (int:big expected p.land.milled)
-::  (expect-eq !>(expected) !>(res))
-::++  test-take-with-sig-unknown-reciever  ^-  tang
-::  ::  owner-1 is giving owner-2 the ability to take 30
-::  =/  to  id:caller-2
-::  =/  account  ~  :: unkown account this time
-::  =/  from-account  0x1.beef
-::  =/  amount  30
-::  =/  nonce  0
-::  =/  deadline  (add batch-num 1)
-::  =/  =typed-message  :-  (fry-data:smart id.p:fungible-wheat id:caller-1 town-id `@`'salt')
-::                      (sham [id:caller-1 to amount nonce deadline])
-::  =/  sig  %+  ecdsa-raw-sign:secp256k1:secp:crypto
-::             (sham typed-message)
-::           priv-1
-::  =/  =action:sur
-::    [%take-with-sig to account from-account amount nonce deadline sig]
-::  =/  =cart
-::    [id.p:fungible-wheat [id:caller-2 0] batch-num town-id] :: cart no longer knows account-2' rice
-::  =/  updated-1=item:smart
-::    :*  %&  `@`'salt'  %account
-::        `account:sur`[20 ~ `@ux`'simple' 1]
-::        0x1.beef
-::        id.p:fungible-wheat
-::        id:caller-1
-::        town-id
-::    ==
-::  =/  new-id  (fry-data:smart id:caller-2 id.p:fungible-wheat 0x1 `@`'salt')
-::  =/  new=item:smart
-::    :*  %&  `@`'salt'  %account
-::        `account:sur`[30 ~ `@ux`'simple' 0]
-::        new-id
-::        id.p:fungible-wheat
-::        id:caller-2
-::        town-id
-::    ==
-::  =/  res=chick:smart
-::    (~(write cont cart) action)
-::  =/  correct-act=action:sur
-::    [%take-with-sig id:caller-2 `new-id 0x1.beef amount nonce deadline sig]
-::  =/  correct=chick:smart
-::    %+  continuation
-::      [me.cart town-id.cart correct-act]~
-::    (result:smart ~ ~[new] ~ ~)
-::  (expect-eq !>(res) !>(correct))
-::::
-::::
-::::  %deploy
-::::
-::++  test-deploy
-::  ::  XX this test infinite loops because of a problematic tap:in callsite in handling `%deploy`
-::  ^-  tang
-::  =/  token-salt  (sham (cat 3 id:caller-1 'TC'))
-::  =/  new-token-metadata=item:smart
-::    :*  %&  token-salt  %metadata
-::        ^-  token-metadata:sur:fun
-::        :*  'Test Coin'
-::            'TC'
-::            0
-::            900
-::            `1.000
-::            %.y
-::            (silt ~[id:caller-1])
-::            id:caller-1
-::        ==
-::        (fry-data:smart id.p:fungible-wheat id.p:fungible-wheat town-id token-salt)
-::        id.p:fungible-wheat
-::        id.p:fungible-wheat
-::        town-id
-::    ==
-::  =/  new-account=item:smart
-::    (fun-account id:caller-1 900 new-token-metadata ~)
-::  =/  =action:sur:fun
-::    [%deploy (silt ~[[id:caller-1 900]]) (silt ~[id:caller-1]) 'Test Coin' 'TC' 0 1.000 %.y]
-::  =/  shel=shell:smart
-::    [caller-1 ~ id.p:fungible-wheat rate budget town-id 0]
-::  =/  milled=single-result
-::    %+  ~(mill mil miller town-id 1)
-::    fake-land  `transaction:smart`[fake-sig shel action]
-::  =/  expected=granary  (gilt ~[new-account new-token-metadata])
-::  =/  res=granary       (int:big expected p.land.milled)
-::  (expect-eq !>(expected) !>(res))
+  =/  =sig:smart
+    %+  ecdsa-raw-sign:secp256k1:secp:crypto
+    `@uvI`(shag:smart typed-message)  priv-1:zigs
+  =/  new-giver  ::  incrementing nonces for giver
+    ^-  item:smart
+    :*  %&
+        (hash-data id:fungible addr-1:zigs default-town-id salt:token-2)
+        id:fungible
+        addr-1:zigs
+        default-town-id
+        salt:token-2
+        %account
+        :*  balance=50.000
+            allowances=~
+            id.p:metadata:token-2
+            nonces=(make-pmap:smart ~[[addr-2:zigs 1]])
+    ==  ==
+  :^    chain
+     [sequencer default-town-id batch=1 eth-block-height=999]
+    :+  fake-sig
+      [%pull addr-1:zigs addr-2:zigs 50.000 id.p:account-1:token-2 0 1.000 sig]
+    [caller-2 ~ id:fungible [1 1.000.000] default-town-id 0]
+  :*  gas=~
+      errorcode=`%0
+      :-  ~
+      %-  make-chain-state
+      :~  (account:fungible addr-2:zigs id.p:metadata:token-2 150.000 salt:token-2 ~)
+          new-giver
+      ==
+      burned=`~
+      events=`~
+  ==
 --
