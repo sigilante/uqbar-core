@@ -302,15 +302,19 @@
       :: :-  (clear-id-sub address.act our.bowl)
       :-  ~
       %=  state
-        keys    (~(del by keys) address.act)
-        nonces  (~(del by nonces) address.act)
-        tokens  (~(del by tokens) address.act)
+        keys               (~(del by keys) address.act)
+        encrypted-keys     (~(del by encrypted-keys) address.act)
+        nonces             (~(del by nonces) address.act)
+        tokens             (~(del by tokens) address.act)
         transaction-store  (~(del by transaction-store) address.act)
       ==
     ::
         %edit-nickname
-      =+  -:(~(got by keys.state) address.act)
-      `state(keys (~(put by keys) address.act [- nick.act]))
+      ?^  entry=(~(get by keys) address.act)
+        `state(keys (~(put by keys) address.act u.entry(nick nick.act)))
+      =-  `state(encrypted-keys -)
+      %+  ~(jab by encrypted-keys)  address.act
+      |=([@t priv=@t seed=@t] [nick.act priv seed])
     ::
         %sign-typed-message
       ::  TODO display something to the user using the contract interface
@@ -617,7 +621,8 @@
     ?~  batch-order.upd         `this
     =/  batch-hash=@ux  (rear batch-order.upd)
     ::  get latest tokens and nfts held
-    =/  addrs=(list address:smart)  ~(tap in ~(key by keys))
+    =/  addrs=(list address:smart)
+      ~(tap in (~(uni in ~(key by keys)) ~(key by encrypted-keys)))
     =/  new-tokens
       (make-tokens addrs [our now]:bowl)
     =/  new-metadata
