@@ -341,7 +341,7 @@
               hash.act
             [typed-message sig.act]
           ==
-      ::  todo: wallet fe update
+      ::  todo: wallet fe update?
       ~
     ::
         %sign-typed-message
@@ -351,7 +351,15 @@
       ?~  priv.keypair
         ::  not a hotwallet, put in pending store and display.
         ::  todo: wallet fe update
-        :-  ~
+        :-  :_  ~
+        :*  %give  %fact
+            ~[/tx-updates]  %wallet-frontend-update 
+            !>  ^-  wallet-frontend-update
+            :*    %new-sign-message
+                  `@ux`hash  origin.act
+                  from.act   domain.act  
+                  type.act
+        ==  ==
         %=    state
             pending-message-store
           (~(put by pending-message-store) `@ux`hash +.act)
@@ -895,6 +903,20 @@
         :-  (scot %ux a)
         %-  pairs:enjs
         (turn ~(tap by m) transaction-with-output:parsing)
+    ==
+  ::
+      [%pending-sign-messages ~]
+    =;  =json  ``json+!>(json)
+    %-  pairs:enjs
+    %+  turn  ~(tap by pending-message-store.state)
+    |=  [=hash:smart [=origin =address:smart domain=id:smart type=json msg=*]]
+    :-  (scot %ux hash)
+    %-  pairs:enjs
+    :~  ['origin' [%s ?~(origin '' (scot %tas p.u.origin))]]
+        ['address' s+(scot %ux address)]
+        ['domain' s+(scot %ux domain)]
+        ['type' type]
+        ::  no msg=* parsed right now.
     ==
   ::
       [%pending @ ~]

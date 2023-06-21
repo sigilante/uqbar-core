@@ -126,6 +126,13 @@
           hash=@ux
           finished-transaction
       ==
+      $:  %new-sign-message 
+          =hash:smart 
+          =origin 
+          =address:smart 
+          domain=id:smart 
+          type=json
+      ==
   ==
 ::
 ::  received from web interface

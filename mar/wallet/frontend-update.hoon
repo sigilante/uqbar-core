@@ -34,6 +34,17 @@
         %finished-tx
       %-  frond
       (transaction-with-output:parsing +.upd)
+    ::
+        %new-sign-message
+      %-  frond
+      :-  (scot %ux hash.upd)
+      %-  pairs
+      :~  ['origin' [%s ?~(origin.upd '' (scot %tas p.u.origin.upd))]]
+          ['address' s+(scot %ux address.upd)]
+          ['domain' s+(scot %ux domain.upd)]
+          ::  ['type' type.upd]
+          ::  no msg=* parsed right now.
+      ==
     ==
   --
 ++  grad  %noun
