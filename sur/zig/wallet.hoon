@@ -42,6 +42,9 @@
 +$  signed-message-store
   (map @ux [=typed-message:smart =sig:smart])
 ::
++$  pending-message-store
+  (map @ux [=origin =address:smart domain=id:smart type=json msg=*])
+::
 +$  unfinished-transaction-store
   (map @ux unfinished-transaction)
 ::
@@ -134,6 +137,7 @@
       [%derive-new-address hdpath=tape nick=@t]
       [%delete-address address=@ux]
       [%edit-nickname address=@ux nick=@t]
+      [%submit-typed-message =hash:smart from=address:smart sig=[v=@ r=@ s=@]]
       [%sign-typed-message =origin from=address:smart domain=id:smart type=json msg=*]
       [%add-tracked-address address=@ux nick=@t]
       [%set-share-prefs =share-prefs]
@@ -229,6 +233,34 @@
       ::  many keys can be derived or imported
       ::  if the private key is ~, that means it's a hardware wallet import
       keys=(map address:smart [priv=(unit @ux) nick=@t])
+      =share-prefs
+      ::  we track the nonce of each address we're handling
+      ::  TODO: introduce a mechanism to check nonce from chain and re-align
+      nonces=(map address:smart (map town=@ux nonce=@ud))
+      ::  signatures tracks any signed calls we've made
+      =signed-message-store
+      ::  tokens tracked for each address we're handling
+      tokens=(map address:smart =book)
+      ::  metadata for tokens we track
+      =metadata-store
+      ::  origins we automatically sign and approve txns from
+      approved-origins=(map (pair term wire) [rate=@ud bud=@ud])
+      ::  transactions we've sent that haven't been finalized by sequencer
+      =unfinished-transaction-store
+      ::  finished transactions we've sent
+      =transaction-store
+      ::  transactions we've been asked to sign, keyed by hash
+      =pending-store
+  ==
++$  state-4
+  $:  %4
+      ::  wallet holds a single seed at once
+      ::  address-index notes where we are in derivation path
+      seed=[mnem=@t pass=@t address-index=@ud]
+      ::  many keys can be derived or imported
+      ::  if the private key is ~, that means it's a hardware wallet import
+      keys=(map address:smart [priv=(unit @ux) nick=@t])
+      encrypted-keys=(map address:smart [nick=@t priv=@t seed=@t])
       =share-prefs
       ::  we track the nonce of each address we're handling
       ::  TODO: introduce a mechanism to check nonce from chain and re-align

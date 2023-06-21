@@ -27,6 +27,7 @@
           [%delete-pending parse-delete]
           [%transaction parse-transaction]
           [%unsigned-transaction parse-unsigned]
+          [%submit-typed-message parse-typed]
       ==
     ++  parse-signed
       %-  ot
@@ -52,6 +53,12 @@
       :~  [%contract (se %ux)]
           [%town (se %ux)]
           [%action (of ~[[%text so]])]
+      ==
+    ++  parse-typed
+      %-  ot
+      :~  [%hash (se %ux)]
+          [%from (se %ux)]
+          [%sig (ot ~[[%v ni] [%r (se %ux)] [%s (se %ux)]])]
       ==
     ++  parse-transaction
       %-  ot

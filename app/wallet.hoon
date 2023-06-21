@@ -11,8 +11,8 @@
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  state-4
-  $:  %4
++$  state-5
+  $:  %5
       ::  wallet holds a single seed at once
       ::  address-index notes where we are in derivation path
       seed=[mnem=@t pass=@t address-index=@ud]
@@ -24,6 +24,8 @@
       ::  we track the nonce of each address we're handling
       ::  TODO: introduce a mechanism to check nonce from chain and re-align
       nonces=(map address:smart (map town=@ux nonce=@ud))
+      ::  pending typed-messages to sign
+      =pending-message-store
       ::  signatures tracks any signed calls we've made
       =signed-message-store
       ::  tokens tracked for each address we're handling
@@ -41,7 +43,7 @@
   ==
 --
 ::
-=|  state-4
+=|  state-5
 =*  state  -
 ::
 %-  agent:dbug
@@ -53,15 +55,19 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  `this(state *state-4)
+  `this(state *state-5)
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
+      %5
+    `this(state !<(state-5 old-vase))
       %4
-    `this(state !<(state-4 old-vase))
+    =+  old=!<(state-4 old-vase)
+    =+  new=[%5 seed.old keys.old ~ share-prefs.old nonces.old ~ |6:old]
+    (on-load !>(`state-5`new))
       %3
     =+  old=!<(state-3 old-vase)
     (on-load !>(`state-4`[%4 seed.old keys.old ~ |3:old]))
@@ -316,16 +322,41 @@
       %+  ~(jab by encrypted-keys)  address.act
       |=([@t priv=@t seed=@t] [nick.act priv seed])
     ::
+       %submit-typed-message
+      ::  sign a pending typed-message from an attached hardware wallet
+      ::  Q: src.bowl verification?
+      ?~  pending=(~(get by pending-message-store) hash.act)
+        ~|("%wallet: no pending signature to that address" !!)
+      =/  =typed-message:smart
+        :+  domain.u.pending
+          `@ux`(sham type.u.pending)
+        msg.u.pending
+      ::  update stores
+      :_  %=    state
+              pending-message-store
+            (~(del by pending-message-store) hash.act)
+          ::
+              signed-message-store
+            %+  ~(put by signed-message-store)
+              hash.act
+            [typed-message sig.act]
+          ==
+      ::  todo: wallet fe update
+      ~
+    ::
         %sign-typed-message
-      ::  TODO display something to the user using the contract interface
-      ::  add pending signed-messages tab to frontend
       =/  keypair  (~(got by keys.state) from.act)
       =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
       =/  hash  `@uvI`(shag:smart typed-message)
+      ?~  priv.keypair
+        ::  not a hotwallet, put in pending store and display.
+        ::  todo: wallet fe update
+        :-  ~
+        %=    state
+            pending-message-store
+          (~(put by pending-message-store) `@ux`hash +.act)
+        ==
       =/  signature
-        ?~  priv.keypair
-          ::  put it into some temporary thing for cold storage. Make it pending
-          !!
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
         hash  u.priv.keypair
       :-   ?~  origin.act  ~
