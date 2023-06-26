@@ -28,6 +28,7 @@
           [%transaction parse-transaction]
           [%unsigned-transaction parse-unsigned]
           [%submit-typed-message parse-typed]
+          [%delete-typed-message (ot ~[[%hash (se %ux)]])]
       ==
     ++  parse-signed
       %-  ot

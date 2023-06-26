@@ -66,7 +66,7 @@
     `this(state !<(state-5 old-vase))
       %4
     =+  old=!<(state-4 old-vase)
-    =+  new=[%5 seed.old keys.old ~ share-prefs.old nonces.old ~ |6:old]
+    =+  new=[%5 seed.old keys.old encrypted-keys.old share-prefs.old nonces.old ~ |6:old]
     (on-load !>(`state-5`new))
       %3
     =+  old=!<(state-3 old-vase)
@@ -382,6 +382,16 @@
           signed-message-store
         %+  ~(put by signed-message-store.state)
         `@ux`hash  [typed-message signature]
+      ==
+    ::
+        %delete-typed-message
+      ~|  "%wallet: no pending message with that hash"
+      =/  my-pending  (~(got by pending-message-store) hash.act)
+      ::  remove without signing
+      :-  ~
+      %=    state
+          pending-message-store
+        (~(del by pending-message-store) hash.act)
       ==
     ::
         %set-nonce  ::  for testing/debugging

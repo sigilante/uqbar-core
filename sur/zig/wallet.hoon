@@ -146,6 +146,7 @@
       [%edit-nickname address=@ux nick=@t]
       [%submit-typed-message =hash:smart from=address:smart sig=[v=@ r=@ s=@]]
       [%sign-typed-message =origin from=address:smart domain=id:smart type=json msg=*]
+      [%delete-typed-message =hash:smart]
       [%add-tracked-address address=@ux nick=@t]
       [%set-share-prefs =share-prefs]
       ::  testing and internal
