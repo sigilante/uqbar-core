@@ -1,5 +1,5 @@
 /-  *zig-wallet, ui=zig-indexer
-/+  ui-lib=zig-indexer
+/+  ui-lib=zig-indexer, ethereum
 =>  |%
     +$  card  card:agent:gall
     --
@@ -59,6 +59,18 @@
   ^-  (list card)
   =-  [%pass /new-batch %agent [our %uqbar] %watch -]~
   /indexer/wallet/batch-order/(scot %ux town)
+::
+::  +generate-eth-hash:  takes in a @ux, 
+::  turns it into a string, transforms & hashes it
+::  the same way eth_personal_sign does. 
+++  generate-eth-hash
+  |=  hash=@ux
+  ^-  @ux
+  %-  keccak-256:keccak:crypto
+  %-  as-octt:mimes:html
+  %+  weld  "\19Ethereum Signed Message:\0a"       :: eth signed message, 
+  =+  hex=(num-to-hex:abi:ethereum hash)           :: prefix + len(msg) + msg
+  "{<(lent hex)>}{<hex>}}"
 ::
 ::  +integrate-output: upon receiving a transaction receipt,
 ::  analyze the output and update our tracked assets if any changed.

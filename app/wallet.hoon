@@ -331,6 +331,7 @@
         :+  domain.u.pending
           `@ux`(sham type.u.pending)
         msg.u.pending
+      =/  hash  (generate-eth-hash hash.act)
       ::  update stores
       :_  %=    state
               pending-message-store
@@ -338,16 +339,17 @@
           ::
               signed-message-store
             %+  ~(put by signed-message-store)
-              hash.act
+              hash
             [typed-message sig.act]
           ==
-      ::  todo: wallet fe update?
       ~
     ::
         %sign-typed-message
       =/  keypair  (~(got by keys.state) from.act)
       =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
-      =/  hash  `@uvI`(shag:smart typed-message)
+      ::  we might want to make signatures default to eth_personal_sign
+      ::  eth_sign would work with this, but "unsafe"
+      =/  typedhash  (shag:smart typed-message)
       ?~  priv.keypair
         ::  not a hotwallet, put in pending store and display.
         ::  todo: wallet fe update
@@ -356,17 +358,18 @@
             ~[/tx-updates]  %wallet-frontend-update 
             !>  ^-  wallet-frontend-update
             :*    %new-sign-message
-                  `@ux`hash  origin.act
+                  `@ux`typedhash  origin.act
                   from.act   domain.act  
                   type.act
         ==  ==
         %=    state
             pending-message-store
-          (~(put by pending-message-store) `@ux`hash +.act)
+          (~(put by pending-message-store) `@ux`typedhash +.act)
         ==
+      =/  hash       (generate-eth-hash typedhash)
       =/  signature
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
-        hash  u.priv.keypair
+        `@uvI`hash  u.priv.keypair
       :-   ?~  origin.act  ~
       :_  ~
       :*   %pass   q.u.origin.act
@@ -381,7 +384,7 @@
       %=    state
           signed-message-store
         %+  ~(put by signed-message-store.state)
-        `@ux`hash  [typed-message signature]
+        hash  [typed-message signature]
       ==
     ::
         %delete-typed-message
