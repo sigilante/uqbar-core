@@ -729,13 +729,38 @@
   ^-  @ux  %-  shag:merk
   :((cury cat 3) town source holder salt)
 ::
+::  eth signature reproduction tools, for eth_personal_sign
+::
+++  build-eth-signature-string
+  |=  tx=transaction:smart
+  ^-  tape
+  =/  original-hash  (sham +.tx)
+  %+  weld  "\19Ethereum Signed Message:\0a"         :: eth signed message prefix
+  =-  "{<(lent -)>}{-}"                              :: len(msg) + msg
+  %+  weld  "Contract: {<contract.tx>}\0a"
+  %+  weld  "Nonce: {<nonce.caller.tx>}\0a"   
+  %+  weld  "Town: {<town.tx>}\0a"
+  %+  weld  "Rate: {<rate.gas.tx}\0a"
+  %+  weld  "Budget: {<bud.gas.tx>}\0a"
+            "Data: {<original-hash>}"
+::
+++  generate-eth-tx-hash
+  |=  tx=transaction:smart
+  ^-  @ux 
+  =:  eth-hash.tx  ~
+      gas.tx       [0 0]
+  ==
+  %-  keccak-256:keccak:crypto
+  %-  as-octt:mimes:html
+  (build-eth-signature-string tx)      
+::
 ++  verify-sig
   |=  tx=transaction:smart
   ^-  ?
   =/  hash=@
     ?~  eth-hash.tx
       (sham +.tx)
-    u.eth-hash.tx
+    (generate-eth-tx-hash tx)
   =?  v.sig.tx  (gte v.sig.tx 27)  (sub v.sig.tx 27)
   =?  hash  (gth (met 3 hash) 32)  (end [3 32] hash)
   =/  virt=toon
