@@ -69,8 +69,7 @@
   %-  keccak-256:keccak:crypto
   %-  as-octt:mimes:html
   %+  weld  "\19Ethereum Signed Message:\0a"       :: eth signed message, 
-  =+  hex=(num-to-hex:abi:ethereum hash)           :: prefix + len(msg) + msg
-  "{<(lent hex)>}{<hex>}}"
+  "{<(lent hash)>}{<hash>}}"                       :: prefix + len(msg) + msg
 ::
 ::  +integrate-output: upon receiving a transaction receipt,
 ::  analyze the output and update our tracked assets if any changed.
