@@ -732,27 +732,30 @@
 ::  eth signature reproduction tools, for eth_personal_sign
 ::
 ++  build-eth-signature-string
-  |=  tx=transaction:smart
+  |=  [tx=transaction:smart old-hash=@ux]
   ^-  tape
-  =/  original-hash  (sham +.tx)
   %+  weld  "\19Ethereum Signed Message:\0a"         :: eth signed message prefix
   =-  "{<(lent -)>}{-}"                              :: len(msg) + msg
   %+  weld  "Contract: {<contract.tx>}\0a"
+  %+  weld  "From: {<address.caller.tx>}\0a"
   %+  weld  "Nonce: {<nonce.caller.tx>}\0a"   
   %+  weld  "Town: {<town.tx>}\0a"
-  %+  weld  "Rate: {<rate.gas.tx}\0a"
+  %+  weld  "Rate: {<rate.gas.tx>}\0a"
   %+  weld  "Budget: {<bud.gas.tx>}\0a"
-            "Data: {<original-hash>}"
+            "Data: {<old-hash>}"
 ::
 ++  generate-eth-tx-hash
   |=  tx=transaction:smart
-  ^-  @ux 
-  =:  eth-hash.tx  ~
-      gas.tx       [0 0]
+  ^-  @ux
+  =/  old  tx 
+  =:  eth-hash.old  ~
+      gas.old       [0 0]
+      status.old    %100
   ==
+  =/  original-hash  `@ux`(sham +.old)
   %-  keccak-256:keccak:crypto
   %-  as-octt:mimes:html
-  (build-eth-signature-string tx)      
+  (build-eth-signature-string tx original-hash)    
 ::
 ++  verify-sig
   |=  tx=transaction:smart
