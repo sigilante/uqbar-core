@@ -37,6 +37,13 @@
       [%nft town=@ux contract=id:smart nft-metadata]
   ==
 ::
+::  keys can be legacy hotwallets, hardware or encrypted hotwallets
+::
++$  key  
+  $%  [%legacy nick=@t priv=@ux]  ::  seed for these in state
+      [%hardware nick=@t]
+      [%encrypted nick=@t priv=@t seed=@t]
+  ==
 ::  keyed by message hash
 ::
 +$  signed-message-store

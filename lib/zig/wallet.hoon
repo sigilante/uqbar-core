@@ -410,4 +410,26 @@
         ::  XX add when merging parsing libraries
     ==
   --
+::
+::  state migrations     
+::
+++  merge-keys
+::  takes in state-4 keys & encrypted-keys, merges them.
+  |=  [keys=(map @ux [priv=(unit @ux) nick=@t]) encrypted=(map @ux [nick=@t priv=@t seed=@t])]
+  ^-  (map address:smart key)
+  =/  keyslist=(list [@ux key])
+     %+  turn  ~(tap by keys)
+     |=  [=address:smart [priv=(unit @ux) nick=@t]] 
+     ^-  [@ux key]
+     :-  address
+     ?~  priv  [%hardware nick]
+     [%legacy nick u.priv]
+   ::  add encrypted-keys store to keys too.
+  =/  encrypted-keyslist=(list [@ux key])
+     %+  turn  ~(tap by encrypted)
+     |=  [=address:smart [nick=@t priv=@t seed=@t]]
+     ^-  [@ux key]
+     :-  address
+     [%encrypted [nick priv seed]]
+  (~(gas by *(map address:smart key)) (weld keyslist encrypted-keyslist))
 --
