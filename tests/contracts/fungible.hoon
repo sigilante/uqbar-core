@@ -410,6 +410,24 @@
 ::
 ::  tests for %pull
 ::
+++  generate-eth-hash
+  |=  =hash:smart
+  ^-  @ux
+  %-  keccak-256:keccak:crypto
+  %-  as-octt:mimes:html
+  %+  weld  "\19Ethereum Signed Message:\0a"           :: eth signed message, 
+  %+  weld  (a-co:co (lent (scow %ux hash)))           :: prefix + len(msg)[no dots] + msg
+  (scow %ux hash)                                  
+::
+++  recover-pub
+  |=  [=hash:smart =sig:smart]
+  ^-  address:smart
+  =?  v.sig  (gte v.sig 27)  (sub v.sig 27)
+  =?  hash  (gth (met 3 hash) 32)  (end [3 32] hash)
+  %-  address-from-pub:smart
+  %-  serialize-point:secp256k1:secp:crypto
+  (ecdsa-raw-recover:secp256k1:secp:crypto hash sig)
+::
 ++  test-zzx-pull  ^-  test-txn
   =/  =typed-message:smart
     :+  id.p:account-1:token-2                         :: domain, giver zigs account
@@ -420,9 +438,12 @@
         0
         1.000
     ==
+  ::  signatures now signed in eth_personal_sign by default. 
+  ::  see ++generate-eth hash
+  =/  =hash:smart  (generate-eth-hash (shag:smart typed-message)) 
   =/  =sig:smart
     %+  ecdsa-raw-sign:secp256k1:secp:crypto
-    `@uvI`(shag:smart typed-message)  priv-1:zigs
+    `@uvI`hash  priv-1:zigs
   =/  new-giver  ::  incrementing nonces for giver
     ^-  item:smart
     :*  %&
