@@ -41,7 +41,7 @@
 ::
 +$  key  
   $%  [%legacy nick=@t priv=@ux]  ::  seed for these in state
-      [%hardware nick=@t]
+      [%imported nick=@t]
       [%encrypted nick=@t priv=@t seed=@t]
   ==
 ::  keyed by message hash

@@ -258,7 +258,7 @@
       =/  sent  (get-sent-history address.act %.n [our now]:bowl)
       =/  tokens
         (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
-      :-  ~
+      :-  (watch-for-batches our.bowl 0x0)
       %=  state
         tokens  tokens
         nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
@@ -296,7 +296,7 @@
       %=  state
         tokens  tokens
         nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
-        keys    (~(put by keys) address.act [%hardware nick.act])
+        keys    (~(put by keys) address.act [%imported nick.act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
     ::
@@ -317,6 +317,7 @@
         %edit-nickname
       :: FIX
       =/  =key  (~(got by keys) address.act)
+      ::
       ::  nick.key not found??? type refinement
       `state(keys (~(put by keys) address.act key))
     ::
@@ -349,7 +350,7 @@
       ::  eth_sign would work with this, but "unsafe"
       =/  typedhash  (shag:smart typed-message)
       ?-    -.keypair
-          ?(%hardware %encrypted)
+          ?(%imported %encrypted)
         ::  put in pending and wait for signature from outside
         :-  :_  ~
           :*  %give  %fact
@@ -846,6 +847,21 @@
         ['password' [%s pass.seed.state]]
     ==
   ::
+      [%encrypted-accounts ~]
+    =;  =json  ``json+!>(json)
+    %-  pairs:enjs
+    %+  murn  ~(tap by keys.state)
+    |=  [pub=@ux =key]
+    ?.  ?=(%encrypted -.key)
+      ~
+    :-  ~
+    :-  (scot %ux pub)
+    %-  pairs:enjs
+    :~  ['nick' s+nick.key]
+        ['priv' s+priv.key]
+        ['seed' s+seed.key]
+    ==
+  ::
       [%accounts ~]
     =;  =json  ``json+!>(json)
     %-  pairs:enjs
@@ -866,9 +882,9 @@
           [(scot %ux town) (numb:enjs nonce)]
       ==
     ::
-        %hardware
+        %imported
       :~  ['pubkey' [%s (scot %ux pub)]]
-          ['type' [%s 'hardware']]
+          ['type' [%s 'imported']]
           ['nick' [%s nick.key]]
           :-  'nonces'
           %-  pairs:enjs
@@ -880,6 +896,7 @@
         %encrypted
       :~  ['pubkey' [%s (scot %ux pub)]]
           ['type' [%s %encrypted]]
+          ['privkey' [%s priv.key]]
           ['seed' [%s seed.key]]
           ['nick' [%s nick.key]]
           :-  'nonces'

@@ -422,7 +422,7 @@
      |=  [=address:smart [priv=(unit @ux) nick=@t]] 
      ^-  [@ux key]
      :-  address
-     ?~  priv  [%hardware nick]
+     ?~  priv  [%imported nick]
      [%legacy nick u.priv]
    ::  add encrypted-keys store to keys too.
   =/  encrypted-keyslist=(list [@ux key])
