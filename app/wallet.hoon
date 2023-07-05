@@ -332,16 +332,26 @@
         msg.u.pending
       =/  hash  (generate-eth-hash hash.act)
       ::  update stores
-      :_  %=    state
-              pending-message-store
-            (~(del by pending-message-store) hash.act)
-          ::
-              signed-message-store
-            %+  ~(put by signed-message-store)
-              hash
-            [typed-message sig.act]
-          ==
-      ~
+      :-   ?~  origin.u.pending  ~
+      :_  ~
+      :*   %pass   q.u.origin.u.pending
+           %agent  [our.bowl p.u.origin.u.pending]
+           %poke  %wallet-update
+           !>  ^-  wallet-update
+           :*  %signed-message
+               origin.u.pending
+               typed-message
+               sig.act
+      ==   ==
+      %=    state
+        pending-message-store
+        (~(del by pending-message-store) hash.act)
+        ::
+        signed-message-store
+        %+  ~(put by signed-message-store)
+          hash
+          [typed-message sig.act]
+      ==
     ::
         %sign-typed-message
       =/  keypair  (~(got by keys.state) from.act)
