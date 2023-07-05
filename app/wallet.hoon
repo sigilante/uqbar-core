@@ -315,15 +315,23 @@
       ==
     ::
         %edit-nickname
-      :: FIX
       =/  =key  (~(got by keys) address.act)
-      ::
-      ::  nick.key not found??? type refinement
+      ::  weird find-fork type refinement error, have to ?-
+      =.  key  
+        ?-    -.key
+            %imported
+          key(nick nick.act)
+        ::
+            %legacy
+          key(nick nick.act)
+        ::
+            %encrypted
+          key(nick nick.act)
+        ==
       `state(keys (~(put by keys) address.act key))
     ::
        %submit-typed-message
       ::  sign a pending typed-message from an attached hardware wallet
-      ::  Q: src.bowl verification?
       ?~  pending=(~(get by pending-message-store) hash.act)
         ~|("%wallet: no pending signature to that address" !!)
       =/  =typed-message:smart
