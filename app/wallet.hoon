@@ -21,7 +21,6 @@
       keys=(map address:smart key)
       =share-prefs
       ::  we track the nonce of each address we're handling
-      ::  TODO: introduce a mechanism to check nonce from chain and re-align
       nonces=(map address:smart (map town=@ux nonce=@ud))
       ::  pending typed-messages to sign
       =pending-message-store
@@ -428,6 +427,11 @@
         %set-nonce  ::  for testing/debugging
       =-  `state(nonces (~(put by nonces) address.act -))
       (~(put by (~(gut by nonces.state) address.act ~)) [town new]:act)
+    ::
+        %realign-nonce  :: try to realign based on local indexer
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
+      =-  `state(nonces (~(put by nonces) address.act -))
+      (~(put by (~(gut by nonces.state) address.act ~)) town.act nonce)
     ::
         %approve-origin
       `state(approved-origins (~(put by approved-origins) +.act))

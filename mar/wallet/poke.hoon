@@ -20,6 +20,7 @@
           [%derive-new-address (ot ~[[%hdpath sa] [%nick so]])]
           [%delete-address (ot ~[[%address (se %ux)]])]
           [%edit-nickname (ot ~[[%address (se %ux)] [%nick so]])]
+          [%realign-nonce (ot ~[[%address (se %ux)] [%town (se %ux)]])]
           [%add-tracked-address (ot ~[[%address (se %ux)] [%nick so]])]
           ::
           [%submit-signed parse-signed]

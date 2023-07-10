@@ -158,6 +158,7 @@
       [%set-share-prefs =share-prefs]
       ::  testing and internal
       [%set-nonce address=@ux town=@ux new=@ud]
+      [%realign-nonce address=@ux town=@ux]
       [%approve-origin (pair term wire) gas=[rate=@ud bud=@ud]]
       [%remove-origin (pair term wire)]
       ::
