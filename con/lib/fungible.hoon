@@ -208,7 +208,8 @@
         :+  (hash-data this.context holder.giver town.context salt.giver)
           pull-jold-hash
         [holder.giver to.act amount.act nonce.act deadline.act]
-    ?>  =((recover typed-message sig.act) holder.giver)
+    =/  hash  (generate-eth-hash (shag typed-message))
+    ?>  =((recover-pub hash sig.act) holder.giver)
     ::  assert nonce is valid
     =/  nonce  (~(gut by nonces.noun.giver) to.act 0)
     ?>  .=(nonce.act nonce)
@@ -330,6 +331,26 @@
       issued                    [%&^rec issued]
       initial-distribution.act  t.initial-distribution.act
     ==
+  ::
+  ::  for %pull signatures
+  ++  generate-eth-hash
+    |=  =hash
+    ^-  @ux
+    %-  keccak-256:keccak:crypto
+    %-  as-octt:mimes:html
+    %+  weld  "\19Ethereum Signed Message:\0a"       :: eth signed message, 
+    =+  len=(lent (trip (scot %ux hash)))            :: note, don't use ++scow
+    %+  weld  (a-co:co len)                          :: prefix + len(msg)[no dots] + msg
+    (trip (scot %ux hash))                                  
+  ::
+  ++  recover-pub
+    |=  [=hash =sig]
+    ^-  address
+    =?  v.sig  (gte v.sig 27)  (sub v.sig 27)
+    =?  hash  (gth (met 3 hash) 32)  (end [3 32] hash)
+    %-  address-from-pub
+    %-  serialize-point:secp256k1:secp:crypto
+    (ecdsa-raw-recover:secp256k1:secp:crypto hash sig)
   ::
   ::  JSON parsing for types
   ::

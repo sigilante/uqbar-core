@@ -11,19 +11,19 @@
 /*  smart-lib  %noun  /lib/zig/sys/smart-lib/noun
 |%
 +$  card  card:agent:gall
-+$  state-4
-  $:  %4
++$  state-5
+  $:  %5
       ::  wallet holds a single seed at once
       ::  address-index notes where we are in derivation path
       seed=[mnem=@t pass=@t address-index=@ud]
       ::  many keys can be derived or imported
       ::  if the private key is ~, that means it's a hardware wallet import
-      keys=(map address:smart [priv=(unit @ux) nick=@t])
-      encrypted-keys=(map address:smart [nick=@t priv=@t seed=@t])
+      keys=(map address:smart key)
       =share-prefs
       ::  we track the nonce of each address we're handling
-      ::  TODO: introduce a mechanism to check nonce from chain and re-align
       nonces=(map address:smart (map town=@ux nonce=@ud))
+      ::  pending typed-messages to sign
+      =pending-message-store
       ::  signatures tracks any signed calls we've made
       =signed-message-store
       ::  tokens tracked for each address we're handling
@@ -41,7 +41,7 @@
   ==
 --
 ::
-=|  state-4
+=|  state-5
 =*  state  -
 ::
 %-  agent:dbug
@@ -53,15 +53,20 @@
 ::
 ++  on-init
   ^-  (quip card _this)
-  `this(state *state-4)
+  `this(state *state-5)
 ::
 ++  on-save  !>(state)
 ++  on-load
   |=  =old=vase
   ^-  (quip card _this)
   ?+    -.q.old-vase  on-init
+      %5
+    `this(state !<(state-5 old-vase))
       %4
-    `this(state !<(state-4 old-vase))
+    =+  old=!<(state-4 old-vase)
+    =/  newkeys  (merge-keys keys.old encrypted-keys.old)
+    =+  new=[%5 seed.old newkeys share-prefs.old nonces.old ~ |6:old]
+    (on-load !>(`state-5`new))
       %3
     =+  old=!<(state-3 old-vase)
     (on-load !>(`state-4`[%4 seed.old keys.old ~ |3:old]))
@@ -178,7 +183,10 @@
       tx(output `output.q.result)
     ::
         nonces
-      ?.  =(status.transaction.tx %103)  nonces
+      ?.  ?|  =(status.transaction.tx %202)
+              =(status.transaction.tx %103)
+          ==
+        nonces
       ::  dec nonce on this town, tx was rejected
       %+  ~(put by nonces)  address.caller.transaction.tx
       %+  ~(jab by (~(got by nonces) address.caller.transaction.tx))
@@ -200,7 +208,8 @@
       =+  core=(from-seed:bip32 [64 seed])
       =+  addr=(address-from-prv:key:ethereum private-key:core)
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history addr %.n [our now]:bowl)
+      =/  sent   (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce  (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens ~[addr] [our now]:bowl)
       ::  sub to batch updates
       :-  (watch-for-batches our.bowl 0x0)  ::  TODO remove town-id hardcode
@@ -212,12 +221,12 @@
         signed-message-store  ~
         tokens                tokens
         seed                  [mnemonic.act password.act 0]
-        nonces                [[addr [[0x0 ~(wyt by sent)] ~ ~]] ~ ~]
+        nonces                [[addr [[0x0 nonce] ~ ~]] ~ ~]
         metadata-store        (update-metadata-store tokens ~ [our now]:bowl)
         unfinished-transaction-store  ~
         transaction-store  [[addr sent] ~ ~]
-        keys  %+  ~(put by *(map address:smart [(unit @ux) @t]))
-              addr  [`private-key:core nick.act]
+        keys  %+  ~(put by *(map address:smart key))
+              addr  [%legacy [nick.act private-key:core]]
       ==
     ::
         %generate-hot-wallet
@@ -227,7 +236,8 @@
       =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem (trip password.act))])
       =+  addr=(address-from-prv:key:ethereum private-key:core)
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history addr %.n [our now]:bowl)
+      =/  sent    (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce   (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens ~[addr] [our now]:bowl)
       ::  sub to batch updates
       :-  (watch-for-batches our.bowl 0x0)  ::  TODO remove town-id hardcode
@@ -239,24 +249,25 @@
         signed-message-store  ~
         tokens                tokens
         seed                  [(crip mnem) password.act 0]
-        nonces                [[addr [[0x0 ~(wyt by sent)] ~ ~]] ~ ~]
+        nonces                [[addr [[0x0 nonce] ~ ~]] ~ ~]
         metadata-store        (update-metadata-store tokens ~ [our now]:bowl)
         unfinished-transaction-store  ~
         transaction-store  [[addr sent] ~ ~]
-        keys  %+  ~(put by *(map address:smart [(unit @ux) @t]))
-              addr  [`private-key:core nick.act]
+        keys  %+  ~(put by *(map address:smart key))
+              addr  [%legacy [nick.act private-key:core]]
       ==
     ::
         %store-hot-wallet
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history address.act %.n [our now]:bowl)
+      =/  sent   (get-sent-history address.act %.n [our now]:bowl)
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
       =/  tokens
         (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
-      :-  ~
+      :-  (watch-for-batches our.bowl 0x0)
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
-        encrypted-keys     (~(put by encrypted-keys) [address nick priv seed]:act)
+        nonces  (~(put by nonces) address.act [[0x0 nonce] ~ ~])
+        keys    (~(put by keys) address.act [%encrypted [nick priv seed]:act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
     ::
@@ -271,26 +282,28 @@
       =+  addr=(address-from-prv:key:ethereum prv:core)
       ::  get transaction history for this new address
       =/  sent    (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce   (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens [addr ~(tap in ~(key by keys))] [our now]:bowl)
       :-  ~
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) addr [[0x0 ~(wyt by sent)] ~ ~])
+        nonces  (~(put by nonces) addr [[0x0 nonce] ~ ~])
         seed    seed(address-index +(address-index.seed))
-        keys    (~(put by keys) addr [`prv:core nick.act])
+        keys    (~(put by keys) addr [%legacy [nick.act prv:core]])
         transaction-store  (~(put by transaction-store) addr sent)
       ==
     ::
         %add-tracked-address
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history address.act %.n [our now]:bowl)
+      =/  sent   (get-sent-history address.act %.n [our now]:bowl)
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
       =/  tokens
         (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
       :-  ~
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
-        keys    (~(put by keys) address.act [~ nick.act])
+        nonces  (~(put by nonces) address.act [[0x0 nonce] ~ ~])
+        keys    (~(put by keys) address.act [%imported nick.act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
     ::
@@ -303,51 +316,122 @@
       :-  ~
       %=  state
         keys               (~(del by keys) address.act)
-        encrypted-keys     (~(del by encrypted-keys) address.act)
         nonces             (~(del by nonces) address.act)
         tokens             (~(del by tokens) address.act)
         transaction-store  (~(del by transaction-store) address.act)
       ==
     ::
         %edit-nickname
-      ?^  entry=(~(get by keys) address.act)
-        `state(keys (~(put by keys) address.act u.entry(nick nick.act)))
-      =-  `state(encrypted-keys -)
-      %+  ~(jab by encrypted-keys)  address.act
-      |=([@t priv=@t seed=@t] [nick.act priv seed])
+      =/  =key  (~(got by keys) address.act)
+      ::  weird find-fork type refinement error, have to ?-
+      =.  key  
+        ?-    -.key
+            %imported
+          key(nick nick.act)
+        ::
+            %legacy
+          key(nick nick.act)
+        ::
+            %encrypted
+          key(nick nick.act)
+        ==
+      `state(keys (~(put by keys) address.act key))
     ::
-        %sign-typed-message
-      ::  TODO display something to the user using the contract interface
-      ::  add pending signed-messages tab to frontend
-      =/  keypair  (~(got by keys.state) from.act)
-      =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
-      =/  hash  `@uvI`(shag:smart typed-message)
-      =/  signature
-        ?~  priv.keypair
-          ::  put it into some temporary thing for cold storage. Make it pending
-          !!
-        %+  ecdsa-raw-sign:secp256k1:secp:crypto
-        hash  u.priv.keypair
-      :-   ?~  origin.act  ~
+       %submit-typed-message
+      ::  sign a pending typed-message from an attached hardware wallet
+      ?~  pending=(~(get by pending-message-store) hash.act)
+        ~|("%wallet: no pending signature to that address" !!)
+      =/  =typed-message:smart
+        :+  domain.u.pending
+          `@ux`(sham type.u.pending)
+        msg.u.pending
+      =/  hash  (generate-eth-hash hash.act)
+      ::  update stores
+      :-   ?~  origin.u.pending  ~
       :_  ~
-      :*   %pass   q.u.origin.act
-           %agent  [our.bowl p.u.origin.act]
+      :*   %pass   q.u.origin.u.pending
+           %agent  [our.bowl p.u.origin.u.pending]
            %poke  %wallet-update
            !>  ^-  wallet-update
            :*  %signed-message
-               origin.act
+               origin.u.pending
                typed-message
-               signature
+               sig.act
       ==   ==
       %=    state
-          signed-message-store
-        %+  ~(put by signed-message-store.state)
-        `@ux`hash  [typed-message signature]
+        pending-message-store
+        (~(del by pending-message-store) hash.act)
+        ::
+        signed-message-store
+        %+  ~(put by signed-message-store)
+          hash
+          [typed-message sig.act]
+      ==
+    ::
+        %sign-typed-message
+      =/  keypair  (~(got by keys.state) from.act)
+      =/  =typed-message:smart  [domain.act `@ux`(sham type.act) msg.act]
+      ::  we might want to make signatures default to eth_personal_sign
+      ::  eth_sign would work with this, but "unsafe"
+      =/  typedhash  (shag:smart typed-message)
+      ?-    -.keypair
+          ?(%imported %encrypted)
+        ::  put in pending and wait for signature from outside
+        :-  :_  ~
+          :*  %give  %fact
+              ~[/tx-updates]  %wallet-frontend-update 
+              !>  ^-  wallet-frontend-update
+              :*    %new-sign-message
+                    `@ux`typedhash  origin.act
+                    from.act   domain.act  
+                    type.act
+          ==  ==
+          %=    state
+              pending-message-store
+            (~(put by pending-message-store) `@ux`typedhash +.act)
+          ==
+      ::
+          %legacy
+        =/  hash       (generate-eth-hash typedhash)
+        =/  signature
+          %+  ecdsa-raw-sign:secp256k1:secp:crypto
+          `@uvI`hash  priv.keypair
+        :-   ?~  origin.act  ~
+        :_  ~
+        :*   %pass   q.u.origin.act
+             %agent  [our.bowl p.u.origin.act]
+             %poke  %wallet-update
+             !>  ^-  wallet-update
+             :*  %signed-message
+                 origin.act
+                 typed-message
+                 signature
+        ==   ==
+        %=    state
+            signed-message-store
+          %+  ~(put by signed-message-store.state)
+          hash  [typed-message signature]
+        ==
+      ==
+    ::
+        %delete-typed-message
+      ~|  "%wallet: no pending message with that hash"
+      =/  my-pending  (~(got by pending-message-store) hash.act)
+      ::  remove without signing
+      :-  ~
+      %=    state
+          pending-message-store
+        (~(del by pending-message-store) hash.act)
       ==
     ::
         %set-nonce  ::  for testing/debugging
       =-  `state(nonces (~(put by nonces) address.act -))
       (~(put by (~(gut by nonces.state) address.act ~)) [town new]:act)
+    ::
+        %realign-nonce  :: try to realign based on local indexer
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
+      =-  `state(nonces (~(put by nonces) address.act -))
+      (~(put by (~(gut by nonces.state) address.act ~)) town.act nonce)
     ::
         %approve-origin
       `state(approved-origins (~(put by approved-origins) +.act))
@@ -427,8 +511,8 @@
                 %poke  %uqbar-write
                 !>(`write:uqbar`[%submit tx])
         ==  ==
-      ?~  keypair=(~(get by keys.state) from.act)
-        ~|("%wallet: don't have knowledge of that address" !!)
+      =/  =key  (~(got by keys.state) from.act)
+      ?>  ?=(%legacy -.key)
       =*  tx  transaction.u.found
       ::  get our nonce
       =/  our-nonces  (~(gut by nonces.state) from.act ~)
@@ -443,10 +527,8 @@
       =/  hash  (hash-transaction +.tx)
       ::  produce our signature
       =.  sig.tx
-        ?~  priv.u.keypair
-          ~|("%wallet: don't have private key for that address" !!)
         %+  ecdsa-raw-sign:secp256k1:secp:crypto
-        `@uvI`hash  u.priv.u.keypair
+        `@uvI`hash  priv.key
       ::  ~&  >>  "%wallet: submitting signed transaction"
       ::  ~&  >>  "with signature {<v.sig.tx^r.sig.tx^s.sig.tx>}"
       ::  update stores
@@ -622,7 +704,7 @@
     =/  batch-hash=@ux  (rear batch-order.upd)
     ::  get latest tokens and nfts held
     =/  addrs=(list address:smart)
-      ~(tap in (~(uni in ~(key by keys)) ~(key by encrypted-keys)))
+      ~(tap in ~(key by keys))
     =/  new-tokens
       (make-tokens addrs [our now]:bowl)
     =/  new-metadata
@@ -798,30 +880,61 @@
       [%encrypted-accounts ~]
     =;  =json  ``json+!>(json)
     %-  pairs:enjs
-    %+  turn  ~(tap by encrypted-keys.state)
-    |=  [pub=@ux [nick=@t priv=@t seed=@t]]
+    %+  murn  ~(tap by keys.state)
+    |=  [pub=@ux =key]
+    ?.  ?=(%encrypted -.key)
+      ~
+    :-  ~
     :-  (scot %ux pub)
     %-  pairs:enjs
-    :~  ['nick' s+nick]
-        ['priv' s+priv]
-        ['seed' s+seed]
+    :~  ['nick' s+nick.key]
+        ['priv' s+priv.key]
+        ['seed' s+seed.key]
     ==
   ::
       [%accounts ~]
     =;  =json  ``json+!>(json)
     %-  pairs:enjs
     %+  turn  ~(tap by keys.state)
-    |=  [pub=@ux [priv=(unit @ux) nick=@t]]
+    |=  [pub=@ux =key]
     :-  (scot %ux pub)
     %-  pairs:enjs
-    :~  ['pubkey' [%s (scot %ux pub)]]
-        ['privkey' ?~(priv [%s ''] [%s (scot %ux u.priv)])]
-        ['nick' [%s nick]]
-        :-  'nonces'
-        %-  pairs:enjs
-        %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
-        |=  [town=@ux nonce=@ud]
-        [(scot %ux town) (numb:enjs nonce)]
+    ?-    -.key
+        %legacy
+      :~  ['pubkey' [%s (scot %ux pub)]]
+          ['type' [%s 'legacy']]
+          ['privkey' [%s (scot %ux priv.key)]]
+          ['nick' [%s nick.key]]
+          :-  'nonces'
+          %-  pairs:enjs
+          %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
+          |=  [town=@ux nonce=@ud]
+          [(scot %ux town) (numb:enjs nonce)]
+      ==
+    ::
+        %imported
+      :~  ['pubkey' [%s (scot %ux pub)]]
+          ['type' [%s 'imported']]
+          ['nick' [%s nick.key]]
+          :-  'nonces'
+          %-  pairs:enjs
+          %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
+          |=  [town=@ux nonce=@ud]
+          [(scot %ux town) (numb:enjs nonce)]
+      ==
+    ::
+        %encrypted
+      :~  ['pubkey' [%s (scot %ux pub)]]
+          ['type' [%s %encrypted]]
+          ['privkey' [%s priv.key]]
+          ['seed' [%s seed.key]]
+          ['nick' [%s nick.key]]
+          :-  'nonces'
+          %-  pairs:enjs
+          %+  turn  ~(tap by (~(gut by nonces.state) pub ~))
+          |=  [town=@ux nonce=@ud]
+          [(scot %ux town) (numb:enjs nonce)]
+      ==
     ==
   ::
       [%book ~]
@@ -864,6 +977,20 @@
         :-  (scot %ux a)
         %-  pairs:enjs
         (turn ~(tap by m) transaction-with-output:parsing)
+    ==
+  ::
+      [%pending-sign-messages ~]
+    =;  =json  ``json+!>(json)
+    %-  pairs:enjs
+    %+  turn  ~(tap by pending-message-store.state)
+    |=  [=hash:smart [=origin =address:smart domain=id:smart type=json msg=*]]
+    :-  (scot %ux hash)
+    %-  pairs:enjs
+    :~  ['origin' [%s ?~(origin '' (scot %tas p.u.origin))]]
+        ['address' s+(scot %ux address)]
+        ['domain' s+(scot %ux domain)]
+        ['type' type]
+        ::  no msg=* parsed right now.
     ==
   ::
       [%pending @ ~]

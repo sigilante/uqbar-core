@@ -84,7 +84,8 @@
         :+  (hash-data this.context holder.giver town.context salt.giver)
           pull-jold-hash:lib
         [holder.giver to.act amount.act nonce.act deadline.act]
-    ?>  =((recover typed-message sig.act) holder.giver)
+    =/  hash  (generate-eth-hash:lib (shag typed-message))
+    ?>  =((recover-pub:lib hash sig.act) holder.giver)
     ::  assert nonce is valid
     =/  nonce  (~(gut by nonces.noun.giver) to.act 0)
     ?>  .=(nonce.act nonce)
@@ -118,7 +119,7 @@
     =.  allowances.noun.account
       (~(put py allowances.noun.account) who.act amount.act)
     `(result [%&^account ~] ~ ~ ~)
-  ==
+  ==             
 ::
 ++  read
   |=  =pith

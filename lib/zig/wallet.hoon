@@ -1,5 +1,5 @@
 /-  *zig-wallet, ui=zig-indexer
-/+  ui-lib=zig-indexer
+/+  ui-lib=zig-indexer, ethereum
 =>  |%
     +$  card  card:agent:gall
     --
@@ -54,11 +54,46 @@
       output.t
   ==
 ::
+++  get-nonce
+  |=  [=address:smart newest=? our=@p now=@da]
+  ^-  @ud
+  =/  transaction-history=update:ui
+    .^  update:ui
+        %gx
+        %+  weld  /(scot %p our)/indexer/(scot %da now)
+        %+  weld  ?.  newest  /  /newest
+        /from/0x0/(scot %ux address)/noun
+    ==
+  ::  == ~(wyt by get-sent-history)
+  ?~  transaction-history  0            
+  ?.  ?=(%transaction -.transaction-history)  0
+  %-  lent
+  %+  murn  ~(tap by transactions.transaction-history)
+  |=  [hash=@ux t=transaction-update-value:ui]
+  ::  errorcodes %1 and %2 don't increment nonce
+  ::  revisit %1, seems to increment nonce.
+  ?:  =(%2 status.transaction.t)
+    ~
+  :-  ~
+  [hash t]
+::
+::
 ++  watch-for-batches
   |=  [our=@p town=@ux]
   ^-  (list card)
   =-  [%pass /new-batch %agent [our %uqbar] %watch -]~
   /indexer/wallet/batch-order/(scot %ux town)
+::
+::  +generate-eth-hash:  takes in a @ux, 
+::  turns it into a string, transforms & hashes it
+::  the same way eth_personal_sign does. 
+++  generate-eth-hash
+  |=  hash=@ux
+  ^-  @ux
+  %-  keccak-256:keccak:crypto
+  %-  as-octt:mimes:html
+  %+  weld  "\19Ethereum Signed Message:\0a"       :: eth signed message, 
+  "{<(lent "{<hash>}")>}{<hash>}"                  :: prefix + len(msg) + msg
 ::
 ::  +integrate-output: upon receiving a transaction receipt,
 ::  analyze the output and update our tracked assets if any changed.
@@ -399,4 +434,26 @@
         ::  XX add when merging parsing libraries
     ==
   --
+::
+::  state migrations     
+::
+++  merge-keys
+::  takes in state-4 keys & encrypted-keys, merges them.
+  |=  [keys=(map @ux [priv=(unit @ux) nick=@t]) encrypted=(map @ux [nick=@t priv=@t seed=@t])]
+  ^-  (map address:smart key)
+  =/  keyslist=(list [@ux key])
+     %+  turn  ~(tap by keys)
+     |=  [=address:smart [priv=(unit @ux) nick=@t]] 
+     ^-  [@ux key]
+     :-  address
+     ?~  priv  [%imported nick]
+     [%legacy nick u.priv]
+   ::  add encrypted-keys store to keys too.
+  =/  encrypted-keyslist=(list [@ux key])
+     %+  turn  ~(tap by encrypted)
+     |=  [=address:smart [nick=@t priv=@t seed=@t]]
+     ^-  [@ux key]
+     :-  address
+     [%encrypted [nick priv seed]]
+  (~(gas by *(map address:smart key)) (weld keyslist encrypted-keyslist))
 --
