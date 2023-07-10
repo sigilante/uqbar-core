@@ -485,10 +485,10 @@
       ::  take in a new pending transaction
       =/  =caller:smart
         :+  from.act
-          ::  this is an ephemeral nonce used to differentiate between
-          ::  pending transactions. the real on-chain nonce is assigned
-          ::  upon signing.
-          `@ud`(cut 3 [0 3] eny.bowl)
+          ::  if there are several pending txs from the same address,
+          ::  cannot sign them one after another [fix]
+          =/  our-nonces  (~(gut by nonces.state) from.act ~)
+          +((~(gut by our-nonces) town.act 0))
         ::  generate our zigs token account ID
         (hash-data:engine zigs-contract-id:smart from.act town.act `@`'zigs')
       ::  build calldata of transaction, depending on argument type
