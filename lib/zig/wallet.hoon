@@ -54,6 +54,30 @@
       output.t
   ==
 ::
+++  get-nonce
+  |=  [=address:smart newest=? our=@p now=@da]
+  ^-  @ud
+  =/  transaction-history=update:ui
+    .^  update:ui
+        %gx
+        %+  weld  /(scot %p our)/indexer/(scot %da now)
+        %+  weld  ?.  newest  /  /newest
+        /from/0x0/(scot %ux address)/noun
+    ==
+  ::  == ~(wyt by get-sent-history)
+  ?~  transaction-history  0            
+  ?.  ?=(%transaction -.transaction-history)  0
+  %-  lent
+  %+  murn  ~(tap by transactions.transaction-history)
+  |=  [hash=@ux t=transaction-update-value:ui]
+  ::  errorcodes %1 and %2 don't increment nonce
+  ::  revisit %1, seems to increment nonce.
+  ?:  =(%2 status.transaction.t)
+    ~
+  :-  ~
+  [hash t]
+::
+::
 ++  watch-for-batches
   |=  [our=@p town=@ux]
   ^-  (list card)

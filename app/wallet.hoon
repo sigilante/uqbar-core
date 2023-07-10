@@ -184,7 +184,10 @@
       tx(output `output.q.result)
     ::
         nonces
-      ?.  =(status.transaction.tx %103)  nonces
+      ?.  ?|  =(status.transaction.tx %202)
+              =(status.transaction.tx %103)
+          ==
+        nonces
       ::  dec nonce on this town, tx was rejected
       %+  ~(put by nonces)  address.caller.transaction.tx
       %+  ~(jab by (~(got by nonces) address.caller.transaction.tx))
@@ -206,7 +209,8 @@
       =+  core=(from-seed:bip32 [64 seed])
       =+  addr=(address-from-prv:key:ethereum private-key:core)
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history addr %.n [our now]:bowl)
+      =/  sent   (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce  (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens ~[addr] [our now]:bowl)
       ::  sub to batch updates
       :-  (watch-for-batches our.bowl 0x0)  ::  TODO remove town-id hardcode
@@ -218,7 +222,7 @@
         signed-message-store  ~
         tokens                tokens
         seed                  [mnemonic.act password.act 0]
-        nonces                [[addr [[0x0 ~(wyt by sent)] ~ ~]] ~ ~]
+        nonces                [[addr [[0x0 nonce] ~ ~]] ~ ~]
         metadata-store        (update-metadata-store tokens ~ [our now]:bowl)
         unfinished-transaction-store  ~
         transaction-store  [[addr sent] ~ ~]
@@ -233,7 +237,8 @@
       =+  core=(from-seed:bip32 [64 (to-seed:bip39 mnem (trip password.act))])
       =+  addr=(address-from-prv:key:ethereum private-key:core)
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history addr %.n [our now]:bowl)
+      =/  sent    (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce   (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens ~[addr] [our now]:bowl)
       ::  sub to batch updates
       :-  (watch-for-batches our.bowl 0x0)  ::  TODO remove town-id hardcode
@@ -245,7 +250,7 @@
         signed-message-store  ~
         tokens                tokens
         seed                  [(crip mnem) password.act 0]
-        nonces                [[addr [[0x0 ~(wyt by sent)] ~ ~]] ~ ~]
+        nonces                [[addr [[0x0 nonce] ~ ~]] ~ ~]
         metadata-store        (update-metadata-store tokens ~ [our now]:bowl)
         unfinished-transaction-store  ~
         transaction-store  [[addr sent] ~ ~]
@@ -255,13 +260,14 @@
     ::
         %store-hot-wallet
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history address.act %.n [our now]:bowl)
+      =/  sent   (get-sent-history address.act %.n [our now]:bowl)
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
       =/  tokens
         (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
       :-  (watch-for-batches our.bowl 0x0)
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
+        nonces  (~(put by nonces) address.act [[0x0 nonce] ~ ~])
         keys    (~(put by keys) address.act [%encrypted [nick priv seed]:act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
@@ -277,11 +283,12 @@
       =+  addr=(address-from-prv:key:ethereum prv:core)
       ::  get transaction history for this new address
       =/  sent    (get-sent-history addr %.n [our now]:bowl)
+      =/  nonce   (get-nonce addr %.n [our now]:bowl)
       =/  tokens  (make-tokens [addr ~(tap in ~(key by keys))] [our now]:bowl)
       :-  ~
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) addr [[0x0 ~(wyt by sent)] ~ ~])
+        nonces  (~(put by nonces) addr [[0x0 nonce] ~ ~])
         seed    seed(address-index +(address-index.seed))
         keys    (~(put by keys) addr [%legacy [nick.act prv:core]])
         transaction-store  (~(put by transaction-store) addr sent)
@@ -289,13 +296,14 @@
     ::
         %add-tracked-address
       ::  get transaction history for this new address
-      =/  sent  (get-sent-history address.act %.n [our now]:bowl)
+      =/  sent   (get-sent-history address.act %.n [our now]:bowl)
+      =/  nonce  (get-nonce address.act %.n [our now]:bowl)
       =/  tokens
         (make-tokens [address.act ~(tap in ~(key by keys))] [our now]:bowl)
       :-  ~
       %=  state
         tokens  tokens
-        nonces  (~(put by nonces) address.act [[0x0 ~(wyt by sent)] ~ ~])
+        nonces  (~(put by nonces) address.act [[0x0 nonce] ~ ~])
         keys    (~(put by keys) address.act [%imported nick.act])
         transaction-store  (~(put by transaction-store) address.act sent)
       ==
